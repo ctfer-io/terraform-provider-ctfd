@@ -14,6 +14,9 @@ import (
 	"github.com/pandatix/go-ctfd/api"
 )
 
+// TODO find a way to avoid having this for file downloads
+var _ctfd_url string
+
 var _ provider.Provider = &CTFdProvider{}
 
 type CTFdProvider struct {
@@ -145,6 +148,7 @@ func (p *CTFdProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 	ctx = addSensitive(ctx, "ctfd_api_key", apiKey)
 	tflog.Debug(ctx, "Creating CTFd API client")
 
+	_ctfd_url = config.URL.ValueString()
 	client := api.NewClient(config.URL.ValueString(), session, nonce, apiKey)
 	resp.DataSourceData = client
 	resp.ResourceData = client

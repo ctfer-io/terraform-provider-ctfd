@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -46,6 +46,7 @@ type challengeResourceModel struct {
 	Tags        []types.String         `tfsdk:"tags"`
 	Topics      []types.String         `tfsdk:"topics"`
 	Hints       []hintSubresourceModel `tfsdk:"hints"`
+	Files       []fileSubresourceModel `tfsdk:"files"`
 }
 
 func (r *challengeResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -107,20 +108,20 @@ func (r *challengeResource) Schema(ctx context.Context, req resource.SchemaReque
 			"tags": schema.ListAttribute{
 				ElementType: types.StringType,
 				Optional:    true,
-				PlanModifiers: []planmodifier.List{
-					listplanmodifier.RequiresReplace(),
-				},
 			},
 			"topics": schema.ListAttribute{
 				ElementType: types.StringType,
 				Optional:    true,
-				PlanModifiers: []planmodifier.List{
-					listplanmodifier.RequiresReplace(),
-				},
 			},
 			"hints": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: hintSubresourceAttributes(),
+				},
+				Optional: true,
+			},
+			"files": schema.ListNestedAttribute{
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: fileSubresourceAttributes(),
 				},
 				Optional: true,
 			},
@@ -164,7 +165,7 @@ func (r *challengeResource) Create(ctx context.Context, req resource.CreateReque
 		Minimum:     toInt(data.Minimum),
 		State:       data.State.ValueString(),
 		Type:        data.Type.ValueString(),
-	})
+	}, api.WithContext(ctx))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -179,13 +180,25 @@ func (r *challengeResource) Create(ctx context.Context, req resource.CreateReque
 	data.ID = types.StringValue(strconv.Itoa(res.ID))
 	data.Value = toTFInt64(res.Value)
 
+	// Create files
+	challFiles := make([]fileSubresourceModel, 0, len(data.Files))
+	for _, file := range data.Files {
+		file.Create(ctx, resp.Diagnostics, r.client, data.ID.ValueString())
+		challFiles = append(challFiles, file)
+	}
+	if data.Files != nil {
+		data.Files = challFiles
+	}
+
 	// Create flags
 	challFlags := make([]flagSubresourceModel, 0, len(data.Flags))
 	for _, flag := range data.Flags {
 		flag.Create(ctx, resp.Diagnostics, r.client, data.ID.ValueString())
 		challFlags = append(challFlags, flag)
 	}
-	data.Flags = challFlags
+	if data.Flags != nil {
+		data.Flags = challFlags
+	}
 
 	// Create tags
 	challTags := make([]types.String, 0, len(data.Tags))
@@ -203,7 +216,9 @@ func (r *challengeResource) Create(ctx context.Context, req resource.CreateReque
 		}
 		challTags = append(challTags, tag)
 	}
-	data.Tags = challTags
+	if data.Tags != nil {
+		data.Tags = challTags
+	}
 
 	// Create topics
 	challTopics := make([]types.String, 0, len(data.Topics))
@@ -222,7 +237,9 @@ func (r *challengeResource) Create(ctx context.Context, req resource.CreateReque
 		}
 		challTopics = append(challTopics, topic)
 	}
-	data.Topics = challTopics
+	if data.Topics != nil {
+		data.Topics = challTopics
+	}
 
 	// Create hints
 	challHints := make([]hintSubresourceModel, 0, len(data.Hints))
@@ -230,7 +247,9 @@ func (r *challengeResource) Create(ctx context.Context, req resource.CreateReque
 		hint.Create(ctx, resp.Diagnostics, r.client, data.ID.ValueString())
 		challHints = append(challHints, hint)
 	}
-	data.Hints = challHints
+	if data.Hints != nil {
+		data.Hints = challHints
+	}
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -246,7 +265,7 @@ func (r *challengeResource) Read(ctx context.Context, req resource.ReadRequest, 
 	}
 
 	// Retrieve challenge
-	res, err := r.client.GetChallenge(data.ID.ValueString())
+	res, err := r.client.GetChallenge(data.ID.ValueString(), api.WithContext(ctx))
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read challenge %s, got error: %s", data.ID.ValueString(), err))
 		return
@@ -261,8 +280,40 @@ func (r *challengeResource) Read(ctx context.Context, req resource.ReadRequest, 
 	data.State = types.StringValue(res.State)
 	data.Type = types.StringValue(res.Type)
 
+	// Read its files
+	resFiles, err := r.client.GetChallengeFiles(data.ID.ValueString(), api.WithContext(ctx))
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Client Error",
+			fmt.Sprintf("Unable to read files of challenge %s, got error: %s", data.ID.ValueString(), err),
+		)
+	}
+	challFiles := make([]fileSubresourceModel, 0, len(resFiles))
+	for _, file := range resFiles {
+		pts := strings.Split(file.Location, "/")
+		name := pts[len(pts)-1]
+
+		content, err := r.client.GetFileContent(file, api.WithContext(ctx))
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"CTFd Error",
+				fmt.Sprintf("Unable to read files at location %s, got error: %s", file.Location, err),
+			)
+			continue
+		}
+
+		challFiles = append(challFiles, fileSubresourceModel{
+			ID:      types.StringValue(strconv.Itoa(file.ID)),
+			Name:    types.StringValue(name),
+			Content: types.StringValue(string(content)),
+		})
+	}
+	if data.Files != nil {
+		data.Files = challFiles
+	}
+
 	// Read its flags
-	resFlags, err := r.client.GetChallengeFlags(data.ID.ValueString())
+	resFlags, err := r.client.GetChallengeFlags(data.ID.ValueString(), api.WithContext(ctx))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -280,10 +331,12 @@ func (r *challengeResource) Read(ctx context.Context, req resource.ReadRequest, 
 			Type: types.StringValue(flag.Type),
 		})
 	}
-	data.Flags = challFlags
+	if data.Flags != nil {
+		data.Flags = challFlags
+	}
 
 	// Read its tags
-	resTags, err := r.client.GetChallengeTags(data.ID.ValueString())
+	resTags, err := r.client.GetChallengeTags(data.ID.ValueString(), api.WithContext(ctx))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -295,10 +348,12 @@ func (r *challengeResource) Read(ctx context.Context, req resource.ReadRequest, 
 	for _, tag := range resTags {
 		challTags = append(challTags, types.StringValue(tag.Value))
 	}
-	data.Tags = challTags
+	if data.Tags != nil {
+		data.Tags = challTags
+	}
 
 	// Read its topics
-	resTopics, err := r.client.GetChallengeTopics(data.ID.ValueString())
+	resTopics, err := r.client.GetChallengeTopics(data.ID.ValueString(), api.WithContext(ctx))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -310,10 +365,12 @@ func (r *challengeResource) Read(ctx context.Context, req resource.ReadRequest, 
 	for _, topic := range resTopics {
 		challTopics = append(challTopics, types.StringValue(topic.Value))
 	}
-	data.Topics = challTopics
+	if data.Topics != nil {
+		data.Topics = challTopics
+	}
 
 	// Read its hints
-	resHints, err := r.client.GetChallengeHints(data.ID.ValueString())
+	resHints, err := r.client.GetChallengeHints(data.ID.ValueString(), api.WithContext(ctx))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -327,6 +384,9 @@ func (r *challengeResource) Read(ctx context.Context, req resource.ReadRequest, 
 		for _, req := range hint.Requirements.Prerequisites {
 			hintReqs = append(hintReqs, types.StringValue(strconv.Itoa(req)))
 		}
+		if len(hint.Requirements.Prerequisites) == 0 {
+			hintReqs = nil
+		}
 		challHints = append(challHints, hintSubresourceModel{
 			ID:           types.StringValue(strconv.Itoa(hint.ID)),
 			Content:      types.StringValue(*hint.Content),
@@ -334,7 +394,9 @@ func (r *challengeResource) Read(ctx context.Context, req resource.ReadRequest, 
 			Requirements: hintReqs,
 		})
 	}
-	data.Hints = challHints
+	if data.Hints != nil {
+		data.Hints = challHints
+	}
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -348,8 +410,13 @@ func (r *challengeResource) Update(ctx context.Context, req resource.UpdateReque
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	var stateChallenge challengeResourceModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &stateChallenge)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
-	// XXX Type can't be modified after creation, needs to delete the challenge
+	// Patch direct attributes
 	res, err := r.client.PatchChallenge(data.ID.ValueString(), &api.PatchChallengeParams{
 		Name:        data.Name.ValueStringPointer(),
 		Category:    data.Category.ValueStringPointer(),
@@ -358,9 +425,12 @@ func (r *challengeResource) Update(ctx context.Context, req resource.UpdateReque
 		Decay:       toInt(data.Decay),
 		Minimum:     toInt(data.Minimum),
 		State:       data.State.ValueStringPointer(),
-	})
+	}, api.WithContext(ctx))
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update challenge, got error: %s", err))
+		resp.Diagnostics.AddError(
+			"Client Error",
+			fmt.Sprintf("Unable to update challenge, got error: %s", err),
+		)
 		return
 	}
 
@@ -374,10 +444,68 @@ func (r *challengeResource) Update(ctx context.Context, req resource.UpdateReque
 	data.State = types.StringValue(res.State)
 	data.Type = types.StringValue(res.Type)
 
+	// Update its files
+	currentFiles, err := r.client.GetChallengeFiles(data.ID.ValueString(), api.WithContext(ctx))
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Client Error",
+			fmt.Sprintf("Unable to get challenge's files, got error: %s", err),
+		)
+	}
+	files := []fileSubresourceModel{}
+	for _, tfFile := range data.Files {
+		exists := false
+		for _, currentFile := range currentFiles {
+			if tfFile.ID.ValueString() == strconv.Itoa(currentFile.ID) {
+				exists = true
+
+				// Update iif plan.content != state.content
+				// => Find corresponding file in state
+				tfFileState := fileSubresourceModel{}
+				for i, tmp := range stateChallenge.Files {
+					if tmp.ID.ValueString() == tfFileState.ID.ValueString() {
+						tfFileState = stateChallenge.Files[i]
+						break
+					}
+				}
+
+				// => Drop and replace
+				update := string(tfFile.GetContent(resp.Diagnostics)) != string(tfFileState.GetContent(resp.Diagnostics))
+				if update {
+					tfFile.Delete(ctx, resp.Diagnostics, r.client)
+					tfFile.Create(ctx, resp.Diagnostics, r.client, data.ID.ValueString())
+				}
+
+				files = append(files, tfFile)
+				break
+			}
+		}
+		if !exists {
+			tfFile.Create(ctx, resp.Diagnostics, r.client, data.ID.ValueString())
+			files = append(files, tfFile)
+		}
+	}
+	for _, currentFile := range currentFiles {
+		exists := false
+		for _, tfFile := range data.Files {
+			if tfFile.ID.ValueString() == strconv.Itoa(currentFile.ID) {
+				exists = true
+				break
+			}
+		}
+		if !exists {
+			f := &fileSubresourceModel{
+				ID: types.StringValue(strconv.Itoa(currentFile.ID)),
+			}
+			f.Delete(ctx, resp.Diagnostics, r.client)
+		}
+	}
+	if data.Files != nil {
+		data.Files = files
+	}
+
 	// Update its flags
-	currentFlags, err := r.client.GetFlags(&api.GetFlagsParams{
-		ChallengeID: data.ID.ValueStringPointer(),
-	})
+	currentFlags, err := r.client.GetChallengeFlags(data.ID.ValueString(), api.WithContext(ctx))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -416,10 +544,12 @@ func (r *challengeResource) Update(ctx context.Context, req resource.UpdateReque
 			f.Delete(ctx, resp.Diagnostics, r.client)
 		}
 	}
-	data.Flags = flags
+	if data.Flags != nil {
+		data.Flags = flags
+	}
 
 	// Update its tags (drop them all, create new ones)
-	challTags, err := r.client.GetChallengeTags(data.ID.ValueString())
+	challTags, err := r.client.GetChallengeTags(data.ID.ValueString(), api.WithContext(ctx))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -428,7 +558,7 @@ func (r *challengeResource) Update(ctx context.Context, req resource.UpdateReque
 		return
 	}
 	for _, tag := range challTags {
-		if err := r.client.DeleteTag(strconv.Itoa(tag.ID)); err != nil {
+		if err := r.client.DeleteTag(strconv.Itoa(tag.ID), api.WithContext(ctx)); err != nil {
 			resp.Diagnostics.AddError(
 				"Client Error",
 				fmt.Sprintf("Unable to delete tag %d of challenge %s, got error: %s", tag.ID, data.ID.ValueString(), err),
@@ -441,7 +571,7 @@ func (r *challengeResource) Update(ctx context.Context, req resource.UpdateReque
 		_, err := r.client.PostTags(&api.PostTagsParams{
 			Challenge: data.ID.ValueString(),
 			Value:     tag.ValueString(),
-		})
+		}, api.WithContext(ctx))
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Client Error",
@@ -451,10 +581,12 @@ func (r *challengeResource) Update(ctx context.Context, req resource.UpdateReque
 		}
 		tags = append(tags, tag)
 	}
-	data.Tags = tags
+	if data.Tags != nil {
+		data.Tags = tags
+	}
 
 	// Update its topics (drop them all, create new ones)
-	challTopics, err := r.client.GetChallengeTopics(data.ID.ValueString())
+	challTopics, err := r.client.GetChallengeTopics(data.ID.ValueString(), api.WithContext(ctx))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -463,7 +595,7 @@ func (r *challengeResource) Update(ctx context.Context, req resource.UpdateReque
 		return
 	}
 	for _, topic := range challTopics {
-		if err := r.client.DeleteTopic(strconv.Itoa(topic.ID)); err != nil {
+		if err := r.client.DeleteTopic(strconv.Itoa(topic.ID), api.WithContext(ctx)); err != nil {
 			resp.Diagnostics.AddError(
 				"Client Error",
 				fmt.Sprintf("Unable to delete topic %d of challenge %s, got error: %s", topic.ID, data.ID.ValueString(), err),
@@ -477,7 +609,7 @@ func (r *challengeResource) Update(ctx context.Context, req resource.UpdateReque
 			Challenge: data.ID.ValueString(),
 			Type:      "challenge",
 			Value:     topic.ValueString(),
-		})
+		}, api.WithContext(ctx))
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Client Error",
@@ -487,10 +619,12 @@ func (r *challengeResource) Update(ctx context.Context, req resource.UpdateReque
 		}
 		topics = append(topics, topic)
 	}
-	data.Topics = topics
+	if data.Topics != nil {
+		data.Topics = topics
+	}
 
 	// Update its hints
-	currentHints, err := r.client.GetChallengeHints(data.ID.ValueString())
+	currentHints, err := r.client.GetChallengeHints(data.ID.ValueString(), api.WithContext(ctx))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -529,7 +663,9 @@ func (r *challengeResource) Update(ctx context.Context, req resource.UpdateReque
 			h.Delete(ctx, resp.Diagnostics, r.client)
 		}
 	}
-	data.Hints = hints
+	if data.Hints != nil {
+		data.Hints = hints
+	}
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -544,7 +680,7 @@ func (r *challengeResource) Delete(ctx context.Context, req resource.DeleteReque
 		return
 	}
 
-	if err := r.client.DeleteChallenge(data.ID.ValueString()); err != nil {
+	if err := r.client.DeleteChallenge(data.ID.ValueString(), api.WithContext(ctx)); err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete challenge, got error: %s", err))
 		return
 	}

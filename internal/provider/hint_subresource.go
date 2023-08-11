@@ -8,7 +8,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -43,9 +42,6 @@ func hintSubresourceAttributes() map[string]schema.Attribute {
 		"requirements": schema.ListAttribute{
 			ElementType: types.StringType,
 			Optional:    true,
-			PlanModifiers: []planmodifier.List{
-				listplanmodifier.RequiresReplace(),
-			},
 		},
 	}
 }
@@ -64,7 +60,7 @@ func (data *hintSubresourceModel) Create(ctx context.Context, diags diag.Diagnos
 		Requirements: api.Requirements{
 			Prerequisites: preq,
 		},
-	})
+	}, api.WithContext(ctx))
 	if err != nil {
 		diags.AddError(
 			"Client Error",
@@ -91,7 +87,7 @@ func (data *hintSubresourceModel) Update(ctx context.Context, diags diag.Diagnos
 		Requirements: api.Requirements{
 			Prerequisites: preq,
 		},
-	})
+	}, api.WithContext(ctx))
 	if err != nil {
 		diags.AddError(
 			"Client Error",
@@ -112,7 +108,7 @@ func (data *hintSubresourceModel) Update(ctx context.Context, diags diag.Diagnos
 }
 
 func (data *hintSubresourceModel) Delete(ctx context.Context, diags diag.Diagnostics, client *api.Client) {
-	if err := client.DeleteHint(data.ID.ValueString()); err != nil {
+	if err := client.DeleteHint(data.ID.ValueString(), api.WithContext(ctx)); err != nil {
 		diags.AddError(
 			"Client Error",
 			fmt.Sprintf("Unable to delete hint, got error: %s", err),
@@ -120,5 +116,5 @@ func (data *hintSubresourceModel) Delete(ctx context.Context, diags diag.Diagnos
 		return
 	}
 
-	tflog.Trace(ctx, "delete a hint")
+	tflog.Trace(ctx, "deleted a hint")
 }

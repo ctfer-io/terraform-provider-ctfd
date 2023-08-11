@@ -55,7 +55,7 @@ func (data *flagSubresourceModel) Create(ctx context.Context, diags diag.Diagnos
 		Content:   data.Content.ValueString(),
 		Data:      data.Data.ValueString(),
 		Type:      data.Type.ValueString(),
-	})
+	}, api.WithContext(ctx))
 	if err != nil {
 		diags.AddError(
 			"Client Error",
@@ -74,7 +74,7 @@ func (data *flagSubresourceModel) Update(ctx context.Context, diags diag.Diagnos
 		Content: data.Content.ValueString(),
 		Data:    data.Data.ValueString(),
 		Type:    data.Type.ValueString(),
-	})
+	}, api.WithContext(ctx))
 	if err != nil {
 		diags.AddError(
 			"Client Error",
@@ -92,7 +92,7 @@ func (data *flagSubresourceModel) Update(ctx context.Context, diags diag.Diagnos
 }
 
 func (data *flagSubresourceModel) Delete(ctx context.Context, diags diag.Diagnostics, client *api.Client) {
-	if err := client.DeleteFlag(data.ID.ValueString()); err != nil {
+	if err := client.DeleteFlag(data.ID.ValueString(), api.WithContext(ctx)); err != nil {
 		diags.AddError(
 			"Client Error",
 			fmt.Sprintf("Unable to delete flag, got error: %s", err),

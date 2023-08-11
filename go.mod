@@ -5,7 +5,7 @@ go 1.21
 require (
 	github.com/hashicorp/terraform-plugin-framework v1.3.2
 	github.com/hashicorp/terraform-plugin-log v0.9.0
-	github.com/pandatix/go-ctfd v0.1.3
+	github.com/pandatix/go-ctfd v0.1.4
 )
 
 require (

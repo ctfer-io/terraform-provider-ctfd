@@ -51,7 +51,8 @@ resource "ctfd_challenge" "icmp" {
 
     files = [{
         name    = "icmp.pcap"
-        contentb64 = filebase64("${path.module}/icmp.pcap")
+        content = file("${path.module}/icmp.pcap")
+        # contentb64 = filebase64("${path.module}/icmp.pcap")
     }]
 }
 

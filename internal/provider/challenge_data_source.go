@@ -142,6 +142,26 @@ func (ch *challengeDataSource) Read(ctx context.Context, req datasource.ReadRequ
 			return
 		}
 
+		// => Files
+		files, err := ch.client.GetChallengeFiles(strconv.Itoa(chall.ID))
+		if err != nil {
+			resp.Diagnostics.AddError(
+				fmt.Sprintf("Unable to Read CTFd files of Challenge %d", chall.ID),
+				err.Error(),
+			)
+			return
+		}
+		challFiles := make([]fileSubresourceModel, 0, len(files))
+		for _, file := range files {
+			f := fileSubresourceModel{
+				ID:       types.StringValue(strconv.Itoa(file.ID)),
+				Location: types.StringValue(file.Location),
+			}
+			f.Read(ctx, resp.Diagnostics, ch.client)
+
+			challFiles = append(challFiles, f)
+		}
+
 		// => Flags
 		flags, err := ch.client.GetChallengeFlags(strconv.Itoa(chall.ID), api.WithContext(ctx))
 		if err != nil {
@@ -224,6 +244,7 @@ func (ch *challengeDataSource) Read(ctx context.Context, req datasource.ReadRequ
 			Minimum:     toTFInt64(chall.Minimum),
 			State:       types.StringValue(chall.State),
 			Type:        types.StringValue(chall.Type),
+			Files:       challFiles,
 			Flags:       challFlags,
 			Tags:        challTags,
 			Topics:      challTopics,

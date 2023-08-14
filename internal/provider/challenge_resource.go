@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -210,7 +209,7 @@ func (r *challengeResource) Create(ctx context.Context, req resource.CreateReque
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Client Error",
-				fmt.Sprintf("Unable to create topic, got error: %s", err),
+				fmt.Sprintf("Unable to create tags, got error: %s", err),
 			)
 			return
 		}
@@ -290,23 +289,13 @@ func (r *challengeResource) Read(ctx context.Context, req resource.ReadRequest, 
 	}
 	challFiles := make([]fileSubresourceModel, 0, len(resFiles))
 	for _, file := range resFiles {
-		pts := strings.Split(file.Location, "/")
-		name := pts[len(pts)-1]
-
-		content, err := r.client.GetFileContent(file, api.WithContext(ctx))
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"CTFd Error",
-				fmt.Sprintf("Unable to read files at location %s, got error: %s", file.Location, err),
-			)
-			continue
+		f := fileSubresourceModel{
+			ID:       types.StringValue(strconv.Itoa(file.ID)),
+			Location: types.StringValue(file.Location),
+			Name:     types.StringValue(filename(file.Location)),
 		}
-
-		challFiles = append(challFiles, fileSubresourceModel{
-			ID:      types.StringValue(strconv.Itoa(file.ID)),
-			Name:    types.StringValue(name),
-			Content: types.StringValue(string(content)),
-		})
+		f.Read(ctx, resp.Diagnostics, r.client)
+		challFiles = append(challFiles, f)
 	}
 	if data.Files != nil {
 		data.Files = challFiles
@@ -410,11 +399,6 @@ func (r *challengeResource) Update(ctx context.Context, req resource.UpdateReque
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	var stateChallenge challengeResourceModel
-	resp.Diagnostics.Append(req.State.Get(ctx, &stateChallenge)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
 
 	// Patch direct attributes
 	res, err := r.client.PatchChallenge(data.ID.ValueString(), &api.PatchChallengeParams{
@@ -453,36 +437,24 @@ func (r *challengeResource) Update(ctx context.Context, req resource.UpdateReque
 		)
 	}
 	files := []fileSubresourceModel{}
-	for _, tfFile := range data.Files {
+	for _, file := range data.Files {
 		exists := false
 		for _, currentFile := range currentFiles {
-			if tfFile.ID.ValueString() == strconv.Itoa(currentFile.ID) {
+			if file.ID.ValueString() == strconv.Itoa(currentFile.ID) {
 				exists = true
 
-				// Update iif plan.content != state.content
-				// => Find corresponding file in state
-				tfFileState := fileSubresourceModel{}
-				for i, tmp := range stateChallenge.Files {
-					if tmp.ID.ValueString() == tfFileState.ID.ValueString() {
-						tfFileState = stateChallenge.Files[i]
-						break
-					}
-				}
+				// => Drop and replace iif content changed
+				// TODO do it only iif content changed
+				file.Delete(ctx, resp.Diagnostics, r.client)
+				file.Create(ctx, resp.Diagnostics, r.client, data.ID.ValueString())
 
-				// => Drop and replace
-				update := string(tfFile.GetContent(resp.Diagnostics)) != string(tfFileState.GetContent(resp.Diagnostics))
-				if update {
-					tfFile.Delete(ctx, resp.Diagnostics, r.client)
-					tfFile.Create(ctx, resp.Diagnostics, r.client, data.ID.ValueString())
-				}
-
-				files = append(files, tfFile)
+				files = append(files, file)
 				break
 			}
 		}
 		if !exists {
-			tfFile.Create(ctx, resp.Diagnostics, r.client, data.ID.ValueString())
-			files = append(files, tfFile)
+			file.Create(ctx, resp.Diagnostics, r.client, data.ID.ValueString())
+			files = append(files, file)
 		}
 	}
 	for _, currentFile := range currentFiles {
@@ -494,8 +466,9 @@ func (r *challengeResource) Update(ctx context.Context, req resource.UpdateReque
 			}
 		}
 		if !exists {
-			f := &fileSubresourceModel{
-				ID: types.StringValue(strconv.Itoa(currentFile.ID)),
+			f := fileSubresourceModel{
+				ID:       types.StringValue(strconv.Itoa(currentFile.ID)),
+				Location: types.StringValue(currentFile.Location),
 			}
 			f.Delete(ctx, resp.Diagnostics, r.client)
 		}

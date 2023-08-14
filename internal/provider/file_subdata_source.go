@@ -10,7 +10,13 @@ func fileSubdatasourceAttributes() map[string]schema.Attribute {
 		"name": schema.StringAttribute{
 			Computed: true,
 		},
+		"location": schema.StringAttribute{
+			Computed: true,
+		},
 		"content": schema.StringAttribute{
+			Computed: true,
+		},
+		"contentb64": schema.StringAttribute{
 			Computed: true,
 		},
 	}

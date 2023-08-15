@@ -11,7 +11,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	api "github.com/pandatix/go-ctfd/api"
 )
@@ -30,22 +32,24 @@ type challengeResource struct {
 	client *api.Client
 }
 
+// TODO support maxAttempts attribute
 type challengeResourceModel struct {
-	ID          types.String           `tfsdk:"id"`
-	Name        types.String           `tfsdk:"name"`
-	Category    types.String           `tfsdk:"category"`
-	Description types.String           `tfsdk:"description"`
-	Value       types.Int64            `tfsdk:"value"`
-	Initial     types.Int64            `tfsdk:"initial"`
-	Decay       types.Int64            `tfsdk:"decay"`
-	Minimum     types.Int64            `tfsdk:"minimum"`
-	State       types.String           `tfsdk:"state"`
-	Type        types.String           `tfsdk:"type"`
-	Flags       []flagSubresourceModel `tfsdk:"flags"`
-	Tags        []types.String         `tfsdk:"tags"`
-	Topics      []types.String         `tfsdk:"topics"`
-	Hints       []hintSubresourceModel `tfsdk:"hints"`
-	Files       []fileSubresourceModel `tfsdk:"files"`
+	ID           types.String                 `tfsdk:"id"`
+	Name         types.String                 `tfsdk:"name"`
+	Category     types.String                 `tfsdk:"category"`
+	Description  types.String                 `tfsdk:"description"`
+	Value        types.Int64                  `tfsdk:"value"`
+	Initial      types.Int64                  `tfsdk:"initial"`
+	Decay        types.Int64                  `tfsdk:"decay"`
+	Minimum      types.Int64                  `tfsdk:"minimum"`
+	State        types.String                 `tfsdk:"state"`
+	Type         types.String                 `tfsdk:"type"`
+	Requirements requirementsSubresourceModel `tfsdk:"requirements"`
+	Flags        []flagSubresourceModel       `tfsdk:"flags"`
+	Tags         []types.String               `tfsdk:"tags"`
+	Topics       []types.String               `tfsdk:"topics"`
+	Hints        []hintSubresourceModel       `tfsdk:"hints"`
+	Files        []fileSubresourceModel       `tfsdk:"files"`
 }
 
 func (r *challengeResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -72,7 +76,7 @@ func (r *challengeResource) Schema(ctx context.Context, req resource.SchemaReque
 			"description": schema.StringAttribute{
 				Required: true,
 			},
-			// TODO value can't be set side to <initial,decay,minimum>
+			// TODO value can't be set side to <initial,decay,minimum>, depends on .type value (respectively standard and dynamic)
 			"value": schema.Int64Attribute{
 				Optional: true,
 			},
@@ -96,6 +100,28 @@ func (r *challengeResource) Schema(ctx context.Context, req resource.SchemaReque
 				Default:  stringdefault.StaticString("dynamic"),
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
+				},
+			},
+			"requirements": schema.SingleNestedAttribute{
+				Optional: true,
+				Attributes: map[string]schema.Attribute{
+					"behavior": schema.StringAttribute{
+						Optional:            true,
+						Computed:            true,
+						Description:         "Behavior if not unlocked.",
+						MarkdownDescription: "Behavior if not unlocked.",
+						Default:             stringdefault.StaticString("hidden"),
+						Validators: []validator.String{
+							NewStringEnumValidator([]basetypes.StringValue{
+								behaviorHidden,
+								behaviorAnonymized,
+							}),
+						},
+					},
+					"prerequisites": schema.ListAttribute{
+						Optional:    true,
+						ElementType: types.StringType,
+					},
 				},
 			},
 			"flags": schema.ListNestedAttribute{
@@ -154,6 +180,11 @@ func (r *challengeResource) Create(ctx context.Context, req resource.CreateReque
 	}
 
 	// Create Challenge
+	preqs := make([]int, 0, len(data.Requirements.Prerequisites))
+	for _, preq := range data.Requirements.Prerequisites {
+		id, _ := strconv.Atoi(preq.ValueString())
+		preqs = append(preqs, id)
+	}
 	res, err := r.client.PostChallenges(&api.PostChallengesParams{
 		Name:        data.Name.ValueString(),
 		Category:    data.Category.ValueString(),
@@ -164,6 +195,10 @@ func (r *challengeResource) Create(ctx context.Context, req resource.CreateReque
 		Minimum:     toInt(data.Minimum),
 		State:       data.State.ValueString(),
 		Type:        data.Type.ValueString(),
+		Requirements: &api.Requirements{
+			Anonymize:     getAnon(data.Requirements.Behavior),
+			Prerequisites: preqs,
+		},
 	}, api.WithContext(ctx))
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -177,7 +212,6 @@ func (r *challengeResource) Create(ctx context.Context, req resource.CreateReque
 
 	// Save computed attributes in state
 	data.ID = types.StringValue(strconv.Itoa(res.ID))
-	data.Value = toTFInt64(res.Value)
 
 	// Create files
 	challFiles := make([]fileSubresourceModel, 0, len(data.Files))
@@ -205,7 +239,7 @@ func (r *challengeResource) Create(ctx context.Context, req resource.CreateReque
 		_, err := r.client.PostTags(&api.PostTagsParams{
 			Challenge: data.ID.ValueString(),
 			Value:     tag.ValueString(),
-		})
+		}, api.WithContext(ctx))
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Client Error",
@@ -226,7 +260,7 @@ func (r *challengeResource) Create(ctx context.Context, req resource.CreateReque
 			Challenge: data.ID.ValueString(),
 			Type:      "challenge",
 			Value:     topic.ValueString(),
-		})
+		}, api.WithContext(ctx))
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Client Error",
@@ -278,6 +312,23 @@ func (r *challengeResource) Read(ctx context.Context, req resource.ReadRequest, 
 	data.Minimum = toTFInt64(res.Minimum)
 	data.State = types.StringValue(res.State)
 	data.Type = types.StringValue(res.Type)
+
+	// Read its requirements
+	resReqs, err := r.client.GetChallengeRequirements(data.ID.ValueString(), api.WithContext(ctx))
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Client Error",
+			fmt.Sprintf("Unable to read requirements of challenge %s, got error: %s", data.ID.ValueString(), err),
+		)
+	}
+	challReqs := make([]types.String, 0, len(resReqs.Prerequisites))
+	for _, req := range resReqs.Prerequisites {
+		challReqs = append(challReqs, types.StringValue(strconv.Itoa(req)))
+	}
+	data.Requirements = requirementsSubresourceModel{
+		Behavior:      fromAnon(resReqs.Anonymize),
+		Prerequisites: challReqs,
+	}
 
 	// Read its files
 	resFiles, err := r.client.GetChallengeFiles(data.ID.ValueString(), api.WithContext(ctx))
@@ -401,14 +452,24 @@ func (r *challengeResource) Update(ctx context.Context, req resource.UpdateReque
 	}
 
 	// Patch direct attributes
-	res, err := r.client.PatchChallenge(data.ID.ValueString(), &api.PatchChallengeParams{
+	preqs := make([]int, 0, len(data.Requirements.Prerequisites))
+	for _, preq := range data.Requirements.Prerequisites {
+		id, _ := strconv.Atoi(preq.ValueString())
+		preqs = append(preqs, id)
+	}
+	_, err := r.client.PatchChallenge(data.ID.ValueString(), &api.PatchChallengeParams{
 		Name:        data.Name.ValueStringPointer(),
 		Category:    data.Category.ValueStringPointer(),
 		Description: data.Description.ValueStringPointer(),
+		Value:       toInt(data.Value),
 		Initial:     toInt(data.Initial),
 		Decay:       toInt(data.Decay),
 		Minimum:     toInt(data.Minimum),
 		State:       data.State.ValueStringPointer(),
+		Requirements: &api.Requirements{
+			Anonymize:     getAnon(data.Requirements.Behavior),
+			Prerequisites: preqs,
+		},
 	}, api.WithContext(ctx))
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -417,16 +478,6 @@ func (r *challengeResource) Update(ctx context.Context, req resource.UpdateReque
 		)
 		return
 	}
-
-	data.Name = types.StringValue(res.Name)
-	data.Category = types.StringValue(res.Category)
-	data.Description = types.StringValue(res.Description)
-	data.Value = toTFInt64(res.Value)
-	data.Initial = toTFInt64(res.Initial)
-	data.Decay = toTFInt64(res.Decay)
-	data.Minimum = toTFInt64(res.Minimum)
-	data.State = types.StringValue(res.State)
-	data.Type = types.StringValue(res.Type)
 
 	// Update its files
 	currentFiles, err := r.client.GetChallengeFiles(data.ID.ValueString(), api.WithContext(ctx))

@@ -15,6 +15,8 @@ import (
 	"github.com/pandatix/go-ctfd/api"
 )
 
+// TODO requirements can be set manually, but can't be automatised. Hint may be a complete resource
+
 type hintSubresourceModel struct {
 	ID           types.String   `tfsdk:"id"`
 	Content      types.String   `tfsdk:"content"`

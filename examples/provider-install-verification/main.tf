@@ -11,9 +11,9 @@ provider "ctfd" {
 }
 
 resource "ctfd_challenge" "icmp" {
-    name        = "Stealing data"
-    category    = "network"
-    description = <<-EOT
+    name         = "Stealing data"
+    category     = "network"
+    description  = <<-EOT
         L'administrateur réseau vient de nous signaler que des flux étranges étaient à destination d'un serveur. 
         Visiblement, il s'agit d'un serveur interne. Vous pouvez nous dire de quoi il s'agit ?
 
@@ -23,11 +23,15 @@ resource "ctfd_challenge" "icmp" {
         - NicolasFgrx
     EOT
     // TODO find a way to avoid this shitty pattern (either <value> with type="static" or <initial,decay,minimum> with type="dynamic")
-    value       = 500
-    initial     = 500
-    decay       = 17
-    minimum     = 50
-    state       = "visible"
+    value        = 500
+    initial      = 500
+    decay        = 17
+    minimum      = 50
+    state        = "visible"
+    requirements = {
+        behavior      = "anonymized"
+        prerequisites = [2]
+    }
 
     flags = [{
         content = "24HIUT{IcmpExfiltrationIsEasy}"

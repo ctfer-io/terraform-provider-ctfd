@@ -34,3 +34,7 @@ func filename(location string) string {
 	pts := strings.Split(location, "/")
 	return pts[len(pts)-1]
 }
+
+func ptr[T any](t T) *T {
+	return &t
+}

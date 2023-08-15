@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -34,22 +35,24 @@ type challengeResource struct {
 
 // TODO support maxAttempts attribute
 type challengeResourceModel struct {
-	ID           types.String                 `tfsdk:"id"`
-	Name         types.String                 `tfsdk:"name"`
-	Category     types.String                 `tfsdk:"category"`
-	Description  types.String                 `tfsdk:"description"`
-	Value        types.Int64                  `tfsdk:"value"`
-	Initial      types.Int64                  `tfsdk:"initial"`
-	Decay        types.Int64                  `tfsdk:"decay"`
-	Minimum      types.Int64                  `tfsdk:"minimum"`
-	State        types.String                 `tfsdk:"state"`
-	Type         types.String                 `tfsdk:"type"`
-	Requirements requirementsSubresourceModel `tfsdk:"requirements"`
-	Flags        []flagSubresourceModel       `tfsdk:"flags"`
-	Tags         []types.String               `tfsdk:"tags"`
-	Topics       []types.String               `tfsdk:"topics"`
-	Hints        []hintSubresourceModel       `tfsdk:"hints"`
-	Files        []fileSubresourceModel       `tfsdk:"files"`
+	ID             types.String                 `tfsdk:"id"`
+	Name           types.String                 `tfsdk:"name"`
+	Category       types.String                 `tfsdk:"category"`
+	Description    types.String                 `tfsdk:"description"`
+	ConnectionInfo types.String                 `tfsdk:"connection_info"`
+	MaxAttempts    types.Int64                  `tfsdk:"max_attempts"`
+	Value          types.Int64                  `tfsdk:"value"`
+	Initial        types.Int64                  `tfsdk:"initial"`
+	Decay          types.Int64                  `tfsdk:"decay"`
+	Minimum        types.Int64                  `tfsdk:"minimum"`
+	State          types.String                 `tfsdk:"state"`
+	Type           types.String                 `tfsdk:"type"`
+	Requirements   requirementsSubresourceModel `tfsdk:"requirements"`
+	Flags          []flagSubresourceModel       `tfsdk:"flags"`
+	Tags           []types.String               `tfsdk:"tags"`
+	Topics         []types.String               `tfsdk:"topics"`
+	Hints          []hintSubresourceModel       `tfsdk:"hints"`
+	Files          []fileSubresourceModel       `tfsdk:"files"`
 }
 
 func (r *challengeResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -75,6 +78,14 @@ func (r *challengeResource) Schema(ctx context.Context, req resource.SchemaReque
 			},
 			"description": schema.StringAttribute{
 				Required: true,
+			},
+			"connection_info": schema.StringAttribute{
+				Optional: true,
+			},
+			"max_attempts": schema.Int64Attribute{
+				Optional: true,
+				Computed: true,
+				Default:  int64default.StaticInt64(0),
 			},
 			// TODO value can't be set side to <initial,decay,minimum>, depends on .type value (respectively standard and dynamic)
 			"value": schema.Int64Attribute{
@@ -186,15 +197,17 @@ func (r *challengeResource) Create(ctx context.Context, req resource.CreateReque
 		preqs = append(preqs, id)
 	}
 	res, err := r.client.PostChallenges(&api.PostChallengesParams{
-		Name:        data.Name.ValueString(),
-		Category:    data.Category.ValueString(),
-		Description: data.Description.ValueString(),
-		Value:       toInt(data.Value),
-		Initial:     toInt(data.Initial),
-		Decay:       toInt(data.Decay),
-		Minimum:     toInt(data.Minimum),
-		State:       data.State.ValueString(),
-		Type:        data.Type.ValueString(),
+		Name:           data.Name.ValueString(),
+		Category:       data.Category.ValueString(),
+		Description:    data.Description.ValueString(),
+		ConnectionInfo: data.Category.ValueStringPointer(),
+		MaxAttempts:    toInt(data.MaxAttempts),
+		Value:          toInt(data.Value),
+		Initial:        toInt(data.Initial),
+		Decay:          toInt(data.Decay),
+		Minimum:        toInt(data.Minimum),
+		State:          data.State.ValueString(),
+		Type:           data.Type.ValueString(),
 		Requirements: &api.Requirements{
 			Anonymize:     getAnon(data.Requirements.Behavior),
 			Prerequisites: preqs,
@@ -306,6 +319,8 @@ func (r *challengeResource) Read(ctx context.Context, req resource.ReadRequest, 
 	data.Name = types.StringValue(res.Name)
 	data.Category = types.StringValue(res.Category)
 	data.Description = types.StringValue(res.Description)
+	data.ConnectionInfo = types.StringValue(res.ConnectionInfo)
+	data.MaxAttempts = types.Int64Value(int64(res.MaxAttempts))
 	data.Value = toTFInt64(res.Value)
 	data.Initial = toTFInt64(res.Initial)
 	data.Decay = toTFInt64(res.Decay)
@@ -458,14 +473,16 @@ func (r *challengeResource) Update(ctx context.Context, req resource.UpdateReque
 		preqs = append(preqs, id)
 	}
 	_, err := r.client.PatchChallenge(data.ID.ValueString(), &api.PatchChallengeParams{
-		Name:        data.Name.ValueStringPointer(),
-		Category:    data.Category.ValueStringPointer(),
-		Description: data.Description.ValueStringPointer(),
-		Value:       toInt(data.Value),
-		Initial:     toInt(data.Initial),
-		Decay:       toInt(data.Decay),
-		Minimum:     toInt(data.Minimum),
-		State:       data.State.ValueStringPointer(),
+		Name:           data.Name.ValueStringPointer(),
+		Category:       data.Category.ValueStringPointer(),
+		Description:    data.Description.ValueStringPointer(),
+		ConnectionInfo: data.ConnectionInfo.ValueStringPointer(),
+		MaxAttempts:    toInt(data.MaxAttempts),
+		Value:          toInt(data.Value),
+		Initial:        toInt(data.Initial),
+		Decay:          toInt(data.Decay),
+		Minimum:        toInt(data.Minimum),
+		State:          data.State.ValueStringPointer(),
 		Requirements: &api.Requirements{
 			Anonymize:     getAnon(data.Requirements.Behavior),
 			Prerequisites: preqs,

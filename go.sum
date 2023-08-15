@@ -41,8 +41,8 @@ github.com/mitchellh/go-testing-interface v1.14.1 h1:jrgshOhYAUVNMAJiKbEu7EqAwgJ
 github.com/mitchellh/go-testing-interface v1.14.1/go.mod h1:gfgS7OtZj6MA4U1UrDRp04twqAjfvlZyCfX3sDjEym8=
 github.com/oklog/run v1.0.0 h1:Ru7dDtJNOyC66gQ5dQmaCa0qIsAUFY3sFpK1Xk8igrw=
 github.com/oklog/run v1.0.0/go.mod h1:dlhp/R75TPv97u0XWUtDeV/lRKWPKSdTuV0TZvrmrQA=
-github.com/pandatix/go-ctfd v0.1.5 h1:29pMYoJA+K3v7YPV21Nyuzo5U+JX9BowNGSfIcW/ysg=
-github.com/pandatix/go-ctfd v0.1.5/go.mod h1:RzuIfvJGweW7/a8uo+STh9e6m2Hbi8o1DskmeHljiK4=
+github.com/pandatix/go-ctfd v0.1.6 h1:rX8zbTLDqiwC7/BS+lNTSxlHXGo2dny7cca4c7dGHwI=
+github.com/pandatix/go-ctfd v0.1.6/go.mod h1:RzuIfvJGweW7/a8uo+STh9e6m2Hbi8o1DskmeHljiK4=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=

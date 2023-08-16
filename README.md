@@ -8,6 +8,8 @@
 	<a href=""><img src="https://img.shields.io/github/license/pandatix/terraform-provider-ctfd?style=for-the-badge" alt="License"></a>
 	<a href="https://github.com/pandatix/terraform-provider-ctfd/actions?query=workflow%3Aci+"><img src="https://img.shields.io/github/actions/workflow/status/pandatix/terraform-provider-ctfd/ci.yaml?style=for-the-badge&label=CI" alt="CI"></a>
 	<a href="https://github.com/pandatix/terraform-provider-ctfd/actions/workflows/codeql-analysis.yaml"><img src="https://img.shields.io/github/actions/workflow/status/pandatix/terraform-provider-ctfd/codeql-analysis.yaml?style=for-the-badge&label=CodeQL" alt="CodeQL"></a>
+    <br>
+    <a href="https://securityscorecards.dev/viewer/?uri=github.com/pandatix/terraform-provider-ctfd"><img src="https://img.shields.io/ossf-scorecard/github.com/pandatix/terraform-provider-ctfd?label=openssf%20scorecard&style=for-the-badge" alt="OpenSSF Scoreboard"></a>
 </div>
 
 ## Why creating this ?

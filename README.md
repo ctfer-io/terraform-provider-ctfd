@@ -1,6 +1,6 @@
 <div align="center">
     <h1>Terraform Provider for CTFd</h1>
-    <p><b>Time for CTF as Code</b><p>
+    <p><b>Time for CTF(d) as Code</b><p>
     <a href="https://pkg.go.dev/github.com/pandatix/terraform-provider-ctfd"><img src="https://shields.io/badge/-reference-blue?logo=go&style=for-the-badge" alt="reference"></a>
 	<a href="https://goreportcard.com/report/github.com/pandatix/terraform-provider-ctfd"><img src="https://goreportcard.com/badge/github.com/pandatix/terraform-provider-ctfd?style=for-the-badge" alt="go report"></a>
 	<a href="https://coveralls.io/github/pandatix/terraform-provider-ctfd?branch=main"><img src="https://img.shields.io/coverallsCoverage/github/pandatix/terraform-provider-ctfd?style=for-the-badge" alt="Coverage Status"></a>

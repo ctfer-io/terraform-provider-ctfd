@@ -1,11 +1,27 @@
-# Terraform Provider for CTFd
+<div align="center">
+    <h1>Terraform Provider for CTFd</h1>
+    <p><b>Time for CTF as Code</b><p>
+    <a href="https://pkg.go.dev/github.com/pandatix/terraform-provider-ctfd"><img src="https://shields.io/badge/-reference-blue?logo=go&style=for-the-badge" alt="reference"></a>
+	<a href="https://goreportcard.com/report/github.com/pandatix/terraform-provider-ctfd"><img src="https://goreportcard.com/badge/github.com/pandatix/terraform-provider-ctfd?style=for-the-badge" alt="go report"></a>
+	<a href="https://coveralls.io/github/pandatix/terraform-provider-ctfd?branch=main"><img src="https://img.shields.io/coverallsCoverage/github/pandatix/terraform-provider-ctfd?style=for-the-badge" alt="Coverage Status"></a>
+	<br>
+	<a href=""><img src="https://img.shields.io/github/license/pandatix/terraform-provider-ctfd?style=for-the-badge" alt="License"></a>
+	<a href="https://github.com/pandatix/terraform-provider-ctfd/actions?query=workflow%3Aci+"><img src="https://img.shields.io/github/actions/workflow/status/pandatix/terraform-provider-ctfd/ci.yaml?style=for-the-badge&label=CI" alt="CI"></a>
+	<a href="https://github.com/pandatix/terraform-provider-ctfd/actions/workflows/codeql-analysis.yaml"><img src="https://img.shields.io/github/actions/workflow/status/pandatix/terraform-provider-ctfd/codeql-analysis.yaml?style=for-the-badge&label=CodeQL" alt="CodeQL"></a>
+</div>
 
-> Why creating this ?
+## Why creating this ?
 
-For fun.
-No, basically CTFd handles ressources that has life-cycles (mainly challenges), and providing them as cloud ressources enables your infrastructure to become modular and avoid shitty scripts i.e. `ctfcli`.
+Terraform is used to manage resources that have lifecycles, to sum it up.
 
-With the Terraform Provider for CTFd, you could setup your CTFd challenge using the following configuration.
+Well, that is the case of CTFd : it handles challenges that could be created, modified and deleted.
+With some work to leverage the unsteady CTFd's API, Terraform is now able to manage them as cloud resources bringing you to opportunity of **CTF as Code**.
+
+It avoids shitty scripts, `ctfcli` and other tools that does not solve the problem of reproductibility, ease of deployment and resiliency.
+
+## How to use it ?
+
+With the **Terraform Provider for CTFd**, you could setup your CTFd challenge using the following configuration.
 ```hcl
 resource "ctfd_challenge" "my_challenge" {
     name        = "My Challenge"
@@ -19,7 +35,3 @@ resource "ctfd_challenge" "my_challenge" {
     value       = 500
 }
 ```
-
-By combining it with existing Terraform providers (e.g. Kubernetes), you can make use of real Infrastructure as Code, providing reproductibility, security and efficiency to the operations !
-
-This provider also leverages the CTFd API that straigly exposes its data model as an API rather than providing the resources and handling the business layer internals.

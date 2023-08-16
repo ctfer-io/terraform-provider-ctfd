@@ -1,4 +1,4 @@
-package provider
+package challenge
 
 import (
 	"context"
@@ -32,7 +32,8 @@ func flagSubresourceAttributes() map[string]schema.Attribute {
 			},
 		},
 		"content": schema.StringAttribute{
-			Required: true,
+			Required:  true,
+			Sensitive: true,
 		},
 		"data": schema.StringAttribute{
 			Optional: true,

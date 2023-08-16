@@ -1,11 +1,10 @@
-package provider
+package challenge
 
 import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-func hintSubdatasourceAttributes() map[string]schema.Attribute {
+func flagSubdatasourceAttributes() map[string]schema.Attribute {
 	return map[string]schema.Attribute{
 		"id": schema.StringAttribute{
 			Computed: true,
@@ -13,12 +12,11 @@ func hintSubdatasourceAttributes() map[string]schema.Attribute {
 		"content": schema.StringAttribute{
 			Computed: true,
 		},
-		"cost": schema.Int64Attribute{
+		"data": schema.StringAttribute{
 			Computed: true,
 		},
-		"requirements": schema.ListAttribute{
-			ElementType: types.StringType,
-			Computed:    true,
+		"type": schema.StringAttribute{
+			Computed: true,
 		},
 	}
 }

@@ -1,4 +1,4 @@
-package provider
+package challenge
 
 import (
 	"context"
@@ -17,6 +17,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	api "github.com/pandatix/go-ctfd/api"
+	"github.com/pandatix/terraform-provider-ctfd/internal/provider/validators"
 )
 
 var (
@@ -33,26 +34,25 @@ type challengeResource struct {
 	client *api.Client
 }
 
-// TODO support maxAttempts attribute
 type challengeResourceModel struct {
-	ID             types.String                 `tfsdk:"id"`
-	Name           types.String                 `tfsdk:"name"`
-	Category       types.String                 `tfsdk:"category"`
-	Description    types.String                 `tfsdk:"description"`
-	ConnectionInfo types.String                 `tfsdk:"connection_info"`
-	MaxAttempts    types.Int64                  `tfsdk:"max_attempts"`
-	Value          types.Int64                  `tfsdk:"value"`
-	Initial        types.Int64                  `tfsdk:"initial"`
-	Decay          types.Int64                  `tfsdk:"decay"`
-	Minimum        types.Int64                  `tfsdk:"minimum"`
-	State          types.String                 `tfsdk:"state"`
-	Type           types.String                 `tfsdk:"type"`
-	Requirements   requirementsSubresourceModel `tfsdk:"requirements"`
-	Flags          []flagSubresourceModel       `tfsdk:"flags"`
-	Tags           []types.String               `tfsdk:"tags"`
-	Topics         []types.String               `tfsdk:"topics"`
-	Hints          []hintSubresourceModel       `tfsdk:"hints"`
-	Files          []fileSubresourceModel       `tfsdk:"files"`
+	ID             types.String                  `tfsdk:"id"`
+	Name           types.String                  `tfsdk:"name"`
+	Category       types.String                  `tfsdk:"category"`
+	Description    types.String                  `tfsdk:"description"`
+	ConnectionInfo types.String                  `tfsdk:"connection_info"`
+	MaxAttempts    types.Int64                   `tfsdk:"max_attempts"`
+	Value          types.Int64                   `tfsdk:"value"`
+	Initial        types.Int64                   `tfsdk:"initial"`
+	Decay          types.Int64                   `tfsdk:"decay"`
+	Minimum        types.Int64                   `tfsdk:"minimum"`
+	State          types.String                  `tfsdk:"state"`
+	Type           types.String                  `tfsdk:"type"`
+	Requirements   *requirementsSubresourceModel `tfsdk:"requirements"`
+	Flags          []flagSubresourceModel        `tfsdk:"flags"`
+	Tags           []types.String                `tfsdk:"tags"`
+	Topics         []types.String                `tfsdk:"topics"`
+	Hints          []hintSubresourceModel        `tfsdk:"hints"`
+	Files          []fileSubresourceModel        `tfsdk:"files"`
 }
 
 func (r *challengeResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -81,6 +81,8 @@ func (r *challengeResource) Schema(ctx context.Context, req resource.SchemaReque
 			},
 			"connection_info": schema.StringAttribute{
 				Optional: true,
+				Computed: true,
+				Default:  stringdefault.StaticString(""),
 			},
 			"max_attempts": schema.Int64Attribute{
 				Optional: true,
@@ -123,7 +125,7 @@ func (r *challengeResource) Schema(ctx context.Context, req resource.SchemaReque
 						MarkdownDescription: "Behavior if not unlocked.",
 						Default:             stringdefault.StaticString("hidden"),
 						Validators: []validator.String{
-							NewStringEnumValidator([]basetypes.StringValue{
+							validators.NewStringEnumValidator([]basetypes.StringValue{
 								behaviorHidden,
 								behaviorAnonymized,
 							}),
@@ -156,6 +158,7 @@ func (r *challengeResource) Schema(ctx context.Context, req resource.SchemaReque
 				Optional: true,
 			},
 			"files": schema.ListNestedAttribute{
+				// TODO find why modifying other fields requires updating those
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: fileSubresourceAttributes(),
 				},
@@ -191,16 +194,23 @@ func (r *challengeResource) Create(ctx context.Context, req resource.CreateReque
 	}
 
 	// Create Challenge
-	preqs := make([]int, 0, len(data.Requirements.Prerequisites))
-	for _, preq := range data.Requirements.Prerequisites {
-		id, _ := strconv.Atoi(preq.ValueString())
-		preqs = append(preqs, id)
+	reqs := (*api.Requirements)(nil)
+	if data.Requirements != nil {
+		preqs := make([]int, 0, len(data.Requirements.Prerequisites))
+		for _, preq := range data.Requirements.Prerequisites {
+			id, _ := strconv.Atoi(preq.ValueString())
+			preqs = append(preqs, id)
+		}
+		reqs = &api.Requirements{
+			Anonymize:     getAnon(data.Requirements.Behavior),
+			Prerequisites: preqs,
+		}
 	}
 	res, err := r.client.PostChallenges(&api.PostChallengesParams{
 		Name:           data.Name.ValueString(),
 		Category:       data.Category.ValueString(),
 		Description:    data.Description.ValueString(),
-		ConnectionInfo: data.Category.ValueStringPointer(),
+		ConnectionInfo: data.ConnectionInfo.ValueStringPointer(),
 		MaxAttempts:    toInt(data.MaxAttempts),
 		Value:          toInt(data.Value),
 		Initial:        toInt(data.Initial),
@@ -208,10 +218,7 @@ func (r *challengeResource) Create(ctx context.Context, req resource.CreateReque
 		Minimum:        toInt(data.Minimum),
 		State:          data.State.ValueString(),
 		Type:           data.Type.ValueString(),
-		Requirements: &api.Requirements{
-			Anonymize:     getAnon(data.Requirements.Behavior),
-			Prerequisites: preqs,
-		},
+		Requirements:   reqs,
 	}, api.WithContext(ctx))
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -336,14 +343,18 @@ func (r *challengeResource) Read(ctx context.Context, req resource.ReadRequest, 
 			fmt.Sprintf("Unable to read requirements of challenge %s, got error: %s", data.ID.ValueString(), err),
 		)
 	}
-	challReqs := make([]types.String, 0, len(resReqs.Prerequisites))
-	for _, req := range resReqs.Prerequisites {
-		challReqs = append(challReqs, types.StringValue(strconv.Itoa(req)))
+	reqs := (*requirementsSubresourceModel)(nil)
+	if resReqs != nil {
+		challReqs := make([]types.String, 0, len(resReqs.Prerequisites))
+		for _, req := range resReqs.Prerequisites {
+			challReqs = append(challReqs, types.StringValue(strconv.Itoa(req)))
+		}
+		reqs = &requirementsSubresourceModel{
+			Behavior:      fromAnon(resReqs.Anonymize),
+			Prerequisites: challReqs,
+		}
 	}
-	data.Requirements = requirementsSubresourceModel{
-		Behavior:      fromAnon(resReqs.Anonymize),
-		Prerequisites: challReqs,
-	}
+	data.Requirements = reqs
 
 	// Read its files
 	resFiles, err := r.client.GetChallengeFiles(data.ID.ValueString(), api.WithContext(ctx))
@@ -465,12 +476,21 @@ func (r *challengeResource) Update(ctx context.Context, req resource.UpdateReque
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	var dataState challengeResourceModel
+	req.State.Get(ctx, &dataState)
 
 	// Patch direct attributes
-	preqs := make([]int, 0, len(data.Requirements.Prerequisites))
-	for _, preq := range data.Requirements.Prerequisites {
-		id, _ := strconv.Atoi(preq.ValueString())
-		preqs = append(preqs, id)
+	reqs := (*api.Requirements)(nil)
+	if data.Requirements != nil {
+		preqs := make([]int, 0, len(data.Requirements.Prerequisites))
+		for _, preq := range data.Requirements.Prerequisites {
+			id, _ := strconv.Atoi(preq.ValueString())
+			preqs = append(preqs, id)
+		}
+		reqs = &api.Requirements{
+			Anonymize:     getAnon(data.Requirements.Behavior),
+			Prerequisites: preqs,
+		}
 	}
 	_, err := r.client.PatchChallenge(data.ID.ValueString(), &api.PatchChallengeParams{
 		Name:           data.Name.ValueStringPointer(),
@@ -483,10 +503,7 @@ func (r *challengeResource) Update(ctx context.Context, req resource.UpdateReque
 		Decay:          toInt(data.Decay),
 		Minimum:        toInt(data.Minimum),
 		State:          data.State.ValueStringPointer(),
-		Requirements: &api.Requirements{
-			Anonymize:     getAnon(data.Requirements.Behavior),
-			Prerequisites: preqs,
-		},
+		Requirements:   reqs,
 	}, api.WithContext(ctx))
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -511,10 +528,21 @@ func (r *challengeResource) Update(ctx context.Context, req resource.UpdateReque
 			if file.ID.ValueString() == strconv.Itoa(currentFile.ID) {
 				exists = true
 
+				// Get corresponding file from state
+				var corFile fileSubresourceModel
+				for _, fState := range dataState.Files {
+					if file.ID.Equal(fState.ID) {
+						corFile = fState
+						break
+					}
+				}
+
 				// => Drop and replace iif content changed
-				// TODO do it only iif content changed
-				file.Delete(ctx, resp.Diagnostics, r.client)
-				file.Create(ctx, resp.Diagnostics, r.client, data.ID.ValueString())
+				update := !corFile.Content.Equal(file.Content)
+				if update {
+					file.Delete(ctx, resp.Diagnostics, r.client)
+					file.Create(ctx, resp.Diagnostics, r.client, data.ID.ValueString())
+				}
 
 				files = append(files, file)
 				break

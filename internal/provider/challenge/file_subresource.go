@@ -1,4 +1,4 @@
-package provider
+package challenge
 
 import (
 	"context"
@@ -37,14 +37,25 @@ func fileSubresourceAttributes() map[string]schema.Attribute {
 		},
 		"location": schema.StringAttribute{
 			Computed: true,
+			PlanModifiers: []planmodifier.String{
+				stringplanmodifier.UseStateForUnknown(),
+			},
 		},
 		"content": schema.StringAttribute{
-			Optional: true,
-			Computed: true,
+			Optional:  true,
+			Computed:  true,
+			Sensitive: true,
+			PlanModifiers: []planmodifier.String{
+				stringplanmodifier.UseStateForUnknown(),
+			},
 		},
 		"contentb64": schema.StringAttribute{
-			Optional: true,
-			Computed: true,
+			Optional:  true,
+			Computed:  true,
+			Sensitive: true,
+			PlanModifiers: []planmodifier.String{
+				stringplanmodifier.UseStateForUnknown(),
+			},
 		},
 	}
 }
@@ -121,7 +132,7 @@ func (data *fileSubresourceModel) PropagateContent(ctx context.Context, diags di
 		data.Content = types.StringValue(string(c))
 		return
 	}
-	// If no content source seems to be set, set them both empty
+	// If no content seems to be set, set them both empty
 	data.Content = types.StringValue("")
 	data.ContentB64 = types.StringValue("")
 }

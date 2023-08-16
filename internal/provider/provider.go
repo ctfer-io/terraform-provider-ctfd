@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/pandatix/go-ctfd/api"
+	"github.com/pandatix/terraform-provider-ctfd/internal/provider/challenge"
 )
 
 var _ provider.Provider = &CTFdProvider{}
@@ -156,12 +157,12 @@ func (p *CTFdProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 
 func (p *CTFdProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
-		NewChallengeResource,
+		challenge.NewChallengeResource,
 	}
 }
 
 func (p *CTFdProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
-		NewChallengeDataSource,
+		challenge.NewChallengeDataSource,
 	}
 }

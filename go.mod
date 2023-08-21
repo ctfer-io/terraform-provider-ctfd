@@ -3,7 +3,7 @@ module github.com/pandatix/terraform-provider-ctfd
 go 1.21
 
 require (
-	github.com/hashicorp/terraform-plugin-framework v1.3.4
+	github.com/hashicorp/terraform-plugin-framework v1.3.5
 	github.com/hashicorp/terraform-plugin-log v0.9.0
 	github.com/pandatix/go-ctfd v0.1.9
 )

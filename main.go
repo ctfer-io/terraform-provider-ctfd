@@ -5,8 +5,8 @@ import (
 	"flag"
 	"log"
 
-	"github.com/hashicorp/terraform-plugin-framework/providerserver"
-	"github.com/pandatix/terraform-provider-ctfd/internal/provider"
+	"github.com/ctfer-io/terraform-provider-ctfd/internal/provider"
+	"github.com/opentofu/terraform-plugin-framework/providerserver"
 )
 
 var (
@@ -20,7 +20,7 @@ func main() {
 	flag.Parse()
 
 	opts := providerserver.ServeOpts{
-		Address: "registry.terraform.io/pandatix/ctfd",
+		Address: "registry.terraform.io/ctfer-io/ctfd",
 		Debug:   debug,
 	}
 

@@ -1,10 +1,10 @@
 package challenge
 
 import (
-	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/opentofu/terraform-plugin-framework/datasource/schema"
 )
 
-func flagSubdatasourceAttributes() map[string]schema.Attribute {
+func FlagSubdatasourceAttributes() map[string]schema.Attribute {
 	return map[string]schema.Attribute{
 		"id": schema.StringAttribute{
 			Computed: true,

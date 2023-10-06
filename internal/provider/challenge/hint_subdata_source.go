@@ -1,11 +1,11 @@
 package challenge
 
 import (
-	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/opentofu/terraform-plugin-framework/datasource/schema"
+	"github.com/opentofu/terraform-plugin-framework/types"
 )
 
-func hintSubdatasourceAttributes() map[string]schema.Attribute {
+func HintSubdatasourceAttributes() map[string]schema.Attribute {
 	return map[string]schema.Attribute{
 		"id": schema.StringAttribute{
 			Computed: true,

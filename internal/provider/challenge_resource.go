@@ -1,23 +1,25 @@
-package challenge
+package provider
 
 import (
 	"context"
 	"fmt"
 	"strconv"
 
-	"github.com/hashicorp/terraform-plugin-framework/path"
-	"github.com/hashicorp/terraform-plugin-framework/resource"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
-	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
-	api "github.com/pandatix/go-ctfd/api"
-	"github.com/pandatix/terraform-provider-ctfd/internal/provider/validators"
+	api "github.com/ctfer-io/go-ctfd/api"
+	"github.com/ctfer-io/terraform-provider-ctfd/internal/provider/challenge"
+	"github.com/ctfer-io/terraform-provider-ctfd/internal/provider/utils"
+	"github.com/ctfer-io/terraform-provider-ctfd/internal/provider/validators"
+	"github.com/opentofu/terraform-plugin-framework/path"
+	"github.com/opentofu/terraform-plugin-framework/resource"
+	"github.com/opentofu/terraform-plugin-framework/resource/schema"
+	"github.com/opentofu/terraform-plugin-framework/resource/schema/int64default"
+	"github.com/opentofu/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/opentofu/terraform-plugin-framework/resource/schema/stringdefault"
+	"github.com/opentofu/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/opentofu/terraform-plugin-framework/schema/validator"
+	"github.com/opentofu/terraform-plugin-framework/types"
+	"github.com/opentofu/terraform-plugin-framework/types/basetypes"
+	"github.com/opentofu/terraform-plugin-log/tflog"
 )
 
 var (
@@ -35,24 +37,24 @@ type challengeResource struct {
 }
 
 type challengeResourceModel struct {
-	ID             types.String                  `tfsdk:"id"`
-	Name           types.String                  `tfsdk:"name"`
-	Category       types.String                  `tfsdk:"category"`
-	Description    types.String                  `tfsdk:"description"`
-	ConnectionInfo types.String                  `tfsdk:"connection_info"`
-	MaxAttempts    types.Int64                   `tfsdk:"max_attempts"`
-	Value          types.Int64                   `tfsdk:"value"`
-	Initial        types.Int64                   `tfsdk:"initial"`
-	Decay          types.Int64                   `tfsdk:"decay"`
-	Minimum        types.Int64                   `tfsdk:"minimum"`
-	State          types.String                  `tfsdk:"state"`
-	Type           types.String                  `tfsdk:"type"`
-	Requirements   *requirementsSubresourceModel `tfsdk:"requirements"`
-	Flags          []flagSubresourceModel        `tfsdk:"flags"`
-	Tags           []types.String                `tfsdk:"tags"`
-	Topics         []types.String                `tfsdk:"topics"`
-	Hints          []hintSubresourceModel        `tfsdk:"hints"`
-	Files          []fileSubresourceModel        `tfsdk:"files"`
+	ID             types.String                            `tfsdk:"id"`
+	Name           types.String                            `tfsdk:"name"`
+	Category       types.String                            `tfsdk:"category"`
+	Description    types.String                            `tfsdk:"description"`
+	ConnectionInfo types.String                            `tfsdk:"connection_info"`
+	MaxAttempts    types.Int64                             `tfsdk:"max_attempts"`
+	Value          types.Int64                             `tfsdk:"value"`
+	Initial        types.Int64                             `tfsdk:"initial"`
+	Decay          types.Int64                             `tfsdk:"decay"`
+	Minimum        types.Int64                             `tfsdk:"minimum"`
+	State          types.String                            `tfsdk:"state"`
+	Type           types.String                            `tfsdk:"type"`
+	Requirements   *challenge.RequirementsSubresourceModel `tfsdk:"requirements"`
+	Flags          []challenge.FlagSubresourceModel        `tfsdk:"flags"`
+	Tags           []types.String                          `tfsdk:"tags"`
+	Topics         []types.String                          `tfsdk:"topics"`
+	Hints          []challenge.HintSubresourceModel        `tfsdk:"hints"`
+	Files          []challenge.FileSubresourceModel        `tfsdk:"files"`
 }
 
 func (r *challengeResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -126,8 +128,8 @@ func (r *challengeResource) Schema(ctx context.Context, req resource.SchemaReque
 						Default:             stringdefault.StaticString("hidden"),
 						Validators: []validator.String{
 							validators.NewStringEnumValidator([]basetypes.StringValue{
-								behaviorHidden,
-								behaviorAnonymized,
+								challenge.BehaviorHidden,
+								challenge.BehaviorAnonymized,
 							}),
 						},
 					},
@@ -139,7 +141,7 @@ func (r *challengeResource) Schema(ctx context.Context, req resource.SchemaReque
 			},
 			"flags": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
-					Attributes: flagSubresourceAttributes(),
+					Attributes: challenge.FlagSubresourceAttributes(),
 				},
 				Optional: true,
 			},
@@ -153,14 +155,14 @@ func (r *challengeResource) Schema(ctx context.Context, req resource.SchemaReque
 			},
 			"hints": schema.ListNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
-					Attributes: hintSubresourceAttributes(),
+					Attributes: challenge.HintSubresourceAttributes(),
 				},
 				Optional: true,
 			},
 			"files": schema.ListNestedAttribute{
 				// TODO find why modifying other fields requires updating those
 				NestedObject: schema.NestedAttributeObject{
-					Attributes: fileSubresourceAttributes(),
+					Attributes: challenge.FileSubresourceAttributes(),
 				},
 				Optional: true,
 			},
@@ -178,7 +180,7 @@ func (r *challengeResource) Configure(ctx context.Context, req resource.Configur
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *github.com/pandatix/go-ctfd/api.Client, got: %T. Please open an issue at https://github.com/pandatix/terraform-provider-ctfd", req.ProviderData),
+			fmt.Sprintf("Expected *github.com/ctfer-io/go-ctfd/api.Client, got: %T. Please open an issue at https://github.com/ctfer-io/terraform-provider-ctfd", req.ProviderData),
 		)
 		return
 	}
@@ -202,7 +204,7 @@ func (r *challengeResource) Create(ctx context.Context, req resource.CreateReque
 			preqs = append(preqs, id)
 		}
 		reqs = &api.Requirements{
-			Anonymize:     getAnon(data.Requirements.Behavior),
+			Anonymize:     challenge.GetAnon(data.Requirements.Behavior),
 			Prerequisites: preqs,
 		}
 	}
@@ -211,11 +213,11 @@ func (r *challengeResource) Create(ctx context.Context, req resource.CreateReque
 		Category:       data.Category.ValueString(),
 		Description:    data.Description.ValueString(),
 		ConnectionInfo: data.ConnectionInfo.ValueStringPointer(),
-		MaxAttempts:    toInt(data.MaxAttempts),
-		Value:          toInt(data.Value),
-		Initial:        toInt(data.Initial),
-		Decay:          toInt(data.Decay),
-		Minimum:        toInt(data.Minimum),
+		MaxAttempts:    utils.ToInt(data.MaxAttempts),
+		Value:          utils.ToInt(data.Value),
+		Initial:        utils.ToInt(data.Initial),
+		Decay:          utils.ToInt(data.Decay),
+		Minimum:        utils.ToInt(data.Minimum),
 		State:          data.State.ValueString(),
 		Type:           data.Type.ValueString(),
 		Requirements:   reqs,
@@ -234,7 +236,7 @@ func (r *challengeResource) Create(ctx context.Context, req resource.CreateReque
 	data.ID = types.StringValue(strconv.Itoa(res.ID))
 
 	// Create files
-	challFiles := make([]fileSubresourceModel, 0, len(data.Files))
+	challFiles := make([]challenge.FileSubresourceModel, 0, len(data.Files))
 	for _, file := range data.Files {
 		file.Create(ctx, resp.Diagnostics, r.client, data.ID.ValueString())
 		challFiles = append(challFiles, file)
@@ -244,7 +246,7 @@ func (r *challengeResource) Create(ctx context.Context, req resource.CreateReque
 	}
 
 	// Create flags
-	challFlags := make([]flagSubresourceModel, 0, len(data.Flags))
+	challFlags := make([]challenge.FlagSubresourceModel, 0, len(data.Flags))
 	for _, flag := range data.Flags {
 		flag.Create(ctx, resp.Diagnostics, r.client, data.ID.ValueString())
 		challFlags = append(challFlags, flag)
@@ -295,7 +297,7 @@ func (r *challengeResource) Create(ctx context.Context, req resource.CreateReque
 	}
 
 	// Create hints
-	challHints := make([]hintSubresourceModel, 0, len(data.Hints))
+	challHints := make([]challenge.HintSubresourceModel, 0, len(data.Hints))
 	for _, hint := range data.Hints {
 		hint.Create(ctx, resp.Diagnostics, r.client, data.ID.ValueString())
 		challHints = append(challHints, hint)
@@ -328,10 +330,10 @@ func (r *challengeResource) Read(ctx context.Context, req resource.ReadRequest, 
 	data.Description = types.StringValue(res.Description)
 	data.ConnectionInfo = types.StringValue(res.ConnectionInfo)
 	data.MaxAttempts = types.Int64Value(int64(res.MaxAttempts))
-	data.Value = toTFInt64(res.Value)
-	data.Initial = toTFInt64(res.Initial)
-	data.Decay = toTFInt64(res.Decay)
-	data.Minimum = toTFInt64(res.Minimum)
+	data.Value = utils.ToTFInt64(res.Value)
+	data.Initial = utils.ToTFInt64(res.Initial)
+	data.Decay = utils.ToTFInt64(res.Decay)
+	data.Minimum = utils.ToTFInt64(res.Minimum)
 	data.State = types.StringValue(res.State)
 	data.Type = types.StringValue(res.Type)
 
@@ -343,14 +345,14 @@ func (r *challengeResource) Read(ctx context.Context, req resource.ReadRequest, 
 			fmt.Sprintf("Unable to read requirements of challenge %s, got error: %s", data.ID.ValueString(), err),
 		)
 	}
-	reqs := (*requirementsSubresourceModel)(nil)
+	reqs := (*challenge.RequirementsSubresourceModel)(nil)
 	if resReqs != nil {
 		challReqs := make([]types.String, 0, len(resReqs.Prerequisites))
 		for _, req := range resReqs.Prerequisites {
 			challReqs = append(challReqs, types.StringValue(strconv.Itoa(req)))
 		}
-		reqs = &requirementsSubresourceModel{
-			Behavior:      fromAnon(resReqs.Anonymize),
+		reqs = &challenge.RequirementsSubresourceModel{
+			Behavior:      challenge.FromAnon(resReqs.Anonymize),
 			Prerequisites: challReqs,
 		}
 	}
@@ -364,12 +366,12 @@ func (r *challengeResource) Read(ctx context.Context, req resource.ReadRequest, 
 			fmt.Sprintf("Unable to read files of challenge %s, got error: %s", data.ID.ValueString(), err),
 		)
 	}
-	challFiles := make([]fileSubresourceModel, 0, len(resFiles))
+	challFiles := make([]challenge.FileSubresourceModel, 0, len(resFiles))
 	for _, file := range resFiles {
-		f := fileSubresourceModel{
+		f := challenge.FileSubresourceModel{
 			ID:       types.StringValue(strconv.Itoa(file.ID)),
 			Location: types.StringValue(file.Location),
-			Name:     types.StringValue(filename(file.Location)),
+			Name:     types.StringValue(utils.Filename(file.Location)),
 		}
 		f.Read(ctx, resp.Diagnostics, r.client)
 		challFiles = append(challFiles, f)
@@ -387,9 +389,9 @@ func (r *challengeResource) Read(ctx context.Context, req resource.ReadRequest, 
 		)
 		return
 	}
-	challFlags := make([]flagSubresourceModel, 0, len(resFlags))
+	challFlags := make([]challenge.FlagSubresourceModel, 0, len(resFlags))
 	for _, flag := range resFlags {
-		challFlags = append(challFlags, flagSubresourceModel{
+		challFlags = append(challFlags, challenge.FlagSubresourceModel{
 			ID:      types.StringValue(strconv.Itoa(flag.ID)),
 			Content: types.StringValue(flag.Content),
 			// XXX this should be typed properly
@@ -444,7 +446,7 @@ func (r *challengeResource) Read(ctx context.Context, req resource.ReadRequest, 
 		)
 		return
 	}
-	challHints := make([]hintSubresourceModel, 0, len(resHints))
+	challHints := make([]challenge.HintSubresourceModel, 0, len(resHints))
 	for _, hint := range resHints {
 		hintReqs := make([]types.String, 0, len(hint.Requirements.Prerequisites))
 		for _, req := range hint.Requirements.Prerequisites {
@@ -453,7 +455,7 @@ func (r *challengeResource) Read(ctx context.Context, req resource.ReadRequest, 
 		if len(hint.Requirements.Prerequisites) == 0 {
 			hintReqs = nil
 		}
-		challHints = append(challHints, hintSubresourceModel{
+		challHints = append(challHints, challenge.HintSubresourceModel{
 			ID:           types.StringValue(strconv.Itoa(hint.ID)),
 			Content:      types.StringValue(*hint.Content),
 			Cost:         types.Int64Value(int64(hint.Cost)),
@@ -488,7 +490,7 @@ func (r *challengeResource) Update(ctx context.Context, req resource.UpdateReque
 			preqs = append(preqs, id)
 		}
 		reqs = &api.Requirements{
-			Anonymize:     getAnon(data.Requirements.Behavior),
+			Anonymize:     challenge.GetAnon(data.Requirements.Behavior),
 			Prerequisites: preqs,
 		}
 	}
@@ -497,11 +499,11 @@ func (r *challengeResource) Update(ctx context.Context, req resource.UpdateReque
 		Category:       data.Category.ValueStringPointer(),
 		Description:    data.Description.ValueStringPointer(),
 		ConnectionInfo: data.ConnectionInfo.ValueStringPointer(),
-		MaxAttempts:    toInt(data.MaxAttempts),
-		Value:          toInt(data.Value),
-		Initial:        toInt(data.Initial),
-		Decay:          toInt(data.Decay),
-		Minimum:        toInt(data.Minimum),
+		MaxAttempts:    utils.ToInt(data.MaxAttempts),
+		Value:          utils.ToInt(data.Value),
+		Initial:        utils.ToInt(data.Initial),
+		Decay:          utils.ToInt(data.Decay),
+		Minimum:        utils.ToInt(data.Minimum),
 		State:          data.State.ValueStringPointer(),
 		Requirements:   reqs,
 	}, api.WithContext(ctx))
@@ -521,7 +523,7 @@ func (r *challengeResource) Update(ctx context.Context, req resource.UpdateReque
 			fmt.Sprintf("Unable to get challenge's files, got error: %s", err),
 		)
 	}
-	files := []fileSubresourceModel{}
+	files := []challenge.FileSubresourceModel{}
 	for _, file := range data.Files {
 		exists := false
 		for _, currentFile := range currentFiles {
@@ -529,7 +531,7 @@ func (r *challengeResource) Update(ctx context.Context, req resource.UpdateReque
 				exists = true
 
 				// Get corresponding file from state
-				var corFile fileSubresourceModel
+				var corFile challenge.FileSubresourceModel
 				for _, fState := range dataState.Files {
 					if file.ID.Equal(fState.ID) {
 						corFile = fState
@@ -562,7 +564,7 @@ func (r *challengeResource) Update(ctx context.Context, req resource.UpdateReque
 			}
 		}
 		if !exists {
-			f := fileSubresourceModel{
+			f := challenge.FileSubresourceModel{
 				ID:       types.StringValue(strconv.Itoa(currentFile.ID)),
 				Location: types.StringValue(currentFile.Location),
 			}
@@ -582,7 +584,7 @@ func (r *challengeResource) Update(ctx context.Context, req resource.UpdateReque
 		)
 		return
 	}
-	flags := []flagSubresourceModel{}
+	flags := []challenge.FlagSubresourceModel{}
 	for _, tfFlag := range data.Flags {
 		exists := false
 		for _, currentFlag := range currentFlags {
@@ -607,7 +609,7 @@ func (r *challengeResource) Update(ctx context.Context, req resource.UpdateReque
 			}
 		}
 		if !exists {
-			f := &flagSubresourceModel{
+			f := &challenge.FlagSubresourceModel{
 				ID: types.StringValue(strconv.Itoa(currentFlag.ID)),
 			}
 			f.Delete(ctx, resp.Diagnostics, r.client)
@@ -701,7 +703,7 @@ func (r *challengeResource) Update(ctx context.Context, req resource.UpdateReque
 		)
 		return
 	}
-	hints := []hintSubresourceModel{}
+	hints := []challenge.HintSubresourceModel{}
 	for _, tfHint := range data.Hints {
 		exists := false
 		for _, currentHint := range currentHints {
@@ -726,7 +728,7 @@ func (r *challengeResource) Update(ctx context.Context, req resource.UpdateReque
 			}
 		}
 		if !exists {
-			h := &hintSubresourceModel{
+			h := &challenge.HintSubresourceModel{
 				ID: types.StringValue(strconv.Itoa(currentHint.ID)),
 			}
 			h.Delete(ctx, resp.Diagnostics, r.client)

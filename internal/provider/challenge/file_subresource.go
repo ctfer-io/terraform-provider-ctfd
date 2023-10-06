@@ -6,16 +6,16 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/pandatix/go-ctfd/api"
+	"github.com/ctfer-io/go-ctfd/api"
+	"github.com/opentofu/terraform-plugin-framework/diag"
+	"github.com/opentofu/terraform-plugin-framework/resource/schema"
+	"github.com/opentofu/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/opentofu/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/opentofu/terraform-plugin-framework/types"
+	"github.com/opentofu/terraform-plugin-log/tflog"
 )
 
-type fileSubresourceModel struct {
+type FileSubresourceModel struct {
 	ID       types.String `tfsdk:"id"`
 	Name     types.String `tfsdk:"name"`
 	Location types.String `tfsdk:"location"`
@@ -24,7 +24,7 @@ type fileSubresourceModel struct {
 	ContentB64 types.String `tfsdk:"contentb64"`
 }
 
-func fileSubresourceAttributes() map[string]schema.Attribute {
+func FileSubresourceAttributes() map[string]schema.Attribute {
 	return map[string]schema.Attribute{
 		"id": schema.StringAttribute{
 			Computed: true,
@@ -61,7 +61,7 @@ func fileSubresourceAttributes() map[string]schema.Attribute {
 }
 
 // Read fetches all the file's information, only requiring the ID to be set.
-func (file *fileSubresourceModel) Read(ctx context.Context, diags diag.Diagnostics, client *api.Client) {
+func (file *FileSubresourceModel) Read(ctx context.Context, diags diag.Diagnostics, client *api.Client) {
 	content, err := client.GetFileContent(&api.File{
 		Location: file.Location.ValueString(),
 	}, api.WithContext(ctx))
@@ -76,7 +76,7 @@ func (file *fileSubresourceModel) Read(ctx context.Context, diags diag.Diagnosti
 	file.PropagateContent(ctx, diags)
 }
 
-func (data *fileSubresourceModel) Create(ctx context.Context, diags diag.Diagnostics, client *api.Client, challengeID string) {
+func (data *FileSubresourceModel) Create(ctx context.Context, diags diag.Diagnostics, client *api.Client, challengeID string) {
 	// Fetch raw or base64 content prior to creating it with raw
 	data.PropagateContent(ctx, diags)
 	if diags.HasError() {
@@ -104,7 +104,7 @@ func (data *fileSubresourceModel) Create(ctx context.Context, diags diag.Diagnos
 	data.Location = types.StringValue(res[0].Location)
 }
 
-func (data *fileSubresourceModel) Delete(ctx context.Context, diags diag.Diagnostics, client *api.Client) {
+func (data *FileSubresourceModel) Delete(ctx context.Context, diags diag.Diagnostics, client *api.Client) {
 	if err := client.DeleteFile(data.ID.ValueString(), api.WithContext(ctx)); err != nil {
 		diags.AddError(
 			"Client Error",
@@ -116,7 +116,7 @@ func (data *fileSubresourceModel) Delete(ctx context.Context, diags diag.Diagnos
 	tflog.Trace(ctx, "deleted a file")
 }
 
-func (data *fileSubresourceModel) PropagateContent(ctx context.Context, diags diag.Diagnostics) {
+func (data *FileSubresourceModel) PropagateContent(ctx context.Context, diags diag.Diagnostics) {
 	// If the other content source is set, get the other from it
 	if len(data.Content.ValueString()) != 0 {
 		cb64 := base64.StdEncoding.EncodeToString([]byte(data.Content.ValueString()))

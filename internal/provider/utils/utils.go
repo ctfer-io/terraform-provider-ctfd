@@ -1,13 +1,13 @@
-package challenge
+package utils
 
 import (
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/opentofu/terraform-plugin-framework/types"
 )
 
 // return a null types.Int64 if pointer is nil, else its value
-func toTFInt64(i *int) types.Int64 {
+func ToTFInt64(i *int) types.Int64 {
 	if i == nil {
 		return types.Int64Null()
 	}
@@ -15,7 +15,7 @@ func toTFInt64(i *int) types.Int64 {
 }
 
 // return a nil point if types.Int64 is null, else its value
-func toInt(itf types.Int64) *int {
+func ToInt(itf types.Int64) *int {
 	if itf.IsNull() {
 		return nil
 	}
@@ -23,11 +23,11 @@ func toInt(itf types.Int64) *int {
 	return &i
 }
 
-func filename(location string) string {
+func Filename(location string) string {
 	pts := strings.Split(location, "/")
 	return pts[len(pts)-1]
 }
 
-func ptr[T any](t T) *T {
+func Ptr[T any](t T) *T {
 	return &t
 }

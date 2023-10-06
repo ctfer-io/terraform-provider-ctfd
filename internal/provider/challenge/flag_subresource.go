@@ -5,24 +5,24 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/pandatix/go-ctfd/api"
+	"github.com/ctfer-io/go-ctfd/api"
+	"github.com/opentofu/terraform-plugin-framework/diag"
+	"github.com/opentofu/terraform-plugin-framework/resource/schema"
+	"github.com/opentofu/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/opentofu/terraform-plugin-framework/resource/schema/stringdefault"
+	"github.com/opentofu/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/opentofu/terraform-plugin-framework/types"
+	"github.com/opentofu/terraform-plugin-log/tflog"
 )
 
-type flagSubresourceModel struct {
+type FlagSubresourceModel struct {
 	ID      types.String `tfsdk:"id"`
 	Content types.String `tfsdk:"content"`
 	Data    types.String `tfsdk:"data"`
 	Type    types.String `tfsdk:"type"`
 }
 
-func flagSubresourceAttributes() map[string]schema.Attribute {
+func FlagSubresourceAttributes() map[string]schema.Attribute {
 	return map[string]schema.Attribute{
 		"id": schema.StringAttribute{
 			Computed:            true,
@@ -50,7 +50,7 @@ func flagSubresourceAttributes() map[string]schema.Attribute {
 	}
 }
 
-func (data *flagSubresourceModel) Create(ctx context.Context, diags diag.Diagnostics, client *api.Client, challengeID string) {
+func (data *FlagSubresourceModel) Create(ctx context.Context, diags diag.Diagnostics, client *api.Client, challengeID string) {
 	res, err := client.PostFlags(&api.PostFlagsParams{
 		Challenge: challengeID,
 		Content:   data.Content.ValueString(),
@@ -70,7 +70,7 @@ func (data *flagSubresourceModel) Create(ctx context.Context, diags diag.Diagnos
 	data.ID = types.StringValue(strconv.Itoa(res.ID))
 }
 
-func (data *flagSubresourceModel) Update(ctx context.Context, diags diag.Diagnostics, client *api.Client) {
+func (data *FlagSubresourceModel) Update(ctx context.Context, diags diag.Diagnostics, client *api.Client) {
 	res, err := client.PatchFlag(data.ID.ValueString(), &api.PatchFlagParams{
 		Content: data.Content.ValueString(),
 		Data:    data.Data.ValueString(),
@@ -92,7 +92,7 @@ func (data *flagSubresourceModel) Update(ctx context.Context, diags diag.Diagnos
 	data.Type = types.StringValue(res.Type)
 }
 
-func (data *flagSubresourceModel) Delete(ctx context.Context, diags diag.Diagnostics, client *api.Client) {
+func (data *FlagSubresourceModel) Delete(ctx context.Context, diags diag.Diagnostics, client *api.Client) {
 	if err := client.DeleteFlag(data.ID.ValueString(), api.WithContext(ctx)); err != nil {
 		diags.AddError(
 			"Client Error",

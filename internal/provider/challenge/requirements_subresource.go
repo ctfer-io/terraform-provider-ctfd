@@ -1,33 +1,36 @@
 package challenge
 
-import "github.com/hashicorp/terraform-plugin-framework/types"
-
-var (
-	behaviorHidden     = types.StringValue("hidden")
-	behaviorAnonymized = types.StringValue("anonymized")
+import (
+	"github.com/ctfer-io/terraform-provider-ctfd/internal/provider/utils"
+	"github.com/opentofu/terraform-plugin-framework/types"
 )
 
-type requirementsSubresourceModel struct {
+var (
+	BehaviorHidden     = types.StringValue("hidden")
+	BehaviorAnonymized = types.StringValue("anonymized")
+)
+
+type RequirementsSubresourceModel struct {
 	Behavior      types.String   `tfsdk:"behavior"`
 	Prerequisites []types.String `tfsdk:"prerequisites"`
 }
 
-func getAnon(str types.String) *bool {
+func GetAnon(str types.String) *bool {
 	switch {
-	case str.Equal(behaviorHidden):
+	case str.Equal(BehaviorHidden):
 		return nil
-	case str.Equal(behaviorAnonymized):
-		return ptr(true)
+	case str.Equal(BehaviorAnonymized):
+		return utils.Ptr(true)
 	}
 	panic("invalid anonymization value: " + str.ValueString())
 }
 
-func fromAnon(b *bool) types.String {
+func FromAnon(b *bool) types.String {
 	if b == nil {
-		return behaviorHidden
+		return BehaviorHidden
 	}
 	if *b {
-		return behaviorAnonymized
+		return BehaviorAnonymized
 	}
 	panic("invalid anonymization value, got boolean false")
 }

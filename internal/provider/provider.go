@@ -4,15 +4,14 @@ import (
 	"context"
 	"os"
 
-	"github.com/hashicorp/terraform-plugin-framework/datasource"
-	"github.com/hashicorp/terraform-plugin-framework/path"
-	"github.com/hashicorp/terraform-plugin-framework/provider"
-	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource"
-	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/pandatix/go-ctfd/api"
-	"github.com/pandatix/terraform-provider-ctfd/internal/provider/challenge"
+	"github.com/ctfer-io/go-ctfd/api"
+	"github.com/opentofu/terraform-plugin-framework/datasource"
+	"github.com/opentofu/terraform-plugin-framework/path"
+	"github.com/opentofu/terraform-plugin-framework/provider"
+	"github.com/opentofu/terraform-plugin-framework/provider/schema"
+	"github.com/opentofu/terraform-plugin-framework/resource"
+	"github.com/opentofu/terraform-plugin-framework/types"
+	"github.com/opentofu/terraform-plugin-log/tflog"
 )
 
 var _ provider.Provider = &CTFdProvider{}
@@ -157,12 +156,12 @@ func (p *CTFdProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 
 func (p *CTFdProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
-		challenge.NewChallengeResource,
+		NewChallengeResource,
 	}
 }
 
 func (p *CTFdProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
-		challenge.NewChallengeDataSource,
+		NewChallengeDataSource,
 	}
 }

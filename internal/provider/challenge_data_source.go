@@ -1,14 +1,16 @@
-package challenge
+package provider
 
 import (
 	"context"
 	"fmt"
 	"strconv"
 
-	"github.com/hashicorp/terraform-plugin-framework/datasource"
-	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/pandatix/go-ctfd/api"
+	"github.com/ctfer-io/go-ctfd/api"
+	"github.com/ctfer-io/terraform-provider-ctfd/internal/provider/challenge"
+	"github.com/ctfer-io/terraform-provider-ctfd/internal/provider/utils"
+	"github.com/opentofu/terraform-plugin-framework/datasource"
+	"github.com/opentofu/terraform-plugin-framework/datasource/schema"
+	"github.com/opentofu/terraform-plugin-framework/types"
 )
 
 var (
@@ -25,6 +27,7 @@ type challengeDataSource struct {
 }
 
 type challengesDataSourceModel struct {
+	ID         types.String             `tfsdk:"id"`
 	Challenges []challengeResourceModel `tfsdk:"challenges"`
 }
 
@@ -35,6 +38,9 @@ func (ch *challengeDataSource) Metadata(ctx context.Context, req datasource.Meta
 func (ch *challengeDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				Computed: true,
+			},
 			"challenges": schema.ListNestedAttribute{
 				Computed: true,
 				NestedObject: schema.NestedAttributeObject{
@@ -71,7 +77,7 @@ func (ch *challengeDataSource) Schema(ctx context.Context, req datasource.Schema
 						},
 						"flags": schema.ListNestedAttribute{
 							NestedObject: schema.NestedAttributeObject{
-								Attributes: flagSubdatasourceAttributes(),
+								Attributes: challenge.FlagSubdatasourceAttributes(),
 							},
 							Computed: true,
 						},
@@ -85,13 +91,13 @@ func (ch *challengeDataSource) Schema(ctx context.Context, req datasource.Schema
 						},
 						"hints": schema.ListNestedAttribute{
 							NestedObject: schema.NestedAttributeObject{
-								Attributes: hintSubdatasourceAttributes(),
+								Attributes: challenge.HintSubdatasourceAttributes(),
 							},
 							Computed: true,
 						},
 						"files": schema.ListNestedAttribute{
 							NestedObject: schema.NestedAttributeObject{
-								Attributes: fileSubdatasourceAttributes(),
+								Attributes: challenge.FileSubdatasourceAttributes(),
 							},
 							Computed: true,
 						},
@@ -111,7 +117,7 @@ func (ch *challengeDataSource) Configure(ctx context.Context, req datasource.Con
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Data Source Configure Type",
-			fmt.Sprintf("Expected *github.com/pandatix/go-ctfd/api.Client, got: %T. Please open an issue at https://github.com/pandatix/terraform-provider-ctfd", req.ProviderData),
+			fmt.Sprintf("Expected *github.com/ctfer-io/go-ctfd/api.Client, got: %T. Please open an issue at https://github.com/ctfer-io/terraform-provider-ctfd", req.ProviderData),
 		)
 		return
 	}
@@ -151,9 +157,9 @@ func (ch *challengeDataSource) Read(ctx context.Context, req datasource.ReadRequ
 			)
 			return
 		}
-		challFiles := make([]fileSubresourceModel, 0, len(files))
+		challFiles := make([]challenge.FileSubresourceModel, 0, len(files))
 		for _, file := range files {
-			f := fileSubresourceModel{
+			f := challenge.FileSubresourceModel{
 				ID:       types.StringValue(strconv.Itoa(file.ID)),
 				Location: types.StringValue(file.Location),
 			}
@@ -171,9 +177,9 @@ func (ch *challengeDataSource) Read(ctx context.Context, req datasource.ReadRequ
 			)
 			return
 		}
-		challFlags := make([]flagSubresourceModel, 0, len(flags))
+		challFlags := make([]challenge.FlagSubresourceModel, 0, len(flags))
 		for _, flag := range flags {
-			challFlags = append(challFlags, flagSubresourceModel{
+			challFlags = append(challFlags, challenge.FlagSubresourceModel{
 				ID:      types.StringValue(strconv.Itoa(flag.ID)),
 				Content: types.StringValue(flag.Content),
 				// XXX this should be properly typed
@@ -219,13 +225,13 @@ func (ch *challengeDataSource) Read(ctx context.Context, req datasource.ReadRequ
 			)
 			return
 		}
-		challHints := make([]hintSubresourceModel, 0, len(hints))
+		challHints := make([]challenge.HintSubresourceModel, 0, len(hints))
 		for _, hint := range hints {
 			hintReq := make([]types.String, 0, len(hint.Requirements.Prerequisites))
 			for _, preq := range hint.Requirements.Prerequisites {
 				hintReq = append(hintReq, types.StringValue(strconv.Itoa(preq)))
 			}
-			challHints = append(challHints, hintSubresourceModel{
+			challHints = append(challHints, challenge.HintSubresourceModel{
 				ID:           types.StringValue(strconv.Itoa(hint.ID)),
 				Content:      types.StringValue(*hint.Content),
 				Cost:         types.Int64Value(int64(hint.Cost)),
@@ -238,10 +244,10 @@ func (ch *challengeDataSource) Read(ctx context.Context, req datasource.ReadRequ
 			Name:        types.StringValue(chall.Name),
 			Category:    types.StringValue(chall.Category),
 			Description: types.StringValue(chall.Description),
-			Value:       toTFInt64(chall.Value),
-			Initial:     toTFInt64(chall.Initial),
-			Decay:       toTFInt64(chall.Decay),
-			Minimum:     toTFInt64(chall.Minimum),
+			Value:       utils.ToTFInt64(chall.Value),
+			Initial:     utils.ToTFInt64(chall.Initial),
+			Decay:       utils.ToTFInt64(chall.Decay),
+			Minimum:     utils.ToTFInt64(chall.Minimum),
 			State:       types.StringValue(chall.State),
 			Type:        types.StringValue(chall.Type),
 			Files:       challFiles,
@@ -251,6 +257,7 @@ func (ch *challengeDataSource) Read(ctx context.Context, req datasource.ReadRequ
 			Hints:       challHints,
 		}
 
+		state.ID = types.StringValue("placeholder")
 		state.Challenges = append(state.Challenges, challState)
 	}
 

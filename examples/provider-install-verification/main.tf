@@ -1,7 +1,7 @@
 terraform {
     required_providers {
         ctfd = {
-            source = "registry.terraform.io/pandatix/ctfd"
+            source = "registry.terraform.io/ctfer-io/ctfd"
         }
     }
 }

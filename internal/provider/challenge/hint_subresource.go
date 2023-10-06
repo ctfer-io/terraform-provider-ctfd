@@ -5,26 +5,26 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/pandatix/go-ctfd/api"
+	"github.com/ctfer-io/go-ctfd/api"
+	"github.com/opentofu/terraform-plugin-framework/diag"
+	"github.com/opentofu/terraform-plugin-framework/resource/schema"
+	"github.com/opentofu/terraform-plugin-framework/resource/schema/int64default"
+	"github.com/opentofu/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/opentofu/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/opentofu/terraform-plugin-framework/types"
+	"github.com/opentofu/terraform-plugin-log/tflog"
 )
 
 // TODO requirements can be set manually, but can't be automatised. Hint may be a complete resource
 
-type hintSubresourceModel struct {
+type HintSubresourceModel struct {
 	ID           types.String   `tfsdk:"id"`
 	Content      types.String   `tfsdk:"content"`
 	Cost         types.Int64    `tfsdk:"cost"`
 	Requirements []types.String `tfsdk:"requirements"`
 }
 
-func hintSubresourceAttributes() map[string]schema.Attribute {
+func HintSubresourceAttributes() map[string]schema.Attribute {
 	return map[string]schema.Attribute{
 		"id": schema.StringAttribute{
 			Computed:            true,
@@ -48,7 +48,7 @@ func hintSubresourceAttributes() map[string]schema.Attribute {
 	}
 }
 
-func (data *hintSubresourceModel) Create(ctx context.Context, diags diag.Diagnostics, client *api.Client, challengeID string) {
+func (data *HintSubresourceModel) Create(ctx context.Context, diags diag.Diagnostics, client *api.Client, challengeID string) {
 	preq := make([]int, 0, len(data.Requirements))
 	for _, req := range data.Requirements {
 		hintID, _ := strconv.Atoi(req.ValueString())
@@ -76,7 +76,7 @@ func (data *hintSubresourceModel) Create(ctx context.Context, diags diag.Diagnos
 	data.ID = types.StringValue(strconv.Itoa(res.ID))
 }
 
-func (data *hintSubresourceModel) Update(ctx context.Context, diags diag.Diagnostics, client *api.Client) {
+func (data *HintSubresourceModel) Update(ctx context.Context, diags diag.Diagnostics, client *api.Client) {
 	preq := make([]int, 0, len(data.Requirements))
 	for _, req := range data.Requirements {
 		hintID, _ := strconv.Atoi(req.ValueString())
@@ -109,7 +109,7 @@ func (data *hintSubresourceModel) Update(ctx context.Context, diags diag.Diagnos
 	data.Requirements = dPreq
 }
 
-func (data *hintSubresourceModel) Delete(ctx context.Context, diags diag.Diagnostics, client *api.Client) {
+func (data *HintSubresourceModel) Delete(ctx context.Context, diags diag.Diagnostics, client *api.Client) {
 	if err := client.DeleteHint(data.ID.ValueString(), api.WithContext(ctx)); err != nil {
 		diags.AddError(
 			"Client Error",

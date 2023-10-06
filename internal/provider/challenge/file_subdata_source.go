@@ -1,8 +1,8 @@
 package challenge
 
-import "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+import "github.com/opentofu/terraform-plugin-framework/datasource/schema"
 
-func fileSubdatasourceAttributes() map[string]schema.Attribute {
+func FileSubdatasourceAttributes() map[string]schema.Attribute {
 	return map[string]schema.Attribute{
 		"id": schema.StringAttribute{
 			Computed: true,

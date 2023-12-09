@@ -6,13 +6,13 @@ import (
 	"strconv"
 
 	"github.com/ctfer-io/go-ctfd/api"
-	"github.com/opentofu/terraform-plugin-framework/diag"
-	"github.com/opentofu/terraform-plugin-framework/resource/schema"
-	"github.com/opentofu/terraform-plugin-framework/resource/schema/int64default"
-	"github.com/opentofu/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/opentofu/terraform-plugin-framework/resource/schema/stringplanmodifier"
-	"github.com/opentofu/terraform-plugin-framework/types"
-	"github.com/opentofu/terraform-plugin-log/tflog"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
 // TODO requirements can be set manually, but can't be automatised. Hint may be a complete resource
@@ -48,7 +48,7 @@ func HintSubresourceAttributes() map[string]schema.Attribute {
 	}
 }
 
-func (data *HintSubresourceModel) Create(ctx context.Context, diags diag.Diagnostics, client *api.Client, challengeID string) {
+func (data *HintSubresourceModel) Create(ctx context.Context, diags diag.Diagnostics, client *api.Client, challengeID int) {
 	preq := make([]int, 0, len(data.Requirements))
 	for _, req := range data.Requirements {
 		hintID, _ := strconv.Atoi(req.ValueString())

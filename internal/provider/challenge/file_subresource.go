@@ -7,12 +7,12 @@ import (
 	"strconv"
 
 	"github.com/ctfer-io/go-ctfd/api"
-	"github.com/opentofu/terraform-plugin-framework/diag"
-	"github.com/opentofu/terraform-plugin-framework/resource/schema"
-	"github.com/opentofu/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/opentofu/terraform-plugin-framework/resource/schema/stringplanmodifier"
-	"github.com/opentofu/terraform-plugin-framework/types"
-	"github.com/opentofu/terraform-plugin-log/tflog"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
 type FileSubresourceModel struct {
@@ -64,7 +64,7 @@ func FileSubresourceAttributes() map[string]schema.Attribute {
 func (file *FileSubresourceModel) Read(ctx context.Context, diags diag.Diagnostics, client *api.Client) {
 	content, err := client.GetFileContent(&api.File{
 		Location: file.Location.ValueString(),
-	}, api.WithContext(ctx))
+	})
 	if err != nil {
 		diags.AddError(
 			"CTFd Error",
@@ -76,7 +76,7 @@ func (file *FileSubresourceModel) Read(ctx context.Context, diags diag.Diagnosti
 	file.PropagateContent(ctx, diags)
 }
 
-func (data *FileSubresourceModel) Create(ctx context.Context, diags diag.Diagnostics, client *api.Client, challengeID string) {
+func (data *FileSubresourceModel) Create(ctx context.Context, diags diag.Diagnostics, client *api.Client, challengeID int) {
 	// Fetch raw or base64 content prior to creating it with raw
 	data.PropagateContent(ctx, diags)
 	if diags.HasError() {

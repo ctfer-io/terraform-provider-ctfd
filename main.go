@@ -6,7 +6,7 @@ import (
 	"log"
 
 	"github.com/ctfer-io/terraform-provider-ctfd/internal/provider"
-	"github.com/opentofu/terraform-plugin-framework/providerserver"
+	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 )
 
 var (

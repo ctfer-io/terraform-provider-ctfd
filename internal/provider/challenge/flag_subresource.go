@@ -6,13 +6,13 @@ import (
 	"strconv"
 
 	"github.com/ctfer-io/go-ctfd/api"
-	"github.com/opentofu/terraform-plugin-framework/diag"
-	"github.com/opentofu/terraform-plugin-framework/resource/schema"
-	"github.com/opentofu/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/opentofu/terraform-plugin-framework/resource/schema/stringdefault"
-	"github.com/opentofu/terraform-plugin-framework/resource/schema/stringplanmodifier"
-	"github.com/opentofu/terraform-plugin-framework/types"
-	"github.com/opentofu/terraform-plugin-log/tflog"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
 type FlagSubresourceModel struct {
@@ -50,7 +50,7 @@ func FlagSubresourceAttributes() map[string]schema.Attribute {
 	}
 }
 
-func (data *FlagSubresourceModel) Create(ctx context.Context, diags diag.Diagnostics, client *api.Client, challengeID string) {
+func (data *FlagSubresourceModel) Create(ctx context.Context, diags diag.Diagnostics, client *api.Client, challengeID int) {
 	res, err := client.PostFlags(&api.PostFlagsParams{
 		Challenge: challengeID,
 		Content:   data.Content.ValueString(),

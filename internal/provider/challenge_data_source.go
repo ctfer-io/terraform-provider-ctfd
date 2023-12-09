@@ -8,9 +8,9 @@ import (
 	"github.com/ctfer-io/go-ctfd/api"
 	"github.com/ctfer-io/terraform-provider-ctfd/internal/provider/challenge"
 	"github.com/ctfer-io/terraform-provider-ctfd/internal/provider/utils"
-	"github.com/opentofu/terraform-plugin-framework/datasource"
-	"github.com/opentofu/terraform-plugin-framework/datasource/schema"
-	"github.com/opentofu/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 var (
@@ -139,7 +139,7 @@ func (ch *challengeDataSource) Read(ctx context.Context, req datasource.ReadRequ
 
 	for _, chall := range challs {
 		// Fetch the challenge with all its information as the CTFd API is broken as fuck
-		chall, err := ch.client.GetChallenge(strconv.Itoa(chall.ID), api.WithContext(ctx))
+		chall, err := ch.client.GetChallenge(chall.ID, api.WithContext(ctx))
 		if err != nil {
 			resp.Diagnostics.AddError(
 				fmt.Sprintf("Unable to Read CTFd Challenge %d", chall.ID),
@@ -149,7 +149,7 @@ func (ch *challengeDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		}
 
 		// => Files
-		files, err := ch.client.GetChallengeFiles(strconv.Itoa(chall.ID))
+		files, err := ch.client.GetChallengeFiles(chall.ID)
 		if err != nil {
 			resp.Diagnostics.AddError(
 				fmt.Sprintf("Unable to Read CTFd files of Challenge %d", chall.ID),
@@ -169,7 +169,7 @@ func (ch *challengeDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		}
 
 		// => Flags
-		flags, err := ch.client.GetChallengeFlags(strconv.Itoa(chall.ID), api.WithContext(ctx))
+		flags, err := ch.client.GetChallengeFlags(chall.ID, api.WithContext(ctx))
 		if err != nil {
 			resp.Diagnostics.AddError(
 				fmt.Sprintf("Unable to Read CTFd flags of Challenge %d", chall.ID),
@@ -189,7 +189,7 @@ func (ch *challengeDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		}
 
 		// => Tags
-		tags, err := ch.client.GetChallengeTags(strconv.Itoa(chall.ID), api.WithContext(ctx))
+		tags, err := ch.client.GetChallengeTags(chall.ID, api.WithContext(ctx))
 		if err != nil {
 			resp.Diagnostics.AddError(
 				fmt.Sprintf("Unable to Read CTFd tags of Challenge %d", chall.ID),
@@ -203,7 +203,7 @@ func (ch *challengeDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		}
 
 		// => Topics
-		topics, err := ch.client.GetChallengeTopics(strconv.Itoa(chall.ID), api.WithContext(ctx))
+		topics, err := ch.client.GetChallengeTopics(chall.ID, api.WithContext(ctx))
 		if err != nil {
 			resp.Diagnostics.AddError(
 				fmt.Sprintf("Unable to Read CTFd topics of Challenge %d", chall.ID),
@@ -217,7 +217,7 @@ func (ch *challengeDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		}
 
 		// => Hints
-		hints, err := ch.client.GetChallengeHints(strconv.Itoa(chall.ID), api.WithContext(ctx))
+		hints, err := ch.client.GetChallengeHints(chall.ID, api.WithContext(ctx))
 		if err != nil {
 			resp.Diagnostics.AddError(
 				fmt.Sprintf("Unable to Reac CTFd hints of Challenge %d", chall.ID),
@@ -244,7 +244,7 @@ func (ch *challengeDataSource) Read(ctx context.Context, req datasource.ReadRequ
 			Name:        types.StringValue(chall.Name),
 			Category:    types.StringValue(chall.Category),
 			Description: types.StringValue(chall.Description),
-			Value:       utils.ToTFInt64(chall.Value),
+			Value:       types.Int64Value(int64(chall.Value)),
 			Initial:     utils.ToTFInt64(chall.Initial),
 			Decay:       utils.ToTFInt64(chall.Decay),
 			Minimum:     utils.ToTFInt64(chall.Minimum),

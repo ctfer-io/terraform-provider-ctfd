@@ -2,7 +2,7 @@ package challenge
 
 import (
 	"github.com/ctfer-io/terraform-provider-ctfd/internal/provider/utils"
-	"github.com/opentofu/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 var (

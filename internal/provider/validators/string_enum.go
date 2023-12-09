@@ -3,8 +3,8 @@ package validators
 import (
 	"context"
 
-	"github.com/opentofu/terraform-plugin-framework/schema/validator"
-	"github.com/opentofu/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 // StringEnumValidator valides a string value in an enumeration.

@@ -1,7 +1,7 @@
 package challenge
 
 import (
-	"github.com/opentofu/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 )
 
 func FlagSubdatasourceAttributes() map[string]schema.Attribute {

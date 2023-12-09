@@ -1,8 +1,8 @@
 package challenge
 
 import (
-	"github.com/opentofu/terraform-plugin-framework/datasource/schema"
-	"github.com/opentofu/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 func HintSubdatasourceAttributes() map[string]schema.Attribute {

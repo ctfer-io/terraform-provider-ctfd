@@ -64,7 +64,7 @@ func FileSubresourceAttributes() map[string]schema.Attribute {
 func (file *FileSubresourceModel) Read(ctx context.Context, diags diag.Diagnostics, client *api.Client) {
 	content, err := client.GetFileContent(&api.File{
 		Location: file.Location.ValueString(),
-	})
+	}, api.WithContext(ctx))
 	if err != nil {
 		diags.AddError(
 			"CTFd Error",

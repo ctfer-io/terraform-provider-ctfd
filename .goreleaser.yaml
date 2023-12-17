@@ -13,9 +13,9 @@ builds:
     - CGO_ENABLED=0
   mod_timestamp: '{{ .CommitTimestamp }}'
   flags:
-    - -trimpath
+    - '-trimpath'
   ldflags:
-    - '-s -w -X main.version={{.Version}}
+    - '-s -w -X main.version={{.Version}}'
   goos:
     - freebsd
     - windows
@@ -41,6 +41,9 @@ checksum:
       name_template: '{{ .ProjectName }}_{{ .Version }}_manifest.json'
   name_template: '{{ .ProjectName }}_{{ .Version }}_SHA256SUMS'
   algorithm: sha256
+
+sboms:
+  - artifacts: archive
 
 signs:
   - artifacts: checksum

@@ -1,5 +1,4 @@
-# Terraform Provider release workflow.
-name: GoReleaser
+name: Release
 
 on:
   push:

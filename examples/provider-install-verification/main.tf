@@ -25,6 +25,7 @@ resource "ctfd_challenge" "http" {
     decay           = 17
     minimum         = 50
     state           = "visible"
+    function        = "logarithmic"
 
     flags = [{
         content = "24HIUT{Http_1s_n0t_s3cuR3}"

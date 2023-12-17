@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/defaults"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
@@ -37,24 +38,26 @@ type challengeResource struct {
 }
 
 type challengeResourceModel struct {
-	ID             types.String                            `tfsdk:"id"`
-	Name           types.String                            `tfsdk:"name"`
-	Category       types.String                            `tfsdk:"category"`
-	Description    types.String                            `tfsdk:"description"`
-	ConnectionInfo types.String                            `tfsdk:"connection_info"`
-	MaxAttempts    types.Int64                             `tfsdk:"max_attempts"`
-	Value          types.Int64                             `tfsdk:"value"`
-	Initial        types.Int64                             `tfsdk:"initial"`
-	Decay          types.Int64                             `tfsdk:"decay"`
-	Minimum        types.Int64                             `tfsdk:"minimum"`
-	State          types.String                            `tfsdk:"state"`
-	Type           types.String                            `tfsdk:"type"`
-	Requirements   *challenge.RequirementsSubresourceModel `tfsdk:"requirements"`
-	Flags          []challenge.FlagSubresourceModel        `tfsdk:"flags"`
-	Tags           []types.String                          `tfsdk:"tags"`
-	Topics         []types.String                          `tfsdk:"topics"`
-	Hints          []challenge.HintSubresourceModel        `tfsdk:"hints"`
-	Files          []challenge.FileSubresourceModel        `tfsdk:"files"`
+	ID             types.String `tfsdk:"id"`
+	Name           types.String `tfsdk:"name"`
+	Category       types.String `tfsdk:"category"`
+	Description    types.String `tfsdk:"description"`
+	ConnectionInfo types.String `tfsdk:"connection_info"`
+	MaxAttempts    types.Int64  `tfsdk:"max_attempts"`
+	Function       types.String `tfsdk:"function"`
+	Value          types.Int64  `tfsdk:"value"`
+	Initial        types.Int64  `tfsdk:"initial"`
+	Decay          types.Int64  `tfsdk:"decay"`
+	Minimum        types.Int64  `tfsdk:"minimum"`
+	State          types.String `tfsdk:"state"`
+	Type           types.String `tfsdk:"type"`
+	// TODO add support of Next challenges
+	Requirements *challenge.RequirementsSubresourceModel `tfsdk:"requirements"`
+	Flags        []challenge.FlagSubresourceModel        `tfsdk:"flags"`
+	Tags         []types.String                          `tfsdk:"tags"`
+	Topics       []types.String                          `tfsdk:"topics"`
+	Hints        []challenge.HintSubresourceModel        `tfsdk:"hints"`
+	Files        []challenge.FileSubresourceModel        `tfsdk:"files"`
 }
 
 func (r *challengeResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -90,6 +93,19 @@ func (r *challengeResource) Schema(ctx context.Context, req resource.SchemaReque
 				Optional: true,
 				Computed: true,
 				Default:  int64default.StaticInt64(0),
+			},
+			"function": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Default:             defaults.String(stringdefault.StaticString("linear")),
+				Description:         "Decay function to define how the challenge's value will change through time.",
+				MarkdownDescription: "Decay function to define how the challenge's value will change through time.",
+				Validators: []validator.String{
+					validators.NewStringEnumValidator([]basetypes.StringValue{
+						challenge.FunctionLinear,
+						challenge.FunctionLogarithmic,
+					}),
+				},
 			},
 			// TODO value can't be set side to <initial,decay,minimum>, depends on .type value (respectively standard and dynamic)
 			"value": schema.Int64Attribute{
@@ -214,6 +230,7 @@ func (r *challengeResource) Create(ctx context.Context, req resource.CreateReque
 		Description:    data.Description.ValueString(),
 		ConnectionInfo: data.ConnectionInfo.ValueStringPointer(),
 		MaxAttempts:    utils.ToInt(data.MaxAttempts),
+		Function:       data.Function.ValueString(),
 		Value:          int(data.Value.ValueInt64()),
 		Initial:        utils.ToInt(data.Initial),
 		Decay:          utils.ToInt(data.Decay),
@@ -330,6 +347,7 @@ func (r *challengeResource) Read(ctx context.Context, req resource.ReadRequest, 
 	data.Description = types.StringValue(res.Description)
 	data.ConnectionInfo = utils.ToTFString(res.ConnectionInfo)
 	data.MaxAttempts = utils.ToTFInt64(res.MaxAttempts)
+	data.Function = types.StringValue(res.Function)
 	data.Value = types.Int64Value(int64(res.Value))
 	data.Initial = utils.ToTFInt64(res.Initial)
 	data.Decay = utils.ToTFInt64(res.Decay)
@@ -500,6 +518,7 @@ func (r *challengeResource) Update(ctx context.Context, req resource.UpdateReque
 		Description:    data.Description.ValueString(),
 		ConnectionInfo: data.ConnectionInfo.ValueStringPointer(),
 		MaxAttempts:    utils.ToInt(data.MaxAttempts),
+		Function:       data.Function.ValueString(),
 		// Value:          int(data.Value.ToInt64Value()), // TODO add support of .value in PATCH /challenges
 		Initial:      utils.ToInt(data.Initial),
 		Decay:        utils.ToInt(data.Decay),

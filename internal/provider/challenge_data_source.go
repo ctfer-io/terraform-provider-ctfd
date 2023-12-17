@@ -57,6 +57,9 @@ func (ch *challengeDataSource) Schema(ctx context.Context, req datasource.Schema
 						"description": schema.StringAttribute{
 							Computed: true,
 						},
+						"connection_info": schema.StringAttribute{
+							Computed: true,
+						},
 						"value": schema.Int64Attribute{
 							Computed: true,
 						},
@@ -69,6 +72,13 @@ func (ch *challengeDataSource) Schema(ctx context.Context, req datasource.Schema
 						"minimum": schema.Int64Attribute{
 							Computed: true,
 						},
+						"max_attempts": schema.StringAttribute{
+							Computed: true,
+						},
+						"function": schema.StringAttribute{
+							Computed: true,
+						},
+						// TODO add support of next + requirements
 						"state": schema.StringAttribute{
 							Computed: true,
 						},
@@ -240,21 +250,24 @@ func (ch *challengeDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		}
 
 		challState := challengeResourceModel{
-			ID:          types.StringValue(strconv.Itoa(chall.ID)),
-			Name:        types.StringValue(chall.Name),
-			Category:    types.StringValue(chall.Category),
-			Description: types.StringValue(chall.Description),
-			Value:       types.Int64Value(int64(chall.Value)),
-			Initial:     utils.ToTFInt64(chall.Initial),
-			Decay:       utils.ToTFInt64(chall.Decay),
-			Minimum:     utils.ToTFInt64(chall.Minimum),
-			State:       types.StringValue(chall.State),
-			Type:        types.StringValue(chall.Type),
-			Files:       challFiles,
-			Flags:       challFlags,
-			Tags:        challTags,
-			Topics:      challTopics,
-			Hints:       challHints,
+			ID:             types.StringValue(strconv.Itoa(chall.ID)),
+			Name:           types.StringValue(chall.Name),
+			Category:       types.StringValue(chall.Category),
+			Description:    types.StringValue(chall.Description),
+			ConnectionInfo: utils.ToTFString(chall.ConnectionInfo),
+			MaxAttempts:    utils.ToTFInt64(chall.MaxAttempts),
+			Function:       types.StringValue(chall.Function),
+			Value:          types.Int64Value(int64(chall.Value)),
+			Initial:        utils.ToTFInt64(chall.Initial),
+			Decay:          utils.ToTFInt64(chall.Decay),
+			Minimum:        utils.ToTFInt64(chall.Minimum),
+			State:          types.StringValue(chall.State),
+			Type:           types.StringValue(chall.Type),
+			Files:          challFiles,
+			Flags:          challFlags,
+			Tags:           challTags,
+			Topics:         challTopics,
+			Hints:          challHints,
 		}
 
 		state.ID = types.StringValue("placeholder")

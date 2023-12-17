@@ -23,7 +23,24 @@ It avoids shitty scripts, `ctfcli` and other tools that does not solve the probl
 
 ## How to use it ?
 
-With the **Terraform Provider for CTFd**, you could setup your CTFd challenge using the following configuration.
+Install the **Terraform Provider for CTFd** by setting the following in your `main.tf file`.
+```hcl
+terraform {
+    required_providers {
+        ctfd = {
+            source = "registry.terraform.io/ctfer-io/ctfd"
+        }
+    }
+}
+
+provider "ctfd" {
+    url = "https://my-ctfd.lan"
+}
+```
+
+We recommend setting the environment variable `CTFD_API_KEY` to enable the provider to communicate with your CTFd instance.
+
+Then, you could use a `ctfd_challenge` resource to setup your CTFd challenge, with for instance the following configuration.
 ```hcl
 resource "ctfd_challenge" "my_challenge" {
     name        = "My Challenge"

@@ -14,7 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
-var _ provider.Provider = &CTFdProvider{}
+var _ provider.Provider = (*CTFdProvider)(nil)
 
 type CTFdProvider struct {
 	version string
@@ -44,8 +44,8 @@ func (p *CTFdProvider) Schema(ctx context.Context, req provider.SchemaRequest, r
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"url": schema.StringAttribute{
-				MarkdownDescription: "CTFd base URL.",
-				Required:            true,
+				MarkdownDescription: "CTFd base URL. Could use CTFD_URL environment variable.",
+				Optional:            true,
 			},
 			"session": schema.StringAttribute{
 				MarkdownDescription: "User session token, comes with nonce. Could use CTFD_SESSION environment variable.",
@@ -102,10 +102,14 @@ func (p *CTFdProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 	}
 
 	// Extract environment variables values
+	url := os.Getenv("CTFD_URL")
 	session := os.Getenv("CTFD_SESSION")
 	nonce := os.Getenv("CTFD_NONCE")
 	apiKey := os.Getenv("CTFD_API_KEY")
 
+	if !config.URL.IsNull() {
+		url = config.URL.ValueString()
+	}
 	if !config.Session.IsNull() {
 		session = config.Session.ValueString()
 	}
@@ -139,13 +143,13 @@ func (p *CTFdProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 	}
 
 	// Instantiate CTFd API client
-	ctx = tflog.SetField(ctx, "ctfd_url", config.URL.ValueString())
+	ctx = tflog.SetField(ctx, "ctfd_url", url)
 	ctx = addSensitive(ctx, "ctfd_session", session)
 	ctx = addSensitive(ctx, "ctfd_nonce", nonce)
 	ctx = addSensitive(ctx, "ctfd_api_key", apiKey)
 	tflog.Debug(ctx, "Creating CTFd API client")
 
-	client := api.NewClient(config.URL.ValueString(), session, nonce, apiKey)
+	client := api.NewClient(url, session, nonce, apiKey)
 	resp.DataSourceData = client
 	resp.ResourceData = client
 

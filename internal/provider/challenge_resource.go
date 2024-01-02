@@ -9,6 +9,7 @@ import (
 	"github.com/ctfer-io/terraform-provider-ctfd/internal/provider/challenge"
 	"github.com/ctfer-io/terraform-provider-ctfd/internal/provider/utils"
 	"github.com/ctfer-io/terraform-provider-ctfd/internal/provider/validators"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -347,7 +348,7 @@ func (r *challengeResource) Read(ctx context.Context, req resource.ReadRequest, 
 	data.Description = types.StringValue(res.Description)
 	data.ConnectionInfo = utils.ToTFString(res.ConnectionInfo)
 	data.MaxAttempts = utils.ToTFInt64(res.MaxAttempts)
-	data.Function = types.StringValue(res.Function)
+	data.Function = types.StringValue("linear") // XXX CTFd does not return the `function` attribute
 	data.Value = types.Int64Value(int64(res.Value))
 	data.Initial = utils.ToTFInt64(res.Initial)
 	data.Decay = utils.ToTFInt64(res.Decay)
@@ -355,61 +356,71 @@ func (r *challengeResource) Read(ctx context.Context, req resource.ReadRequest, 
 	data.State = types.StringValue(res.State)
 	data.Type = types.StringValue(res.Type)
 
-	// Read its requirements
-	resReqs, err := r.client.GetChallengeRequirements(utils.Atoi(data.ID.ValueString()), api.WithContext(ctx))
+	id := utils.Atoi(data.ID.ValueString())
+
+	// Get subresources
+	// => Requirements
+	resReqs, err := r.client.GetChallengeRequirements(id, api.WithContext(ctx))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
-			fmt.Sprintf("Unable to read requirements of challenge %s, got error: %s", data.ID.ValueString(), err),
+			fmt.Sprintf("Unable to read challenge %d requirements, got error: %s", id, err),
 		)
 	}
 	reqs := (*challenge.RequirementsSubresourceModel)(nil)
 	if resReqs != nil {
-		challReqs := make([]types.String, 0, len(resReqs.Prerequisites))
+		challPreqs := make([]types.String, 0, len(resReqs.Prerequisites))
 		for _, req := range resReqs.Prerequisites {
-			challReqs = append(challReqs, types.StringValue(strconv.Itoa(req)))
+			challPreqs = append(challPreqs, types.StringValue(strconv.Itoa(req)))
 		}
 		reqs = &challenge.RequirementsSubresourceModel{
 			Behavior:      challenge.FromAnon(resReqs.Anonymize),
-			Prerequisites: challReqs,
+			Prerequisites: challPreqs,
 		}
 	}
 	data.Requirements = reqs
 
-	// Read its files
-	resFiles, err := r.client.GetChallengeFiles(utils.Atoi(data.ID.ValueString()), api.WithContext(ctx))
+	// => Files
+	resFiles, err := r.client.GetChallengeFiles(id, api.WithContext(ctx))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
-			fmt.Sprintf("Unable to read files of challenge %s, got error: %s", data.ID.ValueString(), err),
-		)
-	}
-	challFiles := make([]challenge.FileSubresourceModel, 0, len(resFiles))
-	for _, file := range resFiles {
-		f := challenge.FileSubresourceModel{
-			ID:       types.StringValue(strconv.Itoa(file.ID)),
-			Location: types.StringValue(file.Location),
-			Name:     types.StringValue(utils.Filename(file.Location)),
-		}
-		f.Read(ctx, resp.Diagnostics, r.client)
-		challFiles = append(challFiles, f)
-	}
-	if data.Files != nil {
-		data.Files = challFiles
-	}
-
-	// Read its flags
-	resFlags, err := r.client.GetChallengeFlags(utils.Atoi(data.ID.ValueString()), api.WithContext(ctx))
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Client Error",
-			fmt.Sprintf("Unable to read flags of challenge %s, got error: %s", data.ID.ValueString(), err),
+			fmt.Sprintf("Unable to read challenge %d files, got error: %s", id, err),
 		)
 		return
 	}
-	challFlags := make([]challenge.FlagSubresourceModel, 0, len(resFlags))
+	data.Files = make([]challenge.FileSubresourceModel, 0, len(resFiles))
+	for _, file := range resFiles {
+		c, err := r.client.GetFileContent(file, api.WithContext(ctx))
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Client Error",
+				fmt.Sprintf("Unable to read file content at %s, got error: %s", file.Location, err),
+			)
+			continue
+		}
+		nf := challenge.FileSubresourceModel{
+			ID:       types.StringValue(strconv.Itoa(file.ID)),
+			Name:     types.StringValue(utils.Filename(file.Location)),
+			Location: types.StringValue(file.Location),
+			Content:  types.StringValue(string(c)),
+		}
+		nf.PropagateContent(ctx, resp.Diagnostics)
+		data.Files = append(data.Files, nf)
+	}
+
+	// => Flags
+	resFlags, err := r.client.GetChallengeFlags(id, api.WithContext(ctx))
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Client Error",
+			fmt.Sprintf("Unable to read challenge %d flags, got error: %s", id, err),
+		)
+		return
+	}
+	data.Flags = make([]challenge.FlagSubresourceModel, 0, len(resFlags))
 	for _, flag := range resFlags {
-		challFlags = append(challFlags, challenge.FlagSubresourceModel{
+		data.Flags = append(data.Flags, challenge.FlagSubresourceModel{
 			ID:      types.StringValue(strconv.Itoa(flag.ID)),
 			Content: types.StringValue(flag.Content),
 			// XXX this should be typed properly
@@ -417,71 +428,59 @@ func (r *challengeResource) Read(ctx context.Context, req resource.ReadRequest, 
 			Type: types.StringValue(flag.Type),
 		})
 	}
-	if data.Flags != nil {
-		data.Flags = challFlags
-	}
 
-	// Read its tags
-	resTags, err := r.client.GetChallengeTags(utils.Atoi(data.ID.ValueString()), api.WithContext(ctx))
+	// => Hints
+	resHints, err := r.client.GetChallengeHints(id, api.WithContext(ctx))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
-			fmt.Sprintf("Unable to read tags of challenge %s, got error: %s", data.ID.ValueString(), err),
+			fmt.Sprintf("Unable to read challenge %d hints, got error: %s", id, err),
 		)
 		return
 	}
-	challTags := make([]types.String, 0, len(resTags))
-	for _, tag := range resTags {
-		challTags = append(challTags, types.StringValue(tag.Value))
-	}
-	if data.Tags != nil {
-		data.Tags = challTags
-	}
-
-	// Read its topics
-	resTopics, err := r.client.GetChallengeTopics(utils.Atoi(data.ID.ValueString()), api.WithContext(ctx))
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Client Error",
-			fmt.Sprintf("Unable to read topics of challenge %s, got error: %s", data.ID.ValueString(), err),
-		)
-		return
-	}
-	challTopics := make([]types.String, 0, len(resTopics))
-	for _, topic := range resTopics {
-		challTopics = append(challTopics, types.StringValue(topic.Value))
-	}
-	if data.Topics != nil {
-		data.Topics = challTopics
-	}
-
-	// Read its hints
-	resHints, err := r.client.GetChallengeHints(utils.Atoi(data.ID.ValueString()), api.WithContext(ctx))
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Client Error",
-			fmt.Sprintf("Unable to read hints of challenge %s, got error: %s", data.ID.ValueString(), err),
-		)
-		return
-	}
-	challHints := make([]challenge.HintSubresourceModel, 0, len(resHints))
+	data.Hints = make([]challenge.HintSubresourceModel, 0, len(resHints))
 	for _, hint := range resHints {
-		hintReqs := make([]types.String, 0, len(hint.Requirements.Prerequisites))
-		for _, req := range hint.Requirements.Prerequisites {
-			hintReqs = append(hintReqs, types.StringValue(strconv.Itoa(req)))
+		reqs := []attr.Value{}
+		if hint.Requirements != nil {
+			reqs = make([]attr.Value, 0, len(hint.Requirements.Prerequisites))
+			for _, req := range hint.Requirements.Prerequisites {
+				reqs = append(reqs, types.StringValue(strconv.Itoa(req)))
+			}
 		}
-		if len(hint.Requirements.Prerequisites) == 0 {
-			hintReqs = nil
-		}
-		challHints = append(challHints, challenge.HintSubresourceModel{
+		data.Hints = append(data.Hints, challenge.HintSubresourceModel{
 			ID:           types.StringValue(strconv.Itoa(hint.ID)),
 			Content:      types.StringValue(*hint.Content),
 			Cost:         types.Int64Value(int64(hint.Cost)),
-			Requirements: hintReqs,
+			Requirements: types.ListValueMust(types.StringType, reqs),
 		})
 	}
-	if data.Hints != nil {
-		data.Hints = challHints
+
+	// => Tags
+	resTags, err := r.client.GetChallengeTags(id, api.WithContext(ctx))
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Client Error",
+			fmt.Sprintf("Unable to read challenge %d tags, got error: %s", id, err),
+		)
+		return
+	}
+	data.Tags = make([]basetypes.StringValue, 0, len(resTags))
+	for _, tag := range resTags {
+		data.Tags = append(data.Tags, types.StringValue(tag.Value))
+	}
+
+	// => Topics
+	resTopics, err := r.client.GetChallengeTopics(id, api.WithContext(ctx))
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Client Error",
+			fmt.Sprintf("Unable to read challenge %d topics, got error: %s", id, err),
+		)
+		return
+	}
+	data.Topics = make([]basetypes.StringValue, 0, len(resTopics))
+	for _, topic := range resTopics {
+		data.Topics = append(data.Topics, types.StringValue(topic.Value))
 	}
 
 	if resp.Diagnostics.HasError() {
@@ -685,7 +684,10 @@ func (r *challengeResource) Update(ctx context.Context, req resource.UpdateReque
 		return
 	}
 	for _, topic := range challTopics {
-		if err := r.client.DeleteTopic(strconv.Itoa(topic.ID), api.WithContext(ctx)); err != nil {
+		if err := r.client.DeleteTopic(&api.DeleteTopicArgs{
+			ID:   strconv.Itoa(topic.ID),
+			Type: "challenge",
+		}, api.WithContext(ctx)); err != nil {
 			resp.Diagnostics.AddError(
 				"Client Error",
 				fmt.Sprintf("Unable to delete topic %d of challenge %s, got error: %s", topic.ID, data.ID.ValueString(), err),
@@ -780,4 +782,6 @@ func (r *challengeResource) Delete(ctx context.Context, req resource.DeleteReque
 
 func (r *challengeResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+
+	// Automatically call r.Read
 }

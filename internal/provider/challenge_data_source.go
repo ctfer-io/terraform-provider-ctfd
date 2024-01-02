@@ -8,6 +8,7 @@ import (
 	"github.com/ctfer-io/go-ctfd/api"
 	"github.com/ctfer-io/terraform-provider-ctfd/internal/provider/challenge"
 	"github.com/ctfer-io/terraform-provider-ctfd/internal/provider/utils"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -237,7 +238,7 @@ func (ch *challengeDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		}
 		challHints := make([]challenge.HintSubresourceModel, 0, len(hints))
 		for _, hint := range hints {
-			hintReq := make([]types.String, 0, len(hint.Requirements.Prerequisites))
+			hintReq := make([]attr.Value, 0, len(hint.Requirements.Prerequisites))
 			for _, preq := range hint.Requirements.Prerequisites {
 				hintReq = append(hintReq, types.StringValue(strconv.Itoa(preq)))
 			}
@@ -245,7 +246,7 @@ func (ch *challengeDataSource) Read(ctx context.Context, req datasource.ReadRequ
 				ID:           types.StringValue(strconv.Itoa(hint.ID)),
 				Content:      types.StringValue(*hint.Content),
 				Cost:         types.Int64Value(int64(hint.Cost)),
-				Requirements: hintReq,
+				Requirements: types.ListValueMust(types.StringType, hintReq),
 			})
 		}
 

@@ -105,8 +105,7 @@ func (data *FlagSubresourceModel) Update(ctx context.Context, diags diag.Diagnos
 	tflog.Trace(ctx, "updated a flag")
 
 	data.Content = types.StringValue(res.Content)
-	// XXX this should be properly typed
-	data.Data = types.StringValue(res.Data.(string))
+	data.Data = types.StringValue(res.Data)
 	data.Type = types.StringValue(res.Type)
 }
 

@@ -124,9 +124,8 @@ func (chall *challengeResourceModel) Read(ctx context.Context, diags diag.Diagno
 		chall.Flags = append(chall.Flags, challenge.FlagSubresourceModel{
 			ID:      types.StringValue(strconv.Itoa(flag.ID)),
 			Content: types.StringValue(flag.Content),
-			// XXX this should be typed properly
-			Data: types.StringValue(flag.Data.(string)),
-			Type: types.StringValue(flag.Type),
+			Data:    types.StringValue(flag.Data),
+			Type:    types.StringValue(flag.Type),
 		})
 	}
 

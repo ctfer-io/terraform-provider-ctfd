@@ -45,21 +45,21 @@ func (p *CTFdProvider) Schema(ctx context.Context, req provider.SchemaRequest, r
 		MarkdownDescription: "Interact with a [CTFd](https://github.com/ctfd/ctfd).",
 		Attributes: map[string]schema.Attribute{
 			"url": schema.StringAttribute{
-				MarkdownDescription: "CTFd base URL. Could use `CTFD_URL` environment variable.",
+				MarkdownDescription: "CTFd base URL (e.g. `https://my-ctf.lan`). Could use `CTFD_URL` environment variable instead.",
 				Optional:            true,
 			},
 			"session": schema.StringAttribute{
-				MarkdownDescription: "User session token, comes with nonce. Could use `CTFD_SESSION` environment variable.",
+				MarkdownDescription: "User session token, comes with nonce. Could use `CTFD_SESSION` environment variable instead.",
 				Sensitive:           true,
 				Optional:            true,
 			},
 			"nonce": schema.StringAttribute{
-				MarkdownDescription: "User session nonce, comes with session. Could use `CTFD_NONCE` environment variable.",
+				MarkdownDescription: "User session nonce, comes with session. Could use `CTFD_NONCE` environment variable instead.",
 				Sensitive:           true,
 				Optional:            true,
 			},
 			"api_key": schema.StringAttribute{
-				MarkdownDescription: "User API key. Could use `CTFD_API_KEY` environment variable. Despite being the most convenient way to authenticate yourself, we do not recommend it as you will probably generate a long-live token without any rotation policy.",
+				MarkdownDescription: "User API key. Could use `CTFD_API_KEY` environment variable instead. Despite being the most convenient way to authenticate yourself, we do not recommend it as you will probably generate a long-live token without any rotation policy.",
 				Sensitive:           true,
 				Optional:            true,
 			},

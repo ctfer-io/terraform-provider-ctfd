@@ -30,24 +30,27 @@ func HintSubresourceAttributes() map[string]schema.Attribute {
 	return map[string]schema.Attribute{
 		"id": schema.StringAttribute{
 			Computed:            true,
-			MarkdownDescription: "Identifier of the hint",
+			MarkdownDescription: "Identifier of the hint, used internally to handle the CTFd corresponding object.",
 			PlanModifiers: []planmodifier.String{
 				stringplanmodifier.UseStateForUnknown(),
 			},
 		},
 		"content": schema.StringAttribute{
-			Required: true,
+			MarkdownDescription: "Content of the hint as displayed to the end-user.",
+			Required:            true,
 		},
 		"cost": schema.Int64Attribute{
-			Optional: true,
-			Computed: true,
-			Default:  int64default.StaticInt64(0),
+			MarkdownDescription: "Cost of the hint, and if any specified, the end-user will consume its own (or team) points to get it.",
+			Optional:            true,
+			Computed:            true,
+			Default:             int64default.StaticInt64(0),
 		},
 		"requirements": schema.ListAttribute{
-			ElementType: types.StringType,
-			Default:     listdefault.StaticValue(basetypes.ListValue{}),
-			Computed:    true,
-			Optional:    true,
+			MarkdownDescription: "Other hints required to be consumed before getting this one. Usefull for cost-increasing hint strategies with more and more help.",
+			ElementType:         types.StringType,
+			Default:             listdefault.StaticValue(basetypes.ListValue{}),
+			Computed:            true,
+			Optional:            true,
 		},
 	}
 }

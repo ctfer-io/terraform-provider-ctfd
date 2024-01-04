@@ -27,32 +27,37 @@ type FileSubresourceModel struct {
 func FileSubresourceAttributes() map[string]schema.Attribute {
 	return map[string]schema.Attribute{
 		"id": schema.StringAttribute{
-			Computed: true,
+			Computed:            true,
+			MarkdownDescription: "Identifier of the file, used internally to handle the CTFd corresponding object.",
 			PlanModifiers: []planmodifier.String{
 				stringplanmodifier.UseStateForUnknown(),
 			},
 		},
 		"name": schema.StringAttribute{
-			Required: true,
+			MarkdownDescription: "Name of the file as displayed to end-users.",
+			Required:            true,
 		},
 		"location": schema.StringAttribute{
-			Computed: true,
+			MarkdownDescription: "Location where the file is stored on the CTFd instance, for download purposes.",
+			Computed:            true,
 			PlanModifiers: []planmodifier.String{
 				stringplanmodifier.UseStateForUnknown(),
 			},
 		},
 		"content": schema.StringAttribute{
-			Optional:  true,
-			Computed:  true,
-			Sensitive: true,
+			MarkdownDescription: "Raw content of the file, perfectly fit the use-cases of a .txt document or anything with a simple binary content. You could provide it from the file-system using `file(\"${path.module}/...\")`.",
+			Optional:            true,
+			Computed:            true,
+			Sensitive:           true,
 			PlanModifiers: []planmodifier.String{
 				stringplanmodifier.UseStateForUnknown(),
 			},
 		},
 		"contentb64": schema.StringAttribute{
-			Optional:  true,
-			Computed:  true,
-			Sensitive: true,
+			MarkdownDescription: "Base 64 content of the file, perfectly fit the use-cases of complex binaries. You could provide it from the file-system using `filebase64(\"${path.module}/...\")`.",
+			Optional:            true,
+			Computed:            true,
+			Sensitive:           true,
 			PlanModifiers: []planmodifier.String{
 				stringplanmodifier.UseStateForUnknown(),
 			},

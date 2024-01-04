@@ -7,8 +7,6 @@ import (
 
 	"github.com/ctfer-io/go-ctfd/api"
 	"github.com/ctfer-io/terraform-provider-ctfd/internal/provider/challenge"
-	"github.com/ctfer-io/terraform-provider-ctfd/internal/provider/utils"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -47,19 +45,32 @@ func (ch *challengeDataSource) Schema(ctx context.Context, req datasource.Schema
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"id": schema.StringAttribute{
-							Computed: true,
+							MarkdownDescription: "Identifier of the challenge.",
+							Computed:            true,
 						},
 						"name": schema.StringAttribute{
-							Computed: true,
+							MarkdownDescription: "Name of the challenge, displayed as it.",
+							Computed:            true,
 						},
 						"category": schema.StringAttribute{
-							Computed: true,
+							MarkdownDescription: "Category of the challenge that CTFd groups by on the web UI.",
+							Computed:            true,
 						},
 						"description": schema.StringAttribute{
-							Computed: true,
+							MarkdownDescription: "Description of the challenge, consider using multiline descriptions for better style.",
+							Computed:            true,
 						},
 						"connection_info": schema.StringAttribute{
-							Computed: true,
+							MarkdownDescription: "Connection Information to connect to the challenge instance, usefull for pwn or web pentest.",
+							Computed:            true,
+						},
+						"max_attempts": schema.Int64Attribute{
+							MarkdownDescription: "Maximum amount of attempts before being unable to flag the challenge.",
+							Computed:            true,
+						},
+						"function": schema.StringAttribute{
+							MarkdownDescription: "Decay function to define how the challenge value evolve through solves, either linear or logarithmic.",
+							Computed:            true,
 						},
 						"value": schema.Int64Attribute{
 							Computed: true,
@@ -73,40 +84,57 @@ func (ch *challengeDataSource) Schema(ctx context.Context, req datasource.Schema
 						"minimum": schema.Int64Attribute{
 							Computed: true,
 						},
-						"max_attempts": schema.StringAttribute{
-							Computed: true,
-						},
-						"function": schema.StringAttribute{
-							Computed: true,
-						},
-						// TODO add support of next + requirements
+						// TODO add support of next
 						"state": schema.StringAttribute{
-							Computed: true,
+							MarkdownDescription: "State of the challenge, either hidden or visible.",
+							Computed:            true,
 						},
 						"type": schema.StringAttribute{
-							Computed: true,
+							MarkdownDescription: "Type of the challenge defining its layout, either standard or dynamic.",
+							Computed:            true,
+						},
+						"requirements": schema.SingleNestedAttribute{
+							MarkdownDescription: "List of required challenges that needs to get flagged before this one being accessible. Usefull for skill-trees-like strategy CTF.",
+							Computed:            true,
+							Attributes: map[string]schema.Attribute{
+								"behavior": schema.StringAttribute{
+									MarkdownDescription: "Behavior if not unlocked, either hidden or anonymized.",
+									Computed:            true,
+								},
+								"prerequisites": schema.ListAttribute{
+
+									MarkdownDescription: "List of the challenges ID.",
+									Computed:            true,
+									ElementType:         types.StringType,
+								},
+							},
 						},
 						"flags": schema.ListNestedAttribute{
+							MarkdownDescription: "List of challenge flags that solves it.",
 							NestedObject: schema.NestedAttributeObject{
 								Attributes: challenge.FlagSubdatasourceAttributes(),
 							},
 							Computed: true,
 						},
 						"tags": schema.ListAttribute{
-							ElementType: types.StringType,
-							Computed:    true,
+							MarkdownDescription: "List of challenge tags that will be displayed to the end-user. You could use them to give some quick insights of what a challenge involves.",
+							ElementType:         types.StringType,
+							Computed:            true,
 						},
 						"topics": schema.ListAttribute{
-							ElementType: types.StringType,
-							Computed:    true,
+							MarkdownDescription: "List of challenge topics that are displayed to the administrators for maintenance and planification.",
+							ElementType:         types.StringType,
+							Computed:            true,
 						},
 						"hints": schema.ListNestedAttribute{
+							MarkdownDescription: "List of hints about the challenge displayed to the end-user.",
 							NestedObject: schema.NestedAttributeObject{
 								Attributes: challenge.HintSubdatasourceAttributes(),
 							},
 							Computed: true,
 						},
 						"files": schema.ListNestedAttribute{
+							MarkdownDescription: "List of files given to players to flag the challenge.",
 							NestedObject: schema.NestedAttributeObject{
 								Attributes: challenge.FileSubdatasourceAttributes(),
 							},
@@ -148,132 +176,17 @@ func (ch *challengeDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		return
 	}
 
-	for _, chall := range challs {
-		// Fetch the challenge with all its information as the CTFd API is broken as fuck
-		chall, err := ch.client.GetChallenge(chall.ID, api.WithContext(ctx))
-		if err != nil {
-			resp.Diagnostics.AddError(
-				fmt.Sprintf("Unable to Read CTFd Challenge %d", chall.ID),
-				err.Error(),
-			)
-			return
+	state.Challenges = make([]challengeResourceModel, 0, len(challs))
+	for _, c := range challs {
+		chall := challengeResourceModel{
+			ID: types.StringValue(strconv.Itoa(c.ID)),
 		}
+		chall.Read(ctx, resp.Diagnostics, ch.client)
 
-		// => Files
-		files, err := ch.client.GetChallengeFiles(chall.ID)
-		if err != nil {
-			resp.Diagnostics.AddError(
-				fmt.Sprintf("Unable to Read CTFd files of Challenge %d", chall.ID),
-				err.Error(),
-			)
-			return
-		}
-		challFiles := make([]challenge.FileSubresourceModel, 0, len(files))
-		for _, file := range files {
-			f := challenge.FileSubresourceModel{
-				ID:       types.StringValue(strconv.Itoa(file.ID)),
-				Location: types.StringValue(file.Location),
-			}
-			f.Read(ctx, resp.Diagnostics, ch.client)
-
-			challFiles = append(challFiles, f)
-		}
-
-		// => Flags
-		flags, err := ch.client.GetChallengeFlags(chall.ID, api.WithContext(ctx))
-		if err != nil {
-			resp.Diagnostics.AddError(
-				fmt.Sprintf("Unable to Read CTFd flags of Challenge %d", chall.ID),
-				err.Error(),
-			)
-			return
-		}
-		challFlags := make([]challenge.FlagSubresourceModel, 0, len(flags))
-		for _, flag := range flags {
-			challFlags = append(challFlags, challenge.FlagSubresourceModel{
-				ID:      types.StringValue(strconv.Itoa(flag.ID)),
-				Content: types.StringValue(flag.Content),
-				// XXX this should be properly typed
-				Data: types.StringValue(flag.Data.(string)),
-				Type: types.StringValue(flag.Type),
-			})
-		}
-
-		// => Tags
-		tags, err := ch.client.GetChallengeTags(chall.ID, api.WithContext(ctx))
-		if err != nil {
-			resp.Diagnostics.AddError(
-				fmt.Sprintf("Unable to Read CTFd tags of Challenge %d", chall.ID),
-				err.Error(),
-			)
-			return
-		}
-		challTags := make([]types.String, 0, len(tags))
-		for _, tag := range tags {
-			challTags = append(challTags, types.StringValue(tag.Value))
-		}
-
-		// => Topics
-		topics, err := ch.client.GetChallengeTopics(chall.ID, api.WithContext(ctx))
-		if err != nil {
-			resp.Diagnostics.AddError(
-				fmt.Sprintf("Unable to Read CTFd topics of Challenge %d", chall.ID),
-				err.Error(),
-			)
-			return
-		}
-		challTopics := make([]types.String, 0, len(topics))
-		for _, topic := range topics {
-			challTopics = append(challTopics, types.StringValue(topic.Value))
-		}
-
-		// => Hints
-		hints, err := ch.client.GetChallengeHints(chall.ID, api.WithContext(ctx))
-		if err != nil {
-			resp.Diagnostics.AddError(
-				fmt.Sprintf("Unable to Reac CTFd hints of Challenge %d", chall.ID),
-				err.Error(),
-			)
-			return
-		}
-		challHints := make([]challenge.HintSubresourceModel, 0, len(hints))
-		for _, hint := range hints {
-			hintReq := make([]attr.Value, 0, len(hint.Requirements.Prerequisites))
-			for _, preq := range hint.Requirements.Prerequisites {
-				hintReq = append(hintReq, types.StringValue(strconv.Itoa(preq)))
-			}
-			challHints = append(challHints, challenge.HintSubresourceModel{
-				ID:           types.StringValue(strconv.Itoa(hint.ID)),
-				Content:      types.StringValue(*hint.Content),
-				Cost:         types.Int64Value(int64(hint.Cost)),
-				Requirements: types.ListValueMust(types.StringType, hintReq),
-			})
-		}
-
-		challState := challengeResourceModel{
-			ID:             types.StringValue(strconv.Itoa(chall.ID)),
-			Name:           types.StringValue(chall.Name),
-			Category:       types.StringValue(chall.Category),
-			Description:    types.StringValue(chall.Description),
-			ConnectionInfo: utils.ToTFString(chall.ConnectionInfo),
-			MaxAttempts:    utils.ToTFInt64(chall.MaxAttempts),
-			Function:       types.StringValue(chall.Function),
-			Value:          types.Int64Value(int64(chall.Value)),
-			Initial:        utils.ToTFInt64(chall.Initial),
-			Decay:          utils.ToTFInt64(chall.Decay),
-			Minimum:        utils.ToTFInt64(chall.Minimum),
-			State:          types.StringValue(chall.State),
-			Type:           types.StringValue(chall.Type),
-			Files:          challFiles,
-			Flags:          challFlags,
-			Tags:           challTags,
-			Topics:         challTopics,
-			Hints:          challHints,
-		}
-
-		state.ID = types.StringValue("placeholder")
-		state.Challenges = append(state.Challenges, challState)
+		state.Challenges = append(state.Challenges, chall)
 	}
+
+	state.ID = types.StringValue("placeholder")
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }

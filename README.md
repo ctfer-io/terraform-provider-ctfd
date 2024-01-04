@@ -23,7 +23,7 @@ Terraform is used to manage resources that have lifecycles, configurations, to s
 That is the case of CTFd: it handles challenges that could be created, modified and deleted.
 With some work to leverage the unsteady CTFd's API, Terraform is now able to manage them as cloud resources bringing you to opportunity of **CTF as Code**.
 
-It avoids shitty scripts, `ctfcli` and other tools that does not solve the problem of reproductibility, ease of deployment and resiliency.
+With a paradigm-shifting vision of setting up CTFs, the Terraform Provider for CTFd avoid shitty scripts, `ctfcli` and other tools that does not solve the problem of reproductibility, ease of deployment and resiliency.
 
 ## How to use it ?
 

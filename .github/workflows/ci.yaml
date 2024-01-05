@@ -25,6 +25,11 @@ jobs:
             update-coverage: true
     runs-on: ${{ matrix.platform }}
     needs: [setup]
+    services:
+      ctfd:
+        image: ctfd/ctfd:3.6.1
+        ports:
+          - 8000:8000
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -41,14 +46,39 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: ${{ runner.os }}-go-
 
-      - name: Run go test
-        run: go test -v -race -coverprofile coverage.txt ./...
+      - name: Wait for CTFd server
+        run: |
+          max_attempts=60
+          base_url="http://localhost:8000"
+          for ((i=0; i<$max_attempts; i++)); do
+            if curl --head --fail --silent --show-error "$base_url" >/dev/null; then
+              echo "Server is up and running!"
+              break
+            else
+              echo "Waiting for the server to respond... (attempt $((i+1)))"
+              sleep 5
+            fi
+          done
+          if [ $i -eq $max_attempts ]; then
+            echo "Server did not respond within the allotted time. Exiting..."
+            exit 1
+          fi
+      
+      - name: Setup CTFd
+        run: go run cmd/setup/main.go
+        env:
+          CTFD_URL: http://localhost:8000
+
+      - name: Run go acceptance tests
+        run: make test-acc
+        env:
+          CTFD_URL: http://localhost:8000
       
       - name: Upload coverage to Coveralls
         if: ${{ matrix.update-coverage }}
         uses: shogo82148/actions-goveralls@v1
         with:
-          path-to-profile: coverage.txt
+          path-to-profile: cov.out
 
   go-lint:
     runs-on: ubuntu-latest

@@ -127,6 +127,10 @@ func (r *challengeResource) Schema(ctx context.Context, req resource.SchemaReque
 					stringplanmodifier.RequiresReplace(),
 				},
 			},
+			"next": schema.Int64Attribute{
+				MarkdownDescription: "Suggestion for the end-user as next challenge to work on.",
+				Optional:            true,
+			},
 			"requirements": schema.SingleNestedAttribute{
 				MarkdownDescription: "List of required challenges that needs to get flagged before this one being accessible. Useful for skill-trees-like strategy CTF.",
 				Optional:            true,
@@ -236,6 +240,7 @@ func (r *challengeResource) Create(ctx context.Context, req resource.CreateReque
 		Minimum:        utils.ToInt(data.Minimum),
 		State:          data.State.ValueString(),
 		Type:           data.Type.ValueString(),
+		NextID:         utils.ToInt(data.Next),
 		Requirements:   reqs,
 	}, api.WithContext(ctx))
 	if err != nil {
@@ -377,6 +382,7 @@ func (r *challengeResource) Update(ctx context.Context, req resource.UpdateReque
 		Decay:          utils.ToInt(data.Decay),
 		Minimum:        utils.ToInt(data.Minimum),
 		State:          data.State.ValueString(),
+		NextID:         utils.ToInt(data.Next),
 		Requirements:   reqs,
 	}, api.WithContext(ctx))
 	if err != nil {

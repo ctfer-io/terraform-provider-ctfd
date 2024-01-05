@@ -15,25 +15,25 @@ import (
 )
 
 type challengeResourceModel struct {
-	ID             types.String `tfsdk:"id"`
-	Name           types.String `tfsdk:"name"`
-	Category       types.String `tfsdk:"category"`
-	Description    types.String `tfsdk:"description"`
-	ConnectionInfo types.String `tfsdk:"connection_info"`
-	MaxAttempts    types.Int64  `tfsdk:"max_attempts"`
-	Function       types.String `tfsdk:"function"`
-	Value          types.Int64  `tfsdk:"value"`
-	Decay          types.Int64  `tfsdk:"decay"`
-	Minimum        types.Int64  `tfsdk:"minimum"`
-	State          types.String `tfsdk:"state"`
-	Type           types.String `tfsdk:"type"`
-	// TODO add support of Next challenges
-	Requirements *challenge.RequirementsSubresourceModel `tfsdk:"requirements"`
-	Flags        []challenge.FlagSubresourceModel        `tfsdk:"flags"`
-	Tags         []types.String                          `tfsdk:"tags"`
-	Topics       []types.String                          `tfsdk:"topics"`
-	Hints        []challenge.HintSubresourceModel        `tfsdk:"hints"`
-	Files        []challenge.FileSubresourceModel        `tfsdk:"files"`
+	ID             types.String                            `tfsdk:"id"`
+	Name           types.String                            `tfsdk:"name"`
+	Category       types.String                            `tfsdk:"category"`
+	Description    types.String                            `tfsdk:"description"`
+	ConnectionInfo types.String                            `tfsdk:"connection_info"`
+	MaxAttempts    types.Int64                             `tfsdk:"max_attempts"`
+	Function       types.String                            `tfsdk:"function"`
+	Value          types.Int64                             `tfsdk:"value"`
+	Decay          types.Int64                             `tfsdk:"decay"`
+	Minimum        types.Int64                             `tfsdk:"minimum"`
+	State          types.String                            `tfsdk:"state"`
+	Type           types.String                            `tfsdk:"type"`
+	Next           types.Int64                             `tfsdk:"next"`
+	Requirements   *challenge.RequirementsSubresourceModel `tfsdk:"requirements"`
+	Flags          []challenge.FlagSubresourceModel        `tfsdk:"flags"`
+	Tags           []types.String                          `tfsdk:"tags"`
+	Topics         []types.String                          `tfsdk:"topics"`
+	Hints          []challenge.HintSubresourceModel        `tfsdk:"hints"`
+	Files          []challenge.FileSubresourceModel        `tfsdk:"files"`
 }
 
 func (chall *challengeResourceModel) Read(ctx context.Context, diags diag.Diagnostics, client *api.Client) {
@@ -53,6 +53,7 @@ func (chall *challengeResourceModel) Read(ctx context.Context, diags diag.Diagno
 	chall.Minimum = utils.ToTFInt64(res.Minimum)
 	chall.State = types.StringValue(res.State)
 	chall.Type = types.StringValue(res.Type)
+	chall.Next = utils.ToTFInt64(res.NextID)
 
 	switch res.Type {
 	case "standard":

@@ -23,7 +23,6 @@ type challengeResourceModel struct {
 	MaxAttempts    types.Int64  `tfsdk:"max_attempts"`
 	Function       types.String `tfsdk:"function"`
 	Value          types.Int64  `tfsdk:"value"`
-	Initial        types.Int64  `tfsdk:"initial"`
 	Decay          types.Int64  `tfsdk:"decay"`
 	Minimum        types.Int64  `tfsdk:"minimum"`
 	State          types.String `tfsdk:"state"`
@@ -50,12 +49,17 @@ func (chall *challengeResourceModel) Read(ctx context.Context, diags diag.Diagno
 	chall.ConnectionInfo = utils.ToTFString(res.ConnectionInfo)
 	chall.MaxAttempts = utils.ToTFInt64(res.MaxAttempts)
 	chall.Function = types.StringValue("linear") // XXX CTFd does not return the `function` attribute
-	chall.Value = types.Int64Value(int64(res.Value))
-	chall.Initial = utils.ToTFInt64(res.Initial)
 	chall.Decay = utils.ToTFInt64(res.Decay)
 	chall.Minimum = utils.ToTFInt64(res.Minimum)
 	chall.State = types.StringValue(res.State)
 	chall.Type = types.StringValue(res.Type)
+
+	switch res.Type {
+	case "standard":
+		chall.Value = types.Int64Value(int64(res.Value))
+	case "dynamic":
+		chall.Value = utils.ToTFInt64(res.Initial)
+	}
 
 	id := utils.Atoi(chall.ID.ValueString())
 

@@ -30,6 +30,8 @@ github.com/cloudflare/circl v1.3.3 h1:fE/Qz0QdIGqeWfnwq0RE0R7MI51s0M2E4Ga9kq5AEM
 github.com/cloudflare/circl v1.3.3/go.mod h1:5XYMA4rFBvNIrhs50XuiBJ15vF2pZn4nnUKZrLbUZFA=
 github.com/ctfer-io/go-ctfd v0.3.7 h1:A8w/jXK84p/lX/VHW8EqVrId52/WfzB0k1vFqpeCiN0=
 github.com/ctfer-io/go-ctfd v0.3.7/go.mod h1:3MEtNvOQPrQ84/+h7GarCB8phfc445ifE7jyV7caMhs=
+github.com/ctfer-io/go-ctfd v0.3.8-0.20240104152541-73fed3627cb5 h1:PO4DlZBU2mGVS5okX2Qwc+7/zxcD+hEVwoZp7n4VRHk=
+github.com/ctfer-io/go-ctfd v0.3.8-0.20240104152541-73fed3627cb5/go.mod h1:3MEtNvOQPrQ84/+h7GarCB8phfc445ifE7jyV7caMhs=
 github.com/cyphar/filepath-securejoin v0.2.4 h1:Ugdm7cg7i6ZK6x3xDF1oEu1nfkyfH53EtKeQYTC3kyg=
 github.com/cyphar/filepath-securejoin v0.2.4/go.mod h1:aPGpWjXOXUn2NCNjFvBE6aRxGGx79pTxQpKOJNYHHl4=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

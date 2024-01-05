@@ -64,7 +64,7 @@ func (r *challengeResource) Schema(ctx context.Context, req resource.SchemaReque
 				Required:            true,
 			},
 			"connection_info": schema.StringAttribute{
-				MarkdownDescription: "Connection Information to connect to the challenge instance, usefull for pwn or web pentest.",
+				MarkdownDescription: "Connection Information to connect to the challenge instance, usefull for pwn, web and infrastructure pentests.",
 				Optional:            true,
 				Computed:            true,
 				Default:             stringdefault.StaticString(""),
@@ -87,18 +87,18 @@ func (r *challengeResource) Schema(ctx context.Context, req resource.SchemaReque
 					}),
 				},
 			},
-			// TODO value can't be set side to <initial,decay,minimum>, depends on .type value (respectively standard and dynamic)
 			"value": schema.Int64Attribute{
-				Optional: true,
+				MarkdownDescription: "The value (points) of the challenge once solved. Internally, the provider will handle what target is legitimate depending on the `.type` value, i.e. either `value` for \"standard\" or `initial` for \"dynamic\".",
+				Optional:            true,
 			},
-			"initial": schema.Int64Attribute{
-				Optional: true,
-			},
+			// XXX decay and minimum are only required if .type == "dynamic"
 			"decay": schema.Int64Attribute{
-				Optional: true,
+				MarkdownDescription: "The decay defines from each number of solves does the decay function triggers until reaching minimum. This function is defined by CTFd and could be configured through `.function`.",
+				Optional:            true,
 			},
 			"minimum": schema.Int64Attribute{
-				Optional: true,
+				MarkdownDescription: "The minimum points for a dynamic-score challenge to reach with the decay function. Once there, no solve could have more value.",
+				Optional:            true,
 			},
 			"state": schema.StringAttribute{
 				MarkdownDescription: "State of the challenge, either hidden or visible.",
@@ -113,10 +113,16 @@ func (r *challengeResource) Schema(ctx context.Context, req resource.SchemaReque
 				},
 			},
 			"type": schema.StringAttribute{
-				MarkdownDescription: "Type of the challenge defining its layout, either standard or dynamic.",
+				MarkdownDescription: "Type of the challenge defining its layout/behavior, either standard or dynamic (default).",
 				Optional:            true,
 				Computed:            true,
 				Default:             stringdefault.StaticString("dynamic"),
+				Validators: []validator.String{
+					validators.NewStringEnumValidator([]basetypes.StringValue{
+						types.StringValue("standard"),
+						types.StringValue("dynamic"),
+					}),
+				},
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
@@ -225,7 +231,7 @@ func (r *challengeResource) Create(ctx context.Context, req resource.CreateReque
 		MaxAttempts:    utils.ToInt(data.MaxAttempts),
 		Function:       data.Function.ValueString(),
 		Value:          int(data.Value.ValueInt64()),
-		Initial:        utils.ToInt(data.Initial),
+		Initial:        utils.ToInt(data.Value),
 		Decay:          utils.ToInt(data.Decay),
 		Minimum:        utils.ToInt(data.Minimum),
 		State:          data.State.ValueString(),
@@ -366,12 +372,12 @@ func (r *challengeResource) Update(ctx context.Context, req resource.UpdateReque
 		ConnectionInfo: data.ConnectionInfo.ValueStringPointer(),
 		MaxAttempts:    utils.ToInt(data.MaxAttempts),
 		Function:       data.Function.ValueString(),
-		// Value:          int(data.Value.ToInt64Value()), // TODO add support of .value in PATCH /challenges
-		Initial:      utils.ToInt(data.Initial),
-		Decay:        utils.ToInt(data.Decay),
-		Minimum:      utils.ToInt(data.Minimum),
-		State:        data.State.ValueString(),
-		Requirements: reqs,
+		Value:          utils.ToInt(data.Value),
+		Initial:        utils.ToInt(data.Value),
+		Decay:          utils.ToInt(data.Decay),
+		Minimum:        utils.ToInt(data.Minimum),
+		State:          data.State.ValueString(),
+		Requirements:   reqs,
 	}, api.WithContext(ctx))
 	if err != nil {
 		resp.Diagnostics.AddError(

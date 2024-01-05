@@ -22,7 +22,6 @@ resource "ctfd_challenge" "test" {
 		And it is multiline :o
 	EOT
 	value    = 500
-    initial  = 500
     decay    = 17
     minimum  = 50
     state    = "visible"
@@ -84,7 +83,6 @@ resource "ctfd_challenge" "test" {
 		And it is multiline :o
 	EOT
 	value    = 500
-    initial  = 500
     decay    = 17
     minimum  = 50
     state    = "visible"

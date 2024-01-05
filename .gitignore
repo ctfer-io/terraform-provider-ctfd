@@ -1,0 +1,6 @@
+# examples
+*.pcap*
+*.tfstate*
+
+# ci files
+cov.out

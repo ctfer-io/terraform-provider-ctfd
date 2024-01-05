@@ -95,6 +95,13 @@ func (p *CTFdProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 	}
 
 	// Check configuration values are known
+	if config.URL.IsUnknown() {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("url"),
+			"Unknown CTFD url.",
+			"The provider cannot guess where to reach the CTFd instance.",
+		)
+	}
 	if config.Session.IsUnknown() {
 		resp.Diagnostics.AddAttributeError(
 			path.Root("session"),

@@ -26,7 +26,7 @@ description: |-
 Read-Only:
 
 - `category` (String) Category of the challenge that CTFd groups by on the web UI.
-- `connection_info` (String) Connection Information to connect to the challenge instance, usefull for pwn or web pentest.
+- `connection_info` (String) Connection Information to connect to the challenge instance, useful for pwn or web pentest.
 - `decay` (Number)
 - `description` (String) Description of the challenge, consider using multiline descriptions for better style.
 - `files` (Attributes List) List of files given to players to flag the challenge. (see [below for nested schema](#nestedatt--challenges--files))
@@ -38,7 +38,7 @@ Read-Only:
 - `max_attempts` (Number) Maximum amount of attempts before being unable to flag the challenge.
 - `minimum` (Number)
 - `name` (String) Name of the challenge, displayed as it.
-- `requirements` (Attributes) List of required challenges that needs to get flagged before this one being accessible. Usefull for skill-trees-like strategy CTF. (see [below for nested schema](#nestedatt--challenges--requirements))
+- `requirements` (Attributes) List of required challenges that needs to get flagged before this one being accessible. Useful for skill-trees-like strategy CTF. (see [below for nested schema](#nestedatt--challenges--requirements))
 - `state` (String) State of the challenge, either hidden or visible.
 - `tags` (List of String) List of challenge tags that will be displayed to the end-user. You could use them to give some quick insights of what a challenge involves.
 - `topics` (List of String) List of challenge topics that are displayed to the administrators for maintenance and planification.

@@ -46,7 +46,7 @@ func HintSubresourceAttributes() map[string]schema.Attribute {
 			Default:             int64default.StaticInt64(0),
 		},
 		"requirements": schema.ListAttribute{
-			MarkdownDescription: "Other hints required to be consumed before getting this one. Usefull for cost-increasing hint strategies with more and more help.",
+			MarkdownDescription: "Other hints required to be consumed before getting this one. Useful for cost-increasing hint strategies with more and more help.",
 			ElementType:         types.StringType,
 			Default:             listdefault.StaticValue(basetypes.ListValue{}),
 			Computed:            true,

@@ -3,7 +3,7 @@
 page_title: "ctfd Provider"
 subcategory: ""
 description: |-
-  Use the Terraform Provider to tnteract with a CTFd https://github.com/ctfd/ctfd.
+  Use the Terraform Provider to interact with a CTFd https://github.com/ctfd/ctfd.
   Why creating this ?
   Terraform is used to manage resources that have lifecycles, configurations, to sum it up.
   That is the case of CTFd: it handles challenges that could be created, modified and deleted.

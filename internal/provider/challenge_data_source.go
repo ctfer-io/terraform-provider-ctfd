@@ -61,7 +61,7 @@ func (ch *challengeDataSource) Schema(ctx context.Context, req datasource.Schema
 							Computed:            true,
 						},
 						"connection_info": schema.StringAttribute{
-							MarkdownDescription: "Connection Information to connect to the challenge instance, usefull for pwn or web pentest.",
+							MarkdownDescription: "Connection Information to connect to the challenge instance, useful for pwn or web pentest.",
 							Computed:            true,
 						},
 						"max_attempts": schema.Int64Attribute{
@@ -94,7 +94,7 @@ func (ch *challengeDataSource) Schema(ctx context.Context, req datasource.Schema
 							Computed:            true,
 						},
 						"requirements": schema.SingleNestedAttribute{
-							MarkdownDescription: "List of required challenges that needs to get flagged before this one being accessible. Usefull for skill-trees-like strategy CTF.",
+							MarkdownDescription: "List of required challenges that needs to get flagged before this one being accessible. Useful for skill-trees-like strategy CTF.",
 							Computed:            true,
 							Attributes: map[string]schema.Attribute{
 								"behavior": schema.StringAttribute{

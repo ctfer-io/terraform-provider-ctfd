@@ -44,7 +44,7 @@ resource "ctfd_challenge" "test" {
 	}]
 	files = [{
 		name    = "something.txt",
-		content = "I won't be really usefull as a file, but I tried my best :)"
+		content = "I won't be really useful as a file, but I tried my best :)"
 	}, {
 		name       = "something-b64.txt",
 		contentb64 = "SSB3b24ndCBiZSByZWFsbHkgdXNlZnVsbCBhcyBhIGZpbGUsIGJ1dCBJIHRyaWVkIG15IGJlc3QgOikK"
@@ -105,7 +105,7 @@ resource "ctfd_challenge" "test" {
 	}]
 	files = [{
 		name    = "something.txt",
-		content = "I won't be really usefull as a file, but I tried my best :)"
+		content = "I won't be really useful as a file, but I tried my best :)"
 	}]
 }
 `,

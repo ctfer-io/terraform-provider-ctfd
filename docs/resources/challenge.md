@@ -68,7 +68,7 @@ resource "ctfd_challenge" "http" {
 
 ### Optional
 
-- `connection_info` (String) Connection Information to connect to the challenge instance, usefull for pwn, web and infrastructure pentests.
+- `connection_info` (String) Connection Information to connect to the challenge instance, useful for pwn, web and infrastructure pentests.
 - `decay` (Number) The decay defines from each number of solves does the decay function triggers until reaching minimum. This function is defined by CTFd and could be configured through `.function`.
 - `files` (Attributes List) List of files given to players to flag the challenge. (see [below for nested schema](#nestedatt--files))
 - `flags` (Attributes List) List of challenge flags that solves it. (see [below for nested schema](#nestedatt--flags))
@@ -76,7 +76,7 @@ resource "ctfd_challenge" "http" {
 - `hints` (Attributes List) List of hints about the challenge displayed to the end-user. (see [below for nested schema](#nestedatt--hints))
 - `max_attempts` (Number) Maximum amount of attempts before being unable to flag the challenge.
 - `minimum` (Number) The minimum points for a dynamic-score challenge to reach with the decay function. Once there, no solve could have more value.
-- `requirements` (Attributes) List of required challenges that needs to get flagged before this one being accessible. Usefull for skill-trees-like strategy CTF. (see [below for nested schema](#nestedatt--requirements))
+- `requirements` (Attributes) List of required challenges that needs to get flagged before this one being accessible. Useful for skill-trees-like strategy CTF. (see [below for nested schema](#nestedatt--requirements))
 - `state` (String) State of the challenge, either hidden or visible.
 - `tags` (List of String) List of challenge tags that will be displayed to the end-user. You could use them to give some quick insights of what a challenge involves.
 - `topics` (List of String) List of challenge topics that are displayed to the administrators for maintenance and planification.
@@ -132,7 +132,7 @@ Required:
 Optional:
 
 - `cost` (Number) Cost of the hint, and if any specified, the end-user will consume its own (or team) points to get it.
-- `requirements` (List of String) Other hints required to be consumed before getting this one. Usefull for cost-increasing hint strategies with more and more help.
+- `requirements` (List of String) Other hints required to be consumed before getting this one. Useful for cost-increasing hint strategies with more and more help.
 
 Read-Only:
 

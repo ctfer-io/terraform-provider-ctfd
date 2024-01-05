@@ -64,7 +64,7 @@ func (r *challengeResource) Schema(ctx context.Context, req resource.SchemaReque
 				Required:            true,
 			},
 			"connection_info": schema.StringAttribute{
-				MarkdownDescription: "Connection Information to connect to the challenge instance, usefull for pwn, web and infrastructure pentests.",
+				MarkdownDescription: "Connection Information to connect to the challenge instance, useful for pwn, web and infrastructure pentests.",
 				Optional:            true,
 				Computed:            true,
 				Default:             stringdefault.StaticString(""),
@@ -128,7 +128,7 @@ func (r *challengeResource) Schema(ctx context.Context, req resource.SchemaReque
 				},
 			},
 			"requirements": schema.SingleNestedAttribute{
-				MarkdownDescription: "List of required challenges that needs to get flagged before this one being accessible. Usefull for skill-trees-like strategy CTF.",
+				MarkdownDescription: "List of required challenges that needs to get flagged before this one being accessible. Useful for skill-trees-like strategy CTF.",
 				Optional:            true,
 				Attributes: map[string]schema.Attribute{
 					"behavior": schema.StringAttribute{

@@ -42,7 +42,26 @@ func (p *CTFdProvider) Metadata(ctx context.Context, req provider.MetadataReques
 
 func (p *CTFdProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Interact with a [CTFd](https://github.com/ctfd/ctfd).",
+		MarkdownDescription: `
+Use the Terraform Provider to interact with a [CTFd](https://github.com/ctfd/ctfd).
+
+## Why creating this ?
+
+Terraform is used to manage resources that have lifecycles, configurations, to sum it up.
+
+That is the case of CTFd: it handles challenges that could be created, modified and deleted.
+With some work to leverage the unsteady CTFd's API, Terraform is now able to manage them as cloud resources bringing you to opportunity of CTF as Code.
+
+With a paradigm-shifting vision of setting up CTFs, the Terraform Provider for CTFd avoid shitty scripts, ` + "`ctfcli`" + ` and other tools that does not solve the problem of reproductibility, ease of deployment and resiliency.
+
+## Authentication
+
+You must configure the provider with the proper credentials before you can use it.
+
+!> **Warning:** Hard-coded credentials are not recommended in any Terraform
+configuration and risks secret leakage should this file ever be committed to a
+public version control system.
+`,
 		Attributes: map[string]schema.Attribute{
 			"url": schema.StringAttribute{
 				MarkdownDescription: "CTFd base URL (e.g. `https://my-ctf.lan`). Could use `CTFD_URL` environment variable instead.",

@@ -3,12 +3,39 @@
 page_title: "ctfd Provider"
 subcategory: ""
 description: |-
-  Interact with a CTFd https://github.com/ctfd/ctfd.
+  Use the Terraform Provider to tnteract with a CTFd https://github.com/ctfd/ctfd.
+  Why creating this ?
+  Terraform is used to manage resources that have lifecycles, configurations, to sum it up.
+  That is the case of CTFd: it handles challenges that could be created, modified and deleted.
+  With some work to leverage the unsteady CTFd's API, Terraform is now able to manage them as cloud resources bringing you to opportunity of CTF as Code.
+  With a paradigm-shifting vision of setting up CTFs, the Terraform Provider for CTFd avoid shitty scripts, ctfcli and other tools that does not solve the problem of reproductibility, ease of deployment and resiliency.
+  Authentication
+  You must configure the provider with the proper credentials before you can use it.
+  !> Warning: Hard-coded credentials are not recommended in any Terraform
+  configuration and risks secret leakage should this file ever be committed to a
+  public version control system.
 ---
 
 # ctfd Provider
 
-Interact with a [CTFd](https://github.com/ctfd/ctfd).
+Use the Terraform Provider to interact with a [CTFd](https://github.com/ctfd/ctfd).
+
+## Why creating this ?
+
+Terraform is used to manage resources that have lifecycles, configurations, to sum it up.
+
+That is the case of CTFd: it handles challenges that could be created, modified and deleted.
+With some work to leverage the unsteady CTFd's API, Terraform is now able to manage them as cloud resources bringing you to opportunity of CTF as Code.
+
+With a paradigm-shifting vision of setting up CTFs, the Terraform Provider for CTFd avoid shitty scripts, `ctfcli` and other tools that does not solve the problem of reproductibility, ease of deployment and resiliency.
+
+## Authentication
+
+You must configure the provider with the proper credentials before you can use it.
+
+!> **Warning:** Hard-coded credentials are not recommended in any Terraform
+configuration and risks secret leakage should this file ever be committed to a
+public version control system.
 
 ## Example Usage
 

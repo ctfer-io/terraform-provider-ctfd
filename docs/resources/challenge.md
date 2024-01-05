@@ -68,21 +68,20 @@ resource "ctfd_challenge" "http" {
 
 ### Optional
 
-- `connection_info` (String) Connection Information to connect to the challenge instance, usefull for pwn or web pentest.
-- `decay` (Number)
+- `connection_info` (String) Connection Information to connect to the challenge instance, usefull for pwn, web and infrastructure pentests.
+- `decay` (Number) The decay defines from each number of solves does the decay function triggers until reaching minimum. This function is defined by CTFd and could be configured through `.function`.
 - `files` (Attributes List) List of files given to players to flag the challenge. (see [below for nested schema](#nestedatt--files))
 - `flags` (Attributes List) List of challenge flags that solves it. (see [below for nested schema](#nestedatt--flags))
 - `function` (String) Decay function to define how the challenge value evolve through solves, either linear or logarithmic.
 - `hints` (Attributes List) List of hints about the challenge displayed to the end-user. (see [below for nested schema](#nestedatt--hints))
-- `initial` (Number)
 - `max_attempts` (Number) Maximum amount of attempts before being unable to flag the challenge.
-- `minimum` (Number)
+- `minimum` (Number) The minimum points for a dynamic-score challenge to reach with the decay function. Once there, no solve could have more value.
 - `requirements` (Attributes) List of required challenges that needs to get flagged before this one being accessible. Usefull for skill-trees-like strategy CTF. (see [below for nested schema](#nestedatt--requirements))
 - `state` (String) State of the challenge, either hidden or visible.
 - `tags` (List of String) List of challenge tags that will be displayed to the end-user. You could use them to give some quick insights of what a challenge involves.
 - `topics` (List of String) List of challenge topics that are displayed to the administrators for maintenance and planification.
-- `type` (String) Type of the challenge defining its layout, either standard or dynamic.
-- `value` (Number)
+- `type` (String) Type of the challenge defining its layout/behavior, either standard or dynamic (default).
+- `value` (Number) The value (points) of the challenge once solved. Internally, the provider will handle what target is legitimate depending on the `.type` value, i.e. either `value` for "standard" or `initial` for "dynamic".
 
 ### Read-Only
 

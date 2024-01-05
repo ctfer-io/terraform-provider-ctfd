@@ -1,15 +1,15 @@
 <div align="center">
     <h1>Terraform Provider for CTFd</h1>
     <p><b>Time for CTF(d) as Code</b><p>
-    <a href="https://pkg.go.dev/github.com/ctfer-io/tofu-provider-ctfd"><img src="https://shields.io/badge/-reference-blue?logo=go&style=for-the-badge" alt="reference"></a>
-	<a href="https://goreportcard.com/report/github.com/ctfer-io/tofu-provider-ctfd"><img src="https://goreportcard.com/badge/github.com/ctfer-io/tofu-provider-ctfd?style=for-the-badge" alt="go report"></a>
-	<a href="https://coveralls.io/github/ctfer-io/tofu-provider-ctfd?branch=main"><img src="https://img.shields.io/coverallsCoverage/github/ctfer-io/tofu-provider-ctfd?style=for-the-badge" alt="Coverage Status"></a>
+    <a href="https://pkg.go.dev/github.com/ctfer-io/terraform-provider-ctfd"><img src="https://shields.io/badge/-reference-blue?logo=go&style=for-the-badge" alt="reference"></a>
+	<a href="https://goreportcard.com/report/github.com/ctfer-io/terraform-provider-ctfd"><img src="https://goreportcard.com/badge/github.com/ctfer-io/terraform-provider-ctfd?style=for-the-badge" alt="go report"></a>
+	<a href="https://coveralls.io/github/ctfer-io/terraform-provider-ctfd?branch=main"><img src="https://img.shields.io/coverallsCoverage/github/ctfer-io/terraform-provider-ctfd?style=for-the-badge" alt="Coverage Status"></a>
 	<br>
-	<a href=""><img src="https://img.shields.io/github/license/ctfer-io/tofu-provider-ctfd?style=for-the-badge" alt="License"></a>
-	<a href="https://github.com/ctfer-io/tofu-provider-ctfd/actions?query=workflow%3Aci+"><img src="https://img.shields.io/github/actions/workflow/status/ctfer-io/tofu-provider-ctfd/ci.yaml?style=for-the-badge&label=CI" alt="CI"></a>
-	<a href="https://github.com/ctfer-io/tofu-provider-ctfd/actions/workflows/codeql-analysis.yaml"><img src="https://img.shields.io/github/actions/workflow/status/ctfer-io/tofu-provider-ctfd/codeql-analysis.yaml?style=for-the-badge&label=CodeQL" alt="CodeQL"></a>
+	<a href=""><img src="https://img.shields.io/github/license/ctfer-io/terraform-provider-ctfd?style=for-the-badge" alt="License"></a>
+	<a href="https://github.com/ctfer-io/terraform-provider-ctfd/actions?query=workflow%3Aci+"><img src="https://img.shields.io/github/actions/workflow/status/ctfer-io/terraform-provider-ctfd/ci.yaml?style=for-the-badge&label=CI" alt="CI"></a>
+	<a href="https://github.com/ctfer-io/terraform-provider-ctfd/actions/workflows/codeql-analysis.yaml"><img src="https://img.shields.io/github/actions/workflow/status/ctfer-io/terraform-provider-ctfd/codeql-analysis.yaml?style=for-the-badge&label=CodeQL" alt="CodeQL"></a>
     <br>
-    <a href="https://securityscorecards.dev/viewer/?uri=github.com/ctfer-io/tofu-provider-ctfd"><img src="https://img.shields.io/ossf-scorecard/github.com/ctfer-io/tofu-provider-ctfd?label=openssf%20scorecard&style=for-the-badge" alt="OpenSSF Scoreboard"></a>
+    <a href="https://securityscorecards.dev/viewer/?uri=github.com/ctfer-io/terraform-provider-ctfd"><img src="https://img.shields.io/ossf-scorecard/github.com/ctfer-io/terraform-provider-ctfd?label=openssf%20scorecard&style=for-the-badge" alt="OpenSSF Scoreboard"></a>
 </div>
 
 > **Warning**:

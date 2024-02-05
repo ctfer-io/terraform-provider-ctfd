@@ -89,7 +89,7 @@ func (r *challengeResource) Schema(ctx context.Context, req resource.SchemaReque
 			},
 			"value": schema.Int64Attribute{
 				MarkdownDescription: "The value (points) of the challenge once solved. Internally, the provider will handle what target is legitimate depending on the `.type` value, i.e. either `value` for \"standard\" or `initial` for \"dynamic\".",
-				Optional:            true,
+				Required:            true,
 			},
 			// XXX decay and minimum are only required if .type == "dynamic"
 			"decay": schema.Int64Attribute{

@@ -1,7 +1,7 @@
 package challenge
 
 import (
-	"github.com/ctfer-io/terraform-provider-ctfd/internal/provider/utils"
+	"github.com/ctfer-io/terraform-provider-ctfd/provider/utils"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 

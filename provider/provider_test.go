@@ -1,7 +1,7 @@
 package provider_test
 
 import (
-	"github.com/ctfer-io/terraform-provider-ctfd/internal/provider"
+	"github.com/ctfer-io/terraform-provider-ctfd/provider"
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 )

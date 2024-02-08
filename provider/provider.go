@@ -188,11 +188,13 @@ func (p *CTFdProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 func (p *CTFdProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		NewChallengeResource,
+		NewUserResource,
 	}
 }
 
 func (p *CTFdProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewChallengeDataSource,
+		NewUserDataSource,
 	}
 }

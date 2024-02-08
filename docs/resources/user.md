@@ -31,8 +31,8 @@ resource "ctfd_user" "ctfer" {
 ### Required
 
 - `email` (String, Sensitive) Email of the user, may be used to verify the account.
+- `name` (String) Name or pseudo of the user.
 - `password` (String, Sensitive) Password of the user. Notice than during a CTF you may not want to update those to avoid defaulting user accesses.
-- `username` (String) Name or pseudo of the user.
 
 ### Optional
 

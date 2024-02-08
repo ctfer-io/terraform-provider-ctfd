@@ -29,7 +29,7 @@ var (
 
 type userResourceModel struct {
 	ID          types.String `tfsdk:"id"`
-	Username    types.String `tfsdk:"username"`
+	Name        types.String `tfsdk:"name"`
 	Email       types.String `tfsdk:"email"`
 	Password    types.String `tfsdk:"password"`
 	Website     types.String `tfsdk:"website"`
@@ -65,7 +65,7 @@ func (r *userResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
-			"username": schema.StringAttribute{
+			"name": schema.StringAttribute{
 				MarkdownDescription: "Name or pseudo of the user.",
 				Required:            true,
 			},
@@ -155,7 +155,7 @@ func (r *userResource) Create(ctx context.Context, req resource.CreateRequest, r
 	}
 
 	res, err := r.client.PostUsers(&api.PostUsersParams{
-		Name:        data.Username.ValueString(),
+		Name:        data.Name.ValueString(),
 		Email:       data.Email.ValueString(),
 		Password:    data.Password.ValueString(),
 		Website:     data.Website.ValueStringPointer(),
@@ -200,7 +200,7 @@ func (r *userResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		return
 	}
 
-	data.Username = types.StringValue(res.Name)
+	data.Name = types.StringValue(res.Name)
 	data.Email = types.StringPointerValue(res.Email)
 	data.Website = types.StringPointerValue(res.Website)
 	data.Affiliation = types.StringPointerValue(res.Affiliation)
@@ -226,7 +226,7 @@ func (r *userResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	}
 
 	_, err := r.client.PatchUser(utils.Atoi(data.ID.ValueString()), &api.PatchUsersParams{
-		Name:        data.Username.ValueString(),
+		Name:        data.Name.ValueString(),
 		Email:       data.Email.ValueString(),
 		Password:    data.Password.ValueStringPointer(),
 		Website:     data.Website.ValueStringPointer(),

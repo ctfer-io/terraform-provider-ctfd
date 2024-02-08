@@ -40,7 +40,7 @@ func (usr *userDataSource) Schema(ctx context.Context, req datasource.SchemaRequ
 				MarkdownDescription: "Identifier of the user.",
 				Computed:            true,
 			},
-			"username": schema.StringAttribute{
+			"name": schema.StringAttribute{
 				MarkdownDescription: "Name or pseudo of the user.",
 				Computed:            true,
 			},
@@ -122,7 +122,7 @@ func (usr *userDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		// Flatten response
 		state.Users = append(state.Users, userResourceModel{
 			ID:          types.StringValue(strconv.Itoa(u.ID)),
-			Username:    types.StringValue(u.Name),
+			Name:        types.StringValue(u.Name),
 			Email:       types.StringPointerValue(u.Email),
 			Password:    types.StringValue("placeholder"),
 			Website:     types.StringPointerValue(u.Website),

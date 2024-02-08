@@ -24,8 +24,8 @@ description: |-
 - `hidden` (Boolean) Is true if the user is hidden to the participants.
 - `id` (String) Identifier of the user.
 - `language` (String) Language the user is fluent in.
+- `name` (String) Name or pseudo of the user.
 - `password` (String) Password of the user. Notice than during a CTF you may not want to update those to avoid defaulting user accesses.
 - `type` (String) Generic type for RBAC purposes.
-- `username` (String) Name or pseudo of the user.
 - `verified` (Boolean) Is true if the user has verified its account by email, or if set by an admin.
 - `website` (String) Website, blog, or anything similar (displayed to other participants).

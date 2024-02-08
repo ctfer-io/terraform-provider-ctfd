@@ -34,10 +34,10 @@ Read-Only:
 - `function` (String) Decay function to define how the challenge value evolve through solves, either linear or logarithmic.
 - `hints` (Attributes List) List of hints about the challenge displayed to the end-user. (see [below for nested schema](#nestedatt--challenges--hints))
 - `id` (String) Identifier of the challenge.
-- `initial` (Number)
 - `max_attempts` (Number) Maximum amount of attempts before being unable to flag the challenge.
 - `minimum` (Number)
 - `name` (String) Name of the challenge, displayed as it.
+- `next` (Number) Suggestion for the end-user as next challenge to work on.
 - `requirements` (Attributes) List of required challenges that needs to get flagged before this one being accessible. Useful for skill-trees-like strategy CTF. (see [below for nested schema](#nestedatt--challenges--requirements))
 - `state` (String) State of the challenge, either hidden or visible.
 - `tags` (List of String) List of challenge tags that will be displayed to the end-user. You could use them to give some quick insights of what a challenge involves.

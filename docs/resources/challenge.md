@@ -3,12 +3,15 @@
 page_title: "ctfd_challenge Resource - terraform-provider-ctfd"
 subcategory: ""
 description: |-
-  
+  CTFd is built around the Challenge resource, which contains all the attributes to define a part of the Capture The Flag event.
+  This provider builds a cleaner API on top of CTFd's one to improve its adoption and lifecycle management.
 ---
 
 # ctfd_challenge (Resource)
 
+CTFd is built around the Challenge resource, which contains all the attributes to define a part of the Capture The Flag event.
 
+This provider builds a cleaner API on top of CTFd's one to improve its adoption and lifecycle management.
 
 ## Example Usage
 
@@ -65,6 +68,7 @@ resource "ctfd_challenge" "http" {
 - `category` (String) Category of the challenge that CTFd groups by on the web UI.
 - `description` (String) Description of the challenge, consider using multiline descriptions for better style.
 - `name` (String) Name of the challenge, displayed as it.
+- `value` (Number) The value (points) of the challenge once solved. Internally, the provider will handle what target is legitimate depending on the `.type` value, i.e. either `value` for "standard" or `initial` for "dynamic".
 
 ### Optional
 
@@ -76,12 +80,12 @@ resource "ctfd_challenge" "http" {
 - `hints` (Attributes List) List of hints about the challenge displayed to the end-user. (see [below for nested schema](#nestedatt--hints))
 - `max_attempts` (Number) Maximum amount of attempts before being unable to flag the challenge.
 - `minimum` (Number) The minimum points for a dynamic-score challenge to reach with the decay function. Once there, no solve could have more value.
+- `next` (Number) Suggestion for the end-user as next challenge to work on.
 - `requirements` (Attributes) List of required challenges that needs to get flagged before this one being accessible. Useful for skill-trees-like strategy CTF. (see [below for nested schema](#nestedatt--requirements))
 - `state` (String) State of the challenge, either hidden or visible.
 - `tags` (List of String) List of challenge tags that will be displayed to the end-user. You could use them to give some quick insights of what a challenge involves.
 - `topics` (List of String) List of challenge topics that are displayed to the administrators for maintenance and planification.
 - `type` (String) Type of the challenge defining its layout/behavior, either standard or dynamic (default).
-- `value` (Number) The value (points) of the challenge once solved. Internally, the provider will handle what target is legitimate depending on the `.type` value, i.e. either `value` for "standard" or `initial` for "dynamic".
 
 ### Read-Only
 

@@ -43,6 +43,7 @@ func (r *challengeResource) Metadata(ctx context.Context, req resource.MetadataR
 
 func (r *challengeResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
+		MarkdownDescription: "CTFd is built around the Challenge resource, which contains all the attributes to define a part of the Capture The Flag event.\n\nThis provider builds a cleaner API on top of CTFd's one to improve its adoption and lifecycle management.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:            true,

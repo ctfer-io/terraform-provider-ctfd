@@ -75,22 +75,22 @@ func (ch *challengeDataSource) Schema(ctx context.Context, req datasource.Schema
 						"value": schema.Int64Attribute{
 							Computed: true,
 						},
-						"initial": schema.Int64Attribute{
-							Computed: true,
-						},
 						"decay": schema.Int64Attribute{
 							Computed: true,
 						},
 						"minimum": schema.Int64Attribute{
 							Computed: true,
 						},
-						// TODO add support of next
 						"state": schema.StringAttribute{
 							MarkdownDescription: "State of the challenge, either hidden or visible.",
 							Computed:            true,
 						},
 						"type": schema.StringAttribute{
 							MarkdownDescription: "Type of the challenge defining its layout, either standard or dynamic.",
+							Computed:            true,
+						},
+						"next": schema.Int64Attribute{
+							MarkdownDescription: "Suggestion for the end-user as next challenge to work on.",
 							Computed:            true,
 						},
 						"requirements": schema.SingleNestedAttribute{

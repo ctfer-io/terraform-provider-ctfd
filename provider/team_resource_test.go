@@ -15,7 +15,7 @@ func TestAcc_Team_Lifecycle(t *testing.T) {
 				Config: providerConfig + `
 resource "ctfd_user" "ctfer" {
 	name     = "CTFer"
-	email    = "ctfer-io@protonmail.com"
+	email    = "ctfer-io-team@protonmail.com"
 	password = "password"
 }
 
@@ -46,7 +46,7 @@ resource "ctfd_team" "cybercombattants" {
 				Config: providerConfig + `
 resource "ctfd_user" "ctfer" {
 	name     = "CTFer"
-	email    = "ctfer-io@protonmail.com"
+	email    = "ctfer-io-team@protonmail.com"
 	password = "password"
 }
 

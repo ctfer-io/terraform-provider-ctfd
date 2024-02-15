@@ -15,7 +15,7 @@ func TestAcc_User_Lifecycle(t *testing.T) {
 				Config: providerConfig + `
 resource "ctfd_user" "ctfer" {
 	name     = "CTFer"
-	email    = "ctfer-io@protonmail.com"
+	email    = "ctfer-io-user@protonmail.com"
 	password = "password"
 
 	# Define as an administration account
@@ -44,7 +44,7 @@ resource "ctfd_user" "ctfer" {
 				Config: providerConfig + `
 resource "ctfd_user" "ctfer" {
 	name     = "CTFer"
-	email    = "ctfer-io@protonmail.com"
+	email    = "ctfer-io-user@protonmail.com"
 	password = "password"
 }
 				`,

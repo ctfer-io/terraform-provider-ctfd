@@ -189,6 +189,7 @@ func (p *CTFdProvider) Resources(ctx context.Context) []func() resource.Resource
 	return []func() resource.Resource{
 		NewChallengeResource,
 		NewUserResource,
+		NewTeamResource,
 	}
 }
 
@@ -196,5 +197,6 @@ func (p *CTFdProvider) DataSources(ctx context.Context) []func() datasource.Data
 	return []func() datasource.DataSource{
 		NewChallengeDataSource,
 		NewUserDataSource,
+		NewTeamDataSource,
 	}
 }

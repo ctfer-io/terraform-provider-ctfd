@@ -27,7 +27,7 @@ func main() {
 	if err := client.Setup(&api.SetupParams{
 		CTFName:                "TFP-CTFd",
 		CTFDescription:         "Terraform Provider CTFd.",
-		UserMode:               "users",
+		UserMode:               "teams",
 		Name:                   "ctfer",
 		Email:                  "ctfer-io@protonmail.com",
 		Password:               "ctfer",

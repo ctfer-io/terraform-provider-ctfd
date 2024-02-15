@@ -60,7 +60,7 @@ func main() {
 	}
 
 	ghf := os.Getenv("GITHUB_ENV")
-	f, err := os.OpenFile(ghf, os.O_WRONLY|os.O_APPEND, 0644)
+	f, err := os.OpenFile(ghf, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 	if err != nil {
 		log.Fatalf("Opening $GITHUB_ENV file (%s): %s", ghf, err)
 	}

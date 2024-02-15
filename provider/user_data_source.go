@@ -49,7 +49,7 @@ func (usr *userDataSource) Schema(ctx context.Context, req datasource.SchemaRequ
 				Computed:            true,
 			},
 			"password": schema.StringAttribute{
-				MarkdownDescription: "Password of the user. Notice than during a CTF you may not want to update those to avoid defaulting user accesses.",
+				MarkdownDescription: "Password of the user. Notice that during a CTF you may not want to update those to avoid defaulting user accesses.",
 				Computed:            true,
 			},
 			"website": schema.StringAttribute{

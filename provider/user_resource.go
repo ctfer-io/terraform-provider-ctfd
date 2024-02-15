@@ -191,7 +191,7 @@ func (r *userResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		return
 	}
 
-	res, err := r.client.GetUser(utils.Atoi(data.ID.ValueString()))
+	res, err := r.client.GetUser(utils.Atoi(data.ID.ValueString()), api.WithContext(ctx))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -267,8 +267,6 @@ func (r *userResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 		)
 		return
 	}
-
-	// ... don't need to delete nested objects, this is handled by CTFd
 }
 
 func (r *userResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {

@@ -16,10 +16,10 @@ import (
 )
 
 type FileSubresourceModel struct {
-	ID       types.String `tfsdk:"id"`
-	Name     types.String `tfsdk:"name"`
-	Location types.String `tfsdk:"location"`
-	// XXX may use sha256 of file to avoid fetching it each time (fasten large-files cases, e.g. forensic dump)
+	ID         types.String `tfsdk:"id"`
+	Name       types.String `tfsdk:"name"`
+	Location   types.String `tfsdk:"location"`
+	SHA1Sum    types.String `tfsdk:"sha1sum"`
 	Content    types.String `tfsdk:"content"`
 	ContentB64 types.String `tfsdk:"contentb64"`
 }
@@ -39,6 +39,12 @@ func FileSubresourceAttributes() map[string]schema.Attribute {
 		},
 		"location": schema.StringAttribute{
 			MarkdownDescription: "Location where the file is stored on the CTFd instance, for download purposes.",
+			PlanModifiers: []planmodifier.String{
+				stringplanmodifier.UseStateForUnknown(),
+			},
+		},
+		"sha1sum": schema.StringAttribute{
+			MarkdownDescription: "The sha1 sum of the file.",
 			Computed:            true,
 			PlanModifiers: []planmodifier.String{
 				stringplanmodifier.UseStateForUnknown(),
@@ -78,6 +84,7 @@ func (file *FileSubresourceModel) Read(ctx context.Context, diags diag.Diagnosti
 	}
 
 	file.Content = types.StringValue(string(content))
+	// TODO fetch sha1sum
 	file.PropagateContent(ctx, diags)
 }
 
@@ -90,10 +97,13 @@ func (data *FileSubresourceModel) Create(ctx context.Context, diags diag.Diagnos
 
 	res, err := client.PostFiles(&api.PostFilesParams{
 		Challenge: challengeID,
-		File: &api.InputFile{
-			Name:    data.Name.ValueString(),
-			Content: []byte(data.Content.ValueString()),
+		Files: []*api.InputFile{
+			{
+				Name:    data.Name.ValueString(),
+				Content: []byte(data.Content.ValueString()),
+			},
 		},
+		Location: data.Location.ValueStringPointer(),
 	}, api.WithContext(ctx))
 	if err != nil {
 		diags.AddError(
@@ -106,6 +116,7 @@ func (data *FileSubresourceModel) Create(ctx context.Context, diags diag.Diagnos
 	tflog.Trace(ctx, "created a file")
 
 	data.ID = types.StringValue(strconv.Itoa(res[0].ID))
+	data.SHA1Sum = types.StringValue(res[0].SHA1sum)
 	data.Location = types.StringValue(res[0].Location)
 }
 

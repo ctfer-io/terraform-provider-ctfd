@@ -158,7 +158,7 @@ func (r *teamResource) Create(ctx context.Context, req resource.CreateRequest, r
 
 	// => Members
 	for _, mem := range data.Members {
-		_, err := r.client.PostTeamMembers(res.ID, &api.PostTeamsMembers{
+		_, err := r.client.PostTeamMembers(res.ID, &api.PostTeamsMembersParams{
 			UserID: utils.Atoi(mem.ValueString()),
 		}, api.WithContext(ctx))
 		if err != nil {
@@ -282,7 +282,7 @@ func (r *teamResource) Update(ctx context.Context, req resource.UpdateRequest, r
 			}
 		}
 		if !exists {
-			if _, err := r.client.PostTeamMembers(teamId, &api.PostTeamsMembers{
+			if _, err := r.client.PostTeamMembers(teamId, &api.PostTeamsMembersParams{
 				UserID: utils.Atoi(tfMember.ValueString()),
 			}, api.WithContext(ctx)); err != nil {
 				resp.Diagnostics.AddError(

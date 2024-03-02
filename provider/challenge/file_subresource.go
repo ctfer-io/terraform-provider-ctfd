@@ -2,7 +2,9 @@ package challenge
 
 import (
 	"context"
+	"crypto/sha1"
 	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"strconv"
 
@@ -39,6 +41,8 @@ func FileSubresourceAttributes() map[string]schema.Attribute {
 		},
 		"location": schema.StringAttribute{
 			MarkdownDescription: "Location where the file is stored on the CTFd instance, for download purposes.",
+			Optional:            true,
+			Computed:            true,
 			PlanModifiers: []planmodifier.String{
 				stringplanmodifier.UseStateForUnknown(),
 			},
@@ -84,8 +88,18 @@ func (file *FileSubresourceModel) Read(ctx context.Context, diags diag.Diagnosti
 	}
 
 	file.Content = types.StringValue(string(content))
-	// TODO fetch sha1sum
 	file.PropagateContent(ctx, diags)
+
+	h := sha1.New()
+	_, err = h.Write(content)
+	if err != nil {
+		diags.AddError(
+			"Internal Error",
+			fmt.Sprintf("Failed to compute SHA1 sum, got error: %s", err),
+		)
+	}
+	sum := h.Sum(nil)
+	file.SHA1Sum = types.StringValue(hex.EncodeToString(sum))
 }
 
 func (data *FileSubresourceModel) Create(ctx context.Context, diags diag.Diagnostics, client *api.Client, challengeID int) {

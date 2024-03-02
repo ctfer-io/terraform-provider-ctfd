@@ -2,6 +2,8 @@ package provider
 
 import (
 	"context"
+	"crypto/sha1"
+	"encoding/hex"
 	"fmt"
 	"strconv"
 
@@ -112,6 +114,16 @@ func (chall *challengeResourceModel) Read(ctx context.Context, diags diag.Diagno
 			Content:  types.StringValue(string(c)),
 		}
 		nf.PropagateContent(ctx, diags)
+		h := sha1.New()
+		_, err = h.Write(c)
+		if err != nil {
+			diags.AddError(
+				"Internal Error",
+				fmt.Sprintf("Failed to compute SHA1 sum, got error: %s", err),
+			)
+		}
+		sum := h.Sum(nil)
+		nf.SHA1Sum = types.StringValue(hex.EncodeToString(sum))
 		chall.Files = append(chall.Files, nf)
 	}
 

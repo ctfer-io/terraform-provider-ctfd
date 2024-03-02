@@ -19,7 +19,7 @@ description: |-
 
 - `affiliation` (String) Affiliation to a company or agency.
 - `banned` (Boolean) Is true if the team is banned from the CTF.
-- `captain` (String) Member who is captain of the team. Must be part of the members too.
+- `captain` (String) Member who is captain of the team. Must be part of the members too. Note it could cause a fatal error in case of resource import with an inconsistent CTFd configuration i.e. if a team has no captain yet (should not be possible).
 - `country` (String) Country the team represent or is hail from.
 - `email` (String) Email of the team.
 - `hidden` (Boolean) Is true if the team is hidden to the participants.

@@ -103,7 +103,7 @@ func (r *teamResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				Required:            true,
 			},
 			"captain": schema.StringAttribute{
-				MarkdownDescription: "Member who is captain of the team. Must be part of the members too.",
+				MarkdownDescription: "Member who is captain of the team. Must be part of the members too. Note it could cause a fatal error in case of resource import with an inconsistent CTFd configuration i.e. if a team has no captain yet (should not be possible).",
 				Required:            true,
 			},
 		},

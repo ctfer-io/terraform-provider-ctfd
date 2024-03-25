@@ -48,9 +48,9 @@ func HintSubresourceAttributes() map[string]schema.Attribute {
 		"requirements": schema.ListAttribute{
 			MarkdownDescription: "Other hints required to be consumed before getting this one. Useful for cost-increasing hint strategies with more and more help.",
 			ElementType:         types.StringType,
-			Default:             listdefault.StaticValue(basetypes.ListValue{}),
 			Computed:            true,
 			Optional:            true,
+			Default:             listdefault.StaticValue(basetypes.NewListNull(types.StringType)),
 		},
 	}
 }
@@ -99,6 +99,7 @@ func (data *HintSubresourceModel) Update(ctx context.Context, diags diag.Diagnos
 			Prerequisites: preq,
 		},
 	}, api.WithContext(ctx))
+	diags.AddError("Provider Error", fmt.Sprintf("res.Requirements: %+v\n", res.Requirements))
 	if err != nil {
 		diags.AddError(
 			"Client Error",
@@ -115,7 +116,15 @@ func (data *HintSubresourceModel) Update(ctx context.Context, diags diag.Diagnos
 	for _, resPreq := range res.Requirements.Prerequisites {
 		dPreq = append(dPreq, types.StringValue(strconv.Itoa(resPreq)))
 	}
-	data.Requirements = types.ListValueMust(types.StringType, dPreq)
+	reqs, d := types.ListValue(types.StringType, dPreq)
+	if d.HasError() {
+		diags.AddError(
+			"Provider Error",
+			"Failed to map updated requirements",
+		)
+		return
+	}
+	data.Requirements = reqs
 }
 
 func (data *HintSubresourceModel) Delete(ctx context.Context, diags diag.Diagnostics, client *api.Client) {

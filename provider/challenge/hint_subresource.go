@@ -48,9 +48,9 @@ func HintSubresourceAttributes() map[string]schema.Attribute {
 		"requirements": schema.ListAttribute{
 			MarkdownDescription: "Other hints required to be consumed before getting this one. Useful for cost-increasing hint strategies with more and more help.",
 			ElementType:         types.StringType,
-			Default:             listdefault.StaticValue(basetypes.ListValue{}),
 			Computed:            true,
 			Optional:            true,
+			Default:             listdefault.StaticValue(basetypes.NewListValueMust(types.StringType, []attr.Value{})),
 		},
 	}
 }
@@ -111,11 +111,6 @@ func (data *HintSubresourceModel) Update(ctx context.Context, diags diag.Diagnos
 
 	data.Content = types.StringValue(*res.Content)
 	data.Cost = types.Int64Value(int64(res.Cost))
-	dPreq := make([]attr.Value, 0, len(res.Requirements.Prerequisites))
-	for _, resPreq := range res.Requirements.Prerequisites {
-		dPreq = append(dPreq, types.StringValue(strconv.Itoa(resPreq)))
-	}
-	data.Requirements = types.ListValueMust(types.StringType, dPreq)
 }
 
 func (data *HintSubresourceModel) Delete(ctx context.Context, diags diag.Diagnostics, client *api.Client) {

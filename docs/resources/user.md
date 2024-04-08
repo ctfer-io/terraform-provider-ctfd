@@ -48,12 +48,3 @@ resource "ctfd_user" "ctfer" {
 ### Read-Only
 
 - `id` (String) Identifier of the user.
-
-## Import
-
-Import is supported using the following syntax:
-
-```shell
-# User can be imported by the CTFd ID (check URLs)
-terraform import ctfd_user.ctfer 1
-```

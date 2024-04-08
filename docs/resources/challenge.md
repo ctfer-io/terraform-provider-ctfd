@@ -151,12 +151,3 @@ Optional:
 
 - `behavior` (String) Behavior if not unlocked, either hidden or anonymized.
 - `prerequisites` (List of String) List of the challenges ID.
-
-## Import
-
-Import is supported using the following syntax:
-
-```shell
-# Challenge can be imported by the CTFd ID (check URLs)
-terraform import ctfd_challenge.http 1
-```

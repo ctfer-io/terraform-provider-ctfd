@@ -10,6 +10,8 @@ permissions:
 
 jobs:
   goreleaser:
+    outputs:
+      hashes: ${{ steps.hash.outputs.hashes }}
     permissions:
       contents: write  # for goreleaser/goreleaser-action to create a GitHub release
     runs-on: ubuntu-latest

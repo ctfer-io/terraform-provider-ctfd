@@ -31,6 +31,6 @@ resource "ctfd_challenge" "http" {
 
   files = [{
     name       = "image.png"
-    contentb64 = filebase64("${path.module}/image.png")
+    contentb64 = filebase64(".../image.png")
   }]
 }

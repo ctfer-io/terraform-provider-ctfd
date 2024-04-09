@@ -21,7 +21,6 @@ resource "ctfd_challenge" "http" {
   category    = "misc"
   description = "..."
   value       = 500
-  initial     = 500
   decay       = 100
   minimum     = 50
   state       = "visible"

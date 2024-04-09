@@ -14,11 +14,11 @@ CTFd defines a User as someone who will either play or administrate the Capture 
 
 ```terraform
 resource "ctfd_user" "ctfer" {
-  username = "CTFer"
+  name     = "CTFer"
   email    = "ctfer-io@protonmail.com"
   password = "password"
 
-  # Define as an administration account
+  # Make the user administrator of the CTFd instance
   type     = "admin"
   verified = true
   hidden   = true

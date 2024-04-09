@@ -17,45 +17,39 @@ This provider builds a cleaner API on top of CTFd's one to improve its adoption 
 
 ```terraform
 resource "ctfd_challenge" "http" {
-  name        = "HTTP Authentication"
-  category    = "network"
-  description = <<-EOT
-        Oh no ! I did not see my connection was no encrypted !
-        I hope no one spied me...
-
-        Authors:
-        - NicolasFgrx
-    EOT
+  name        = "My Challenge"
+  category    = "misc"
+  description = "..."
   value       = 500
   initial     = 500
-  decay       = 17
+  decay       = 100
   minimum     = 50
   state       = "visible"
   function    = "logarithmic"
 
   flags = [{
-    content = "24HIUT{Http_1s_n0t_s3cuR3}"
+    content = "CTF{some_flag}"
   }]
 
   topics = [
-    "Network"
+    "Misc"
   ]
   tags = [
-    "network",
-    "http"
+    "misc",
+    "basic"
   ]
 
   hints = [{
-    content = "HTTP exchanges are not ciphered."
+    content = "Some super-helpful hint"
     cost    = 50
     }, {
-    content = "Content is POSTed in HTTP :)"
+    content = "Even more helpful hint !"
     cost    = 50
   }]
 
   files = [{
-    name       = "capture.pcapng"
-    contentb64 = filebase64("${path.module}/capture.pcapng")
+    name       = "image.png"
+    contentb64 = filebase64(".../image.png")
   }]
 }
 ```

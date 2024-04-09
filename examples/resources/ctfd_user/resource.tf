@@ -3,7 +3,6 @@ resource "ctfd_user" "ctfer" {
   email    = "ctfer-io@protonmail.com"
   password = "password"
 
-  # Define as an administration account
   type     = "admin"
   verified = true
   hidden   = true

@@ -44,7 +44,6 @@ func main() {
 		ThemeColor:             "",
 		Start:                  "",
 		End:                    "",
-		Nonce:                  nonce,
 	}); err != nil {
 		log.Fatalf("Setting up CTFd: %s", err)
 	}

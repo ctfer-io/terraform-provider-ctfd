@@ -65,10 +65,10 @@ resource "ctfd_challenge" "icmp" {
         Authors:
         - NicolasFgrx
     EOT
-  value   = 500
-  decay   = 17
-  minimum = 50
-  state   = "visible"
+  value       = 500
+  decay       = 17
+  minimum     = 50
+  state       = "visible"
   requirements = {
     behavior      = "anonymized"
     prerequisites = [ctfd_challenge.http.id]
@@ -95,7 +95,7 @@ resource "ctfd_challenge" "icmp" {
   }]
 
   files = [{
-    name = "icmp.pcap"
+    name       = "icmp.pcap"
     contentb64 = filebase64("${path.module}/icmp.pcap")
   }]
 }

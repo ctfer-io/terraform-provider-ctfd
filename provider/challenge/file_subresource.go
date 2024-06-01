@@ -110,7 +110,7 @@ func (data *FileSubresourceModel) Create(ctx context.Context, diags diag.Diagnos
 	}
 
 	res, err := client.PostFiles(&api.PostFilesParams{
-		Challenge: challengeID,
+		Challenge: &challengeID,
 		Files: []*api.InputFile{
 			{
 				Name:    data.Name.ValueString(),

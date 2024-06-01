@@ -17,6 +17,9 @@ jobs:
         image: ctfd/ctfd:3.7.0@sha256:e4e886aa8f1051eeddcabe2115bc9a5f380be2b54034d5a119c44b177d6b8c57
         ports:
           - 8000:8000
+    env:
+      NAME: ctfer
+      PASSWORD: password
     steps:
       - name: Checkout code
         uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
@@ -52,9 +55,22 @@ jobs:
           fi
       
       - name: Setup CTFd
-        run: go run cmd/setup/main.go
+        uses: ctfer-io/ctfd-setup@dc0b1f042a99b5a4abc04e69e850f483ca139557 # v1.1.8
+        with:
+          url: http://localhost:8000
+          appearance_name: TFP-CTFd
+          appearance_description: Terraform Provider CTFd.
+          mode: teams
+          admin_name: ${{ env.NAME }}
+          admin_email: ctfer-io@protonmail.com
+          admin_password: ${{ env.PASSWORD }}
+
+      - name: Generate token
+        run: go run cmd/token/main.go
         env:
           CTFD_URL: http://localhost:8000
+          CTFD_NAME: ${{ env.NAME }}
+          CTFD_PASSWORD: ${{ env.PASSWORD }}
 
       - name: Run go acceptance tests
         run: make test-acc

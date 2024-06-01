@@ -8,44 +8,27 @@ import (
 	"github.com/ctfer-io/go-ctfd/api"
 )
 
-// This utility setup a brand new CTFd instance for acceptance testing of the provider,
+// This utility login to a CTFd instance for acceptance testing of the provider,
 // and creates an API key ready to work.
 
 func main() {
 	url := os.Getenv("CTFD_URL")
+	name := os.Getenv("CTFD_NAME")
+	password := os.Getenv("CTFD_PASSWORD")
 
-	// Note: add /setup so won't have to follow redirect
 	fmt.Println("[+] Getting initial nonce and session values")
 	nonce, session, err := api.GetNonceAndSession(url)
 	if err != nil {
 		log.Fatalf("Getting nonce and session: %s", err)
 	}
-
-	// Setup CTFd
-	fmt.Println("[+] Setting up CTFd")
 	client := api.NewClient(url, nonce, session, "")
-	if err := client.Setup(&api.SetupParams{
-		CTFName:                "TFP-CTFd",
-		CTFDescription:         "Terraform Provider CTFd.",
-		UserMode:               "teams",
-		Name:                   "ctfer",
-		Email:                  "ctfer-io@protonmail.com",
-		Password:               "ctfer",
-		ChallengeVisibility:    "public",
-		AccountVisibility:      "public",
-		ScoreVisibility:        "public",
-		RegistrationVisibility: "public",
-		VerifyEmails:           false,
-		TeamSize:               nil,
-		CTFLogo:                nil,
-		CTFBanner:              nil,
-		CTFSmallIcon:           nil,
-		CTFTheme:               "core",
-		ThemeColor:             "",
-		Start:                  "",
-		End:                    "",
+
+	fmt.Println("[+] Logging in")
+	if err := client.Login(&api.LoginParams{
+		Name:     name,
+		Password: password,
 	}); err != nil {
-		log.Fatalf("Setting up CTFd: %s", err)
+		log.Fatalf("Logging in: %s", err)
 	}
 
 	// Create API Key

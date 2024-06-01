@@ -53,10 +53,9 @@ jobs:
             echo "Server did not respond within the allotted time. Exiting..."
             exit 1
           fi
-          curl "$base_url"
       
       - name: Setup CTFd
-        uses: ctfer-io/ctfd-setup@dc0b1f042a99b5a4abc04e69e850f483ca139557 # v1.1.8
+        uses: ctfer-io/ctfd-setup@6184bab99f91c895dae9172ba30bce87ef10a120 # v1.1.9
         with:
           url: 'http://ctfd:8000'
           appearance_name: TFP-CTFd

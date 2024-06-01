@@ -53,11 +53,12 @@ jobs:
             echo "Server did not respond within the allotted time. Exiting..."
             exit 1
           fi
+          curl "$base_url"
       
       - name: Setup CTFd
         uses: ctfer-io/ctfd-setup@dc0b1f042a99b5a4abc04e69e850f483ca139557 # v1.1.8
         with:
-          url: http://localhost:8000
+          url: 'http://ctfd:8000'
           appearance_name: TFP-CTFd
           appearance_description: Terraform Provider CTFd.
           mode: teams

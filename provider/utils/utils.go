@@ -31,11 +31,6 @@ func ToInt(itf types.Int64) *int {
 	return &i
 }
 
-func Filename(location string) string {
-	pts := strings.Split(location, "/")
-	return pts[len(pts)-1]
-}
-
 func Ptr[T any](t T) *T {
 	return &t
 }

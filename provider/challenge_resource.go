@@ -6,14 +6,17 @@ import (
 	"strconv"
 
 	"github.com/ctfer-io/go-ctfd/api"
-	"github.com/ctfer-io/terraform-provider-ctfd/provider/challenge"
 	"github.com/ctfer-io/terraform-provider-ctfd/provider/utils"
 	"github.com/ctfer-io/terraform-provider-ctfd/provider/validators"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/defaults"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -35,6 +38,25 @@ func NewChallengeResource() resource.Resource {
 
 type challengeResource struct {
 	client *api.Client
+}
+
+type challengeResourceModel struct {
+	ID             types.String                  `tfsdk:"id"`
+	Name           types.String                  `tfsdk:"name"`
+	Category       types.String                  `tfsdk:"category"`
+	Description    types.String                  `tfsdk:"description"`
+	ConnectionInfo types.String                  `tfsdk:"connection_info"`
+	MaxAttempts    types.Int64                   `tfsdk:"max_attempts"`
+	Function       types.String                  `tfsdk:"function"`
+	Value          types.Int64                   `tfsdk:"value"`
+	Decay          types.Int64                   `tfsdk:"decay"`
+	Minimum        types.Int64                   `tfsdk:"minimum"`
+	State          types.String                  `tfsdk:"state"`
+	Type           types.String                  `tfsdk:"type"`
+	Next           types.Int64                   `tfsdk:"next"`
+	Requirements   *RequirementsSubresourceModel `tfsdk:"requirements"`
+	Tags           []types.String                `tfsdk:"tags"`
+	Topics         []types.String                `tfsdk:"topics"`
 }
 
 func (r *challengeResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -83,8 +105,8 @@ func (r *challengeResource) Schema(ctx context.Context, req resource.SchemaReque
 				Default:             defaults.String(stringdefault.StaticString("linear")),
 				Validators: []validator.String{
 					validators.NewStringEnumValidator([]basetypes.StringValue{
-						challenge.FunctionLinear,
-						challenge.FunctionLogarithmic,
+						FunctionLinear,
+						FunctionLogarithmic,
 					}),
 				},
 			},
@@ -96,10 +118,18 @@ func (r *challengeResource) Schema(ctx context.Context, req resource.SchemaReque
 			"decay": schema.Int64Attribute{
 				MarkdownDescription: "The decay defines from each number of solves does the decay function triggers until reaching minimum. This function is defined by CTFd and could be configured through `.function`.",
 				Optional:            true,
+				Computed:            true,
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifier.UseStateForUnknown(),
+				},
 			},
 			"minimum": schema.Int64Attribute{
 				MarkdownDescription: "The minimum points for a dynamic-score challenge to reach with the decay function. Once there, no solve could have more value.",
 				Optional:            true,
+				Computed:            true,
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifier.UseStateForUnknown(),
+				},
 			},
 			"state": schema.StringAttribute{
 				MarkdownDescription: "State of the challenge, either hidden or visible.",
@@ -143,8 +173,8 @@ func (r *challengeResource) Schema(ctx context.Context, req resource.SchemaReque
 						Default:             stringdefault.StaticString("hidden"),
 						Validators: []validator.String{
 							validators.NewStringEnumValidator([]basetypes.StringValue{
-								challenge.BehaviorHidden,
-								challenge.BehaviorAnonymized,
+								BehaviorHidden,
+								BehaviorAnonymized,
 							}),
 						},
 					},
@@ -155,36 +185,19 @@ func (r *challengeResource) Schema(ctx context.Context, req resource.SchemaReque
 					},
 				},
 			},
-			"flags": schema.ListNestedAttribute{
-				MarkdownDescription: "List of challenge flags that solves it.",
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: challenge.FlagSubresourceAttributes(),
-				},
-				Optional: true,
-			},
 			"tags": schema.ListAttribute{
 				MarkdownDescription: "List of challenge tags that will be displayed to the end-user. You could use them to give some quick insights of what a challenge involves.",
 				ElementType:         types.StringType,
 				Optional:            true,
+				Computed:            true,
+				Default:             listdefault.StaticValue(basetypes.NewListValueMust(types.StringType, []attr.Value{})),
 			},
 			"topics": schema.ListAttribute{
 				MarkdownDescription: "List of challenge topics that are displayed to the administrators for maintenance and planification.",
 				ElementType:         types.StringType,
 				Optional:            true,
-			},
-			"hints": schema.ListNestedAttribute{
-				MarkdownDescription: "List of hints about the challenge displayed to the end-user.",
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: challenge.HintSubresourceAttributes(),
-				},
-				Optional: true,
-			},
-			"files": schema.ListNestedAttribute{
-				MarkdownDescription: "List of files given to players to flag the challenge.",
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: challenge.FileSubresourceAttributes(),
-				},
-				Optional: true,
+				Computed:            true,
+				Default:             listdefault.StaticValue(basetypes.NewListValueMust(types.StringType, []attr.Value{})),
 			},
 		},
 	}
@@ -224,7 +237,7 @@ func (r *challengeResource) Create(ctx context.Context, req resource.CreateReque
 			preqs = append(preqs, id)
 		}
 		reqs = &api.Requirements{
-			Anonymize:     challenge.GetAnon(data.Requirements.Behavior),
+			Anonymize:     GetAnon(data.Requirements.Behavior),
 			Prerequisites: preqs,
 		}
 	}
@@ -256,26 +269,8 @@ func (r *challengeResource) Create(ctx context.Context, req resource.CreateReque
 
 	// Save computed attributes in state
 	data.ID = types.StringValue(strconv.Itoa(res.ID))
-
-	// Create files
-	challFiles := make([]challenge.FileSubresourceModel, 0, len(data.Files))
-	for _, file := range data.Files {
-		file.Create(ctx, resp.Diagnostics, r.client, utils.Atoi(data.ID.ValueString()))
-		challFiles = append(challFiles, file)
-	}
-	if data.Files != nil {
-		data.Files = challFiles
-	}
-
-	// Create flags
-	challFlags := make([]challenge.FlagSubresourceModel, 0, len(data.Flags))
-	for _, flag := range data.Flags {
-		flag.Create(ctx, resp.Diagnostics, r.client, utils.Atoi(data.ID.ValueString()))
-		challFlags = append(challFlags, flag)
-	}
-	if data.Flags != nil {
-		data.Flags = challFlags
-	}
+	data.Decay = utils.ToTFInt64(res.Decay)
+	data.Minimum = utils.ToTFInt64(res.Minimum)
 
 	// Create tags
 	challTags := make([]types.String, 0, len(data.Tags))
@@ -318,16 +313,6 @@ func (r *challengeResource) Create(ctx context.Context, req resource.CreateReque
 		data.Topics = challTopics
 	}
 
-	// Create hints
-	challHints := make([]challenge.HintSubresourceModel, 0, len(data.Hints))
-	for _, hint := range data.Hints {
-		hint.Create(ctx, resp.Diagnostics, r.client, utils.Atoi(data.ID.ValueString()))
-		challHints = append(challHints, hint)
-	}
-	if data.Hints != nil {
-		data.Hints = challHints
-	}
-
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -341,7 +326,7 @@ func (r *challengeResource) Read(ctx context.Context, req resource.ReadRequest, 
 		return
 	}
 
-	data.Read(ctx, resp.Diagnostics, r.client)
+	data.Read(ctx, r.client, resp.Diagnostics)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -367,7 +352,7 @@ func (r *challengeResource) Update(ctx context.Context, req resource.UpdateReque
 			preqs = append(preqs, id)
 		}
 		reqs = &api.Requirements{
-			Anonymize:     challenge.GetAnon(data.Requirements.Behavior),
+			Anonymize:     GetAnon(data.Requirements.Behavior),
 			Prerequisites: preqs,
 		}
 	}
@@ -392,110 +377,6 @@ func (r *challengeResource) Update(ctx context.Context, req resource.UpdateReque
 			fmt.Sprintf("Unable to update challenge, got error: %s", err),
 		)
 		return
-	}
-
-	// Update its files
-	currentFiles, err := r.client.GetChallengeFiles(utils.Atoi(data.ID.ValueString()), api.WithContext(ctx))
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Client Error",
-			fmt.Sprintf("Unable to get challenge's files, got error: %s", err),
-		)
-	}
-	files := []challenge.FileSubresourceModel{}
-	for _, file := range data.Files {
-		exists := false
-		for _, currentFile := range currentFiles {
-			if file.ID.ValueString() == strconv.Itoa(currentFile.ID) {
-				exists = true
-
-				// Get corresponding file from state
-				var corFile challenge.FileSubresourceModel
-				for _, fState := range dataState.Files {
-					if file.ID.Equal(fState.ID) {
-						corFile = fState
-						break
-					}
-				}
-
-				// => Drop and replace iif content changed
-				update := !corFile.Content.Equal(file.Content)
-				if update {
-					file.Delete(ctx, resp.Diagnostics, r.client)
-					file.Create(ctx, resp.Diagnostics, r.client, utils.Atoi(data.ID.ValueString()))
-				}
-
-				files = append(files, file)
-				break
-			}
-		}
-		if !exists {
-			file.Create(ctx, resp.Diagnostics, r.client, utils.Atoi(data.ID.ValueString()))
-			files = append(files, file)
-		}
-	}
-	for _, currentFile := range currentFiles {
-		exists := false
-		for _, tfFile := range data.Files {
-			if tfFile.ID.ValueString() == strconv.Itoa(currentFile.ID) {
-				exists = true
-				break
-			}
-		}
-		if !exists {
-			f := challenge.FileSubresourceModel{
-				ID:       types.StringValue(strconv.Itoa(currentFile.ID)),
-				Location: types.StringValue(currentFile.Location),
-			}
-			f.Delete(ctx, resp.Diagnostics, r.client)
-		}
-	}
-	if data.Files != nil {
-		data.Files = files
-	}
-
-	// Update its flags
-	currentFlags, err := r.client.GetChallengeFlags(utils.Atoi(data.ID.ValueString()), api.WithContext(ctx))
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Client Error",
-			fmt.Sprintf("Unable to get challenge's flags, got error: %s", err),
-		)
-		return
-	}
-	flags := []challenge.FlagSubresourceModel{}
-	for _, tfFlag := range data.Flags {
-		exists := false
-		for _, currentFlag := range currentFlags {
-			if tfFlag.ID.ValueString() == strconv.Itoa(currentFlag.ID) {
-				exists = true
-				tfFlag.Update(ctx, resp.Diagnostics, r.client)
-				flags = append(flags, tfFlag)
-				break
-			}
-		}
-		if !exists {
-			tfFlag.Create(ctx, resp.Diagnostics, r.client, utils.Atoi(data.ID.ValueString()))
-			flags = append(flags, tfFlag)
-		}
-	}
-	for _, currentFlag := range currentFlags {
-		exists := false
-		for _, tfFlag := range data.Flags {
-			if tfFlag.ID.ValueString() == strconv.Itoa(currentFlag.ID) {
-				exists = true
-				break
-			}
-		}
-		if !exists {
-			f := &challenge.FlagSubresourceModel{
-				ID: types.StringValue(strconv.Itoa(currentFlag.ID)),
-			}
-			f.Delete(ctx, resp.Diagnostics, r.client)
-		}
-	}
-	if data.Flags != nil {
-		data.Flags = flags
 	}
 
 	// Update its tags (drop them all, create new ones)
@@ -576,50 +457,6 @@ func (r *challengeResource) Update(ctx context.Context, req resource.UpdateReque
 		data.Topics = topics
 	}
 
-	// Update its hints
-	currentHints, err := r.client.GetChallengeHints(utils.Atoi(data.ID.ValueString()), api.WithContext(ctx))
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Client Error",
-			fmt.Sprintf("Unable to get challenge's hints, got error: %s", err),
-		)
-		return
-	}
-	hints := []challenge.HintSubresourceModel{}
-	for _, tfHint := range data.Hints {
-		exists := false
-		for _, currentHint := range currentHints {
-			if tfHint.ID.ValueString() == strconv.Itoa(currentHint.ID) {
-				exists = true
-				tfHint.Update(ctx, resp.Diagnostics, r.client)
-				hints = append(hints, tfHint)
-				break
-			}
-		}
-		if !exists {
-			tfHint.Create(ctx, resp.Diagnostics, r.client, utils.Atoi(data.ID.ValueString()))
-			hints = append(hints, tfHint)
-		}
-	}
-	for _, currentHint := range currentHints {
-		exists := false
-		for _, tfHint := range data.Hints {
-			if tfHint.ID.ValueString() == strconv.Itoa(currentHint.ID) {
-				exists = true
-				break
-			}
-		}
-		if !exists {
-			h := &challenge.HintSubresourceModel{
-				ID: types.StringValue(strconv.Itoa(currentHint.ID)),
-			}
-			h.Delete(ctx, resp.Diagnostics, r.client)
-		}
-	}
-	if data.Hints != nil {
-		data.Hints = hints
-	}
-
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -645,4 +482,120 @@ func (r *challengeResource) ImportState(ctx context.Context, req resource.Import
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 
 	// Automatically call r.Read
+}
+
+//
+// Starting from this are helper or types-specific code related to the ctfd_challenge resource
+//
+
+func (chall *challengeResourceModel) Read(ctx context.Context, client *api.Client, diags diag.Diagnostics) {
+	res, err := client.GetChallenge(utils.Atoi(chall.ID.ValueString()), api.WithContext(ctx))
+	if err != nil {
+		diags.AddError("Client Error", fmt.Sprintf("Unable to read challenge %s, got error: %s", chall.ID.ValueString(), err))
+		return
+	}
+	chall.Name = types.StringValue(res.Name)
+	chall.Category = types.StringValue(res.Category)
+	chall.Description = types.StringValue(res.Description)
+	chall.ConnectionInfo = utils.ToTFString(res.ConnectionInfo)
+	chall.MaxAttempts = utils.ToTFInt64(res.MaxAttempts)
+	chall.Function = types.StringValue(res.Function)
+	chall.Decay = utils.ToTFInt64(res.Decay)
+	chall.Minimum = utils.ToTFInt64(res.Minimum)
+	chall.State = types.StringValue(res.State)
+	chall.Type = types.StringValue(res.Type)
+	chall.Next = utils.ToTFInt64(res.NextID)
+
+	switch res.Type {
+	case "standard":
+		chall.Value = types.Int64Value(int64(res.Value))
+	case "dynamic":
+		chall.Value = utils.ToTFInt64(res.Initial)
+	}
+
+	id := utils.Atoi(chall.ID.ValueString())
+
+	// Get subresources
+	// => Requirements
+	resReqs, err := client.GetChallengeRequirements(id, api.WithContext(ctx))
+	if err != nil {
+		diags.AddError(
+			"Client Error",
+			fmt.Sprintf("Unable to read challenge %d requirements, got error: %s", id, err),
+		)
+		return
+	}
+	reqs := (*RequirementsSubresourceModel)(nil)
+	if resReqs != nil {
+		challPreqs := make([]types.String, 0, len(resReqs.Prerequisites))
+		for _, req := range resReqs.Prerequisites {
+			challPreqs = append(challPreqs, types.StringValue(strconv.Itoa(req)))
+		}
+		reqs = &RequirementsSubresourceModel{
+			Behavior:      FromAnon(resReqs.Anonymize),
+			Prerequisites: challPreqs,
+		}
+	}
+	chall.Requirements = reqs
+
+	// => Tags
+	resTags, err := client.GetChallengeTags(id, api.WithContext(ctx))
+	if err != nil {
+		diags.AddError(
+			"Client Error",
+			fmt.Sprintf("Unable to read challenge %d tags, got error: %s", id, err),
+		)
+		return
+	}
+	chall.Tags = make([]basetypes.StringValue, 0, len(resTags))
+	for _, tag := range resTags {
+		chall.Tags = append(chall.Tags, types.StringValue(tag.Value))
+	}
+
+	// => Topics
+	resTopics, err := client.GetChallengeTopics(id, api.WithContext(ctx))
+	if err != nil {
+		diags.AddError(
+			"Client Error",
+			fmt.Sprintf("Unable to read challenge %d topics, got error: %s", id, err),
+		)
+		return
+	}
+	chall.Topics = make([]basetypes.StringValue, 0, len(resTopics))
+	for _, topic := range resTopics {
+		chall.Topics = append(chall.Topics, types.StringValue(topic.Value))
+	}
+}
+
+var (
+	BehaviorHidden     = types.StringValue("hidden")
+	BehaviorAnonymized = types.StringValue("anonymized")
+
+	FunctionLinear      = types.StringValue("linear")
+	FunctionLogarithmic = types.StringValue("logarithmic")
+)
+
+type RequirementsSubresourceModel struct {
+	Behavior      types.String   `tfsdk:"behavior"`
+	Prerequisites []types.String `tfsdk:"prerequisites"`
+}
+
+func GetAnon(str types.String) *bool {
+	switch {
+	case str.Equal(BehaviorHidden):
+		return nil
+	case str.Equal(BehaviorAnonymized):
+		return utils.Ptr(true)
+	}
+	panic("invalid anonymization value: " + str.ValueString())
+}
+
+func FromAnon(b *bool) types.String {
+	if b == nil {
+		return BehaviorHidden
+	}
+	if *b {
+		return BehaviorAnonymized
+	}
+	panic("invalid anonymization value, got boolean false")
 }

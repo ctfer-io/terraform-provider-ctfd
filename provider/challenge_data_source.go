@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/ctfer-io/go-ctfd/api"
-	"github.com/ctfer-io/terraform-provider-ctfd/provider/challenge"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -109,13 +108,6 @@ func (ch *challengeDataSource) Schema(ctx context.Context, req datasource.Schema
 								},
 							},
 						},
-						"flags": schema.ListNestedAttribute{
-							MarkdownDescription: "List of challenge flags that solves it.",
-							NestedObject: schema.NestedAttributeObject{
-								Attributes: challenge.FlagSubdatasourceAttributes(),
-							},
-							Computed: true,
-						},
 						"tags": schema.ListAttribute{
 							MarkdownDescription: "List of challenge tags that will be displayed to the end-user. You could use them to give some quick insights of what a challenge involves.",
 							ElementType:         types.StringType,
@@ -125,20 +117,6 @@ func (ch *challengeDataSource) Schema(ctx context.Context, req datasource.Schema
 							MarkdownDescription: "List of challenge topics that are displayed to the administrators for maintenance and planification.",
 							ElementType:         types.StringType,
 							Computed:            true,
-						},
-						"hints": schema.ListNestedAttribute{
-							MarkdownDescription: "List of hints about the challenge displayed to the end-user.",
-							NestedObject: schema.NestedAttributeObject{
-								Attributes: challenge.HintSubdatasourceAttributes(),
-							},
-							Computed: true,
-						},
-						"files": schema.ListNestedAttribute{
-							MarkdownDescription: "List of files given to players to flag the challenge.",
-							NestedObject: schema.NestedAttributeObject{
-								Attributes: challenge.FileSubdatasourceAttributes(),
-							},
-							Computed: true,
 						},
 					},
 				},
@@ -181,7 +159,10 @@ func (ch *challengeDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		chall := challengeResourceModel{
 			ID: types.StringValue(strconv.Itoa(c.ID)),
 		}
-		chall.Read(ctx, resp.Diagnostics, ch.client)
+		chall.Read(ctx, ch.client, resp.Diagnostics)
+		if resp.Diagnostics.HasError() {
+			return
+		}
 
 		state.Challenges = append(state.Challenges, chall)
 	}

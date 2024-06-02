@@ -26,10 +26,6 @@ resource "ctfd_challenge" "http" {
   state       = "visible"
   function    = "logarithmic"
 
-  flags = [{
-    content = "CTF{some_flag}"
-  }]
-
   topics = [
     "Misc"
   ]
@@ -37,19 +33,30 @@ resource "ctfd_challenge" "http" {
     "misc",
     "basic"
   ]
+}
 
-  hints = [{
-    content = "Some super-helpful hint"
-    cost    = 50
-    }, {
-    content = "Even more helpful hint !"
-    cost    = 50
-  }]
+resource "ctfd_flag" "http_flag" {
+  challenge_id = ctfd_challenge.http.id
+  content      = "CTF{some_flag}"
+}
 
-  files = [{
-    name       = "image.png"
-    contentb64 = filebase64(".../image.png")
-  }]
+resource "ctfd_hint" "http_hint_1" {
+  challenge_id = ctfd_challenge.http.id
+  content      = "Some super-helpful hint"
+  cost         = 50
+}
+
+resource "ctfd_hint" "http_hint_2" {
+  challenge_id = ctfd_challenge.http.id
+  content      = "Even more helpful hint !"
+  cost         = 50
+  requirements = [ctfd_hint.http_hint_1.id]
+}
+
+resource "ctfd_file" "http_file" {
+  challenge_id = ctfd_challenge.http.id
+  name         = "image.png"
+  contentb64   = filebase64(".../image.png")
 }
 ```
 
@@ -67,10 +74,7 @@ resource "ctfd_challenge" "http" {
 
 - `connection_info` (String) Connection Information to connect to the challenge instance, useful for pwn, web and infrastructure pentests.
 - `decay` (Number) The decay defines from each number of solves does the decay function triggers until reaching minimum. This function is defined by CTFd and could be configured through `.function`.
-- `files` (Attributes List) List of files given to players to flag the challenge. (see [below for nested schema](#nestedatt--files))
-- `flags` (Attributes List) List of challenge flags that solves it. (see [below for nested schema](#nestedatt--flags))
 - `function` (String) Decay function to define how the challenge value evolve through solves, either linear or logarithmic.
-- `hints` (Attributes List) List of hints about the challenge displayed to the end-user. (see [below for nested schema](#nestedatt--hints))
 - `max_attempts` (Number) Maximum amount of attempts before being unable to flag the challenge.
 - `minimum` (Number) The minimum points for a dynamic-score challenge to reach with the decay function. Once there, no solve could have more value.
 - `next` (Number) Suggestion for the end-user as next challenge to work on.
@@ -83,59 +87,6 @@ resource "ctfd_challenge" "http" {
 ### Read-Only
 
 - `id` (String) Identifier of the challenge.
-
-<a id="nestedatt--files"></a>
-### Nested Schema for `files`
-
-Required:
-
-- `name` (String) Name of the file as displayed to end-users.
-
-Optional:
-
-- `content` (String, Sensitive) Raw content of the file, perfectly fit the use-cases of a .txt document or anything with a simple binary content. You could provide it from the file-system using `file("${path.module}/...")`.
-- `contentb64` (String, Sensitive) Base 64 content of the file, perfectly fit the use-cases of complex binaries. You could provide it from the file-system using `filebase64("${path.module}/...")`.
-- `location` (String) Location where the file is stored on the CTFd instance, for download purposes.
-
-Read-Only:
-
-- `id` (String) Identifier of the file, used internally to handle the CTFd corresponding object.
-- `sha1sum` (String) The sha1 sum of the file.
-
-
-<a id="nestedatt--flags"></a>
-### Nested Schema for `flags`
-
-Required:
-
-- `content` (String, Sensitive) The actual flag to match. Consider using the convention `MYCTF{value}` with `MYCTF` being the shortcode of your event's name and `value` depending on each challenge.
-
-Optional:
-
-- `data` (String) The flag sensitivity information, either case_sensitive or case_insensitive
-- `type` (String) The type of the flag, could be either static or regex
-
-Read-Only:
-
-- `id` (String) Identifier of the flag, used internally to handle the CTFd corresponding object.
-
-
-<a id="nestedatt--hints"></a>
-### Nested Schema for `hints`
-
-Required:
-
-- `content` (String) Content of the hint as displayed to the end-user.
-
-Optional:
-
-- `cost` (Number) Cost of the hint, and if any specified, the end-user will consume its own (or team) points to get it.
-- `requirements` (List of String) Other hints required to be consumed before getting this one. Useful for cost-increasing hint strategies with more and more help.
-
-Read-Only:
-
-- `id` (String) Identifier of the hint, used internally to handle the CTFd corresponding object.
-
 
 <a id="nestedatt--requirements"></a>
 ### Nested Schema for `requirements`

@@ -1,11 +1,17 @@
 package utils
 
 import (
+	"context"
 	"strconv"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
+
+func AddSensitive(ctx context.Context, key string, value any) context.Context {
+	ctx = tflog.SetField(ctx, key, value)
+	return tflog.MaskFieldValuesWithFieldKeys(ctx, key)
+}
 
 // return a null types.Int64 if pointer is nil, else its value
 func ToTFInt64(i *int) types.Int64 {

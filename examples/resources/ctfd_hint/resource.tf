@@ -22,7 +22,7 @@ resource "ctfd_flag" "http_flag" {
   content      = "CTF{some_flag}"
 }
 
-resource "ctfd_hint" "http_hint_1" {
+resource "ctfd_hint" "http_hint" {
   challenge_id = ctfd_challenge.http.id
   content      = "Some super-helpful hint"
   cost         = 50
@@ -33,10 +33,4 @@ resource "ctfd_hint" "http_hint_2" {
   content      = "Even more helpful hint !"
   cost         = 50
   requirements = [ctfd_hint.http_hint_1.id]
-}
-
-resource "ctfd_file" "http_file" {
-  challenge_id = ctfd_challenge.http.id
-  name         = "image.png"
-  contentb64   = filebase64(".../image.png")
 }

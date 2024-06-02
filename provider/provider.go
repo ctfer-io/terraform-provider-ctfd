@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/ctfer-io/go-ctfd/api"
+	"github.com/ctfer-io/terraform-provider-ctfd/provider/utils"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
@@ -171,9 +172,9 @@ func (p *CTFdProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 
 	// Instantiate CTFd API client
 	ctx = tflog.SetField(ctx, "ctfd_url", url)
-	ctx = addSensitive(ctx, "ctfd_session", session)
-	ctx = addSensitive(ctx, "ctfd_nonce", nonce)
-	ctx = addSensitive(ctx, "ctfd_api_key", apiKey)
+	ctx = utils.AddSensitive(ctx, "ctfd_session", session)
+	ctx = utils.AddSensitive(ctx, "ctfd_nonce", nonce)
+	ctx = utils.AddSensitive(ctx, "ctfd_api_key", apiKey)
 	tflog.Debug(ctx, "Creating CTFd API client")
 
 	client := api.NewClient(url, session, nonce, apiKey)

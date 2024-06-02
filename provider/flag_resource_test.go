@@ -26,10 +26,6 @@ resource "ctfd_flag" "static" {
 	type         = "static"
 }
 `,
-				Check: resource.ComposeAggregateTestCheckFunc(
-				// Verify dynamic values have any value set in the state.
-				// resource.TestCheckResourceAttr("ctfd_flag.first", "requirements.#", "0"),
-				),
 			},
 			// ImportState testing
 			{
@@ -60,10 +56,6 @@ resource "ctfd_flag" "regex" {
 	type         = "regex"
 }
 `,
-				Check: resource.ComposeAggregateTestCheckFunc(
-				// resource.TestCheckResourceAttr("ctfd_flag.first", "requirements.#", "0"),
-				// resource.TestCheckResourceAttr("ctfd_flag.second", "requirements.#", "1"),
-				),
 			},
 			// Delete testing automatically occurs in TestCase
 		},

@@ -10,6 +10,8 @@ provider "ctfd" {
   url = "http://localhost:8080"
 }
 
+
+
 resource "ctfd_challenge" "http" {
   name        = "HTTP Authentication"
   category    = "network"
@@ -27,10 +29,6 @@ resource "ctfd_challenge" "http" {
   state       = "visible"
   function    = "logarithmic"
 
-  flags = [{
-    content = "24HIUT{Http_1s_n0t_s3cuR3}"
-  }]
-
   topics = [
     "Network"
   ]
@@ -38,20 +36,33 @@ resource "ctfd_challenge" "http" {
     "network",
     "http"
   ]
-
-  hints = [{
-    content = "Les flux http ne sont pas chiffrés"
-    cost    = 50
-    }, {
-    content = "Les informations sont POSTées en HTTP :)"
-    cost    = 50
-  }]
-
-  files = [{
-    name       = "capture.pcapng"
-    contentb64 = filebase64("${path.module}/capture.pcapng")
-  }]
 }
+
+resource "ctfd_flag" "http_flag" {
+  challenge_id = ctfd_challenge.http.id
+  content      = "24HIUT{Http_1s_n0t_s3cuR3}"
+}
+
+resource "ctfd_hint" "http_hint_1" {
+  challenge_id = ctfd_challenge.http.id
+  content      = "Les flux http ne sont pas chiffrés"
+  cost         = 50
+}
+
+resource "ctfd_hint" "http_hint_2" {
+  challenge_id = ctfd_challenge.http.id
+  content      = "Les informations sont POSTées en HTTP :)"
+  cost         = 50
+  requirements = [ctfd_hint.http_hint_1.id]
+}
+
+resource "ctfd_file" "http_file" {
+  challenge_id = ctfd_challenge.http.id
+  name         = "capture.pcapng"
+  contentb64   = filebase64("${path.module}/capture.pcapng")
+}
+
+
 
 resource "ctfd_challenge" "icmp" {
   name        = "Stealing data"
@@ -85,17 +96,28 @@ resource "ctfd_challenge" "icmp" {
     "network",
     "icmp"
   ]
+}
 
-  hints = [{
-    content = "Vous ne trouvez pas qu'il ya beaucoup de requêtes ICMP ?"
-    cost    = 50
-    }, {
-    content = "Pour l'exo, le ttl a été modifié, tente un `ip.ttl<=20`"
-    cost    = 50
-  }]
+resource "ctfd_flag" "icmp_flag" {
+  challenge_id = ctfd_challenge.icmp.id
+  content      = "24HIUT{IcmpExfiltrationIsEasy}"
+}
 
-  files = [{
-    name       = "icmp.pcap"
-    contentb64 = filebase64("${path.module}/icmp.pcap")
-  }]
+resource "ctfd_hint" "icmp_hint_1" {
+  challenge_id = ctfd_challenge.icmp.id
+  content      = "Vous ne trouvez pas qu'il ya beaucoup de requêtes ICMP ?"
+  cost         = 50
+}
+
+resource "ctfd_hint" "icmp_hint_2" {
+  challenge_id = ctfd_challenge.icmp.id
+  content      = "Pour l'exo, le ttl a été modifié, tente un `ip.ttl<=20`"
+  cost         = 50
+  requirements = [ctfd_hint.icmp_hint_2.id]
+}
+
+resource "ctfd_file" "icmp_file" {
+  challenge_id = ctfd_challenge.icmp.id
+  name         = "icmp.pcap"
+  contentb64   = filebase64("${path.module}/icmp.pcap")
 }

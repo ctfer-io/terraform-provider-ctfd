@@ -49,7 +49,7 @@ func (r *fileResource) Metadata(ctx context.Context, req resource.MetadataReques
 
 func (r *fileResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "",
+		MarkdownDescription: "A CTFd file for a challenge.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:            true,
@@ -61,22 +61,17 @@ func (r *fileResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 			"challenge_id": schema.StringAttribute{
 				MarkdownDescription: "Challenge of the file.",
 				Required:            true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
-				},
 			},
 			"name": schema.StringAttribute{
 				MarkdownDescription: "Name of the file as displayed to end-users.",
 				Required:            true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
-				},
 			},
 			"location": schema.StringAttribute{
 				MarkdownDescription: "Location where the file is stored on the CTFd instance, for download purposes.",
 				Optional:            true,
 				Computed:            true,
 				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
 					stringplanmodifier.RequiresReplace(),
 				},
 			},
@@ -84,7 +79,7 @@ func (r *fileResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				MarkdownDescription: "The sha1 sum of the file.",
 				Computed:            true,
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
+					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
 			"content": schema.StringAttribute{
@@ -93,6 +88,7 @@ func (r *fileResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				Computed:            true,
 				Sensitive:           true,
 				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
 					stringplanmodifier.RequiresReplace(),
 				},
 			},
@@ -102,6 +98,7 @@ func (r *fileResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				Computed:            true,
 				Sensitive:           true,
 				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
 					stringplanmodifier.RequiresReplace(),
 				},
 			},
@@ -191,7 +188,7 @@ func (r *fileResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	data.Name = types.StringValue(filepath.Base(res.Location))
 	data.Location = types.StringValue(res.Location)
 	data.SHA1Sum = types.StringValue(res.SHA1sum)
-	data.ChallengeID = lookForChallengeId(ctx, r.client, res.Location, resp.Diagnostics)
+	data.ChallengeID = lookForChallengeId(ctx, r.client, res.ID, resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -267,14 +264,16 @@ func (data *fileResourceModel) PropagateContent(ctx context.Context, diags diag.
 }
 
 // XXX this helper only exist because CTFd does not return the challenge id of a file if it exist...
-func lookForChallengeId(ctx context.Context, client *api.Client, location string, diags diag.Diagnostics) types.String {
-	challs, err := client.GetChallenges(nil, api.WithContext(ctx))
+func lookForChallengeId(ctx context.Context, client *api.Client, fileID int, diags diag.Diagnostics) types.String {
+	challs, err := client.GetChallenges(&api.GetChallengesParams{
+		View: utils.Ptr("admin"), // required, else CTFd only returns the "visible" challenges
+	}, api.WithContext(ctx))
 	if err != nil {
 		diags.AddError(
 			"CTFd Error",
 			fmt.Sprintf("Unable to query challenges, got error: %s", err),
 		)
-		return types.StringValue("")
+		return types.StringNull()
 	}
 
 	for _, chall := range challs {
@@ -284,17 +283,17 @@ func lookForChallengeId(ctx context.Context, client *api.Client, location string
 				"CTFd Error",
 				fmt.Sprintf("Unable to query challenge %d files, got error: %s", chall.ID, err),
 			)
-			return types.StringValue("")
+			return types.StringNull()
 		}
 		for _, file := range files {
-			if file.Location == location {
+			if file.ID == fileID {
 				return types.StringValue(strconv.Itoa(chall.ID))
 			}
 		}
 	}
 	diags.AddError(
 		"Provider Error",
-		fmt.Sprintf("Unable to find challenge of file at %s", location),
+		fmt.Sprintf("Unable to find challenge of file %d", fileID),
 	)
-	return types.StringValue("")
+	return types.StringNull()
 }

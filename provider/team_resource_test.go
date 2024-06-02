@@ -47,7 +47,7 @@ resource "ctfd_team" "cybercombattants" {
 resource "ctfd_user" "ctfer" {
 	name     = "CTFer"
 	email    = "ctfer-io-team@protonmail.com"
-	password = "password"
+	password = "new-password"
 }
 
 resource "ctfd_team" "cybercombattants" {

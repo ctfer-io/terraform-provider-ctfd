@@ -60,7 +60,7 @@ func (r *fileResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 			},
 			"challenge_id": schema.StringAttribute{
 				MarkdownDescription: "Challenge of the file.",
-				Required:            true,
+				Optional:            true,
 			},
 			"name": schema.StringAttribute{
 				MarkdownDescription: "Name of the file as displayed to end-users.",
@@ -138,8 +138,7 @@ func (r *fileResource) Create(ctx context.Context, req resource.CreateRequest, r
 	}
 
 	// Create file
-	res, err := r.client.PostFiles(&api.PostFilesParams{
-		Challenge: utils.Ptr(utils.Atoi(data.ChallengeID.ValueString())),
+	params := &api.PostFilesParams{
 		Files: []*api.InputFile{
 			{
 				Name:    data.Name.ValueString(),
@@ -147,7 +146,11 @@ func (r *fileResource) Create(ctx context.Context, req resource.CreateRequest, r
 			},
 		},
 		Location: data.Location.ValueStringPointer(),
-	}, api.WithContext(ctx))
+	}
+	if !data.ChallengeID.IsNull() {
+		params.Challenge = utils.Ptr(utils.Atoi(data.ChallengeID.ValueString()))
+	}
+	res, err := r.client.PostFiles(params, api.WithContext(ctx))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -291,9 +294,5 @@ func lookForChallengeId(ctx context.Context, client *api.Client, fileID int, dia
 			}
 		}
 	}
-	diags.AddError(
-		"Provider Error",
-		fmt.Sprintf("Unable to find challenge of file %d", fileID),
-	)
 	return types.StringNull()
 }

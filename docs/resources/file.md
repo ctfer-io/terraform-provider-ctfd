@@ -44,11 +44,11 @@ resource "ctfd_file" "http_file" {
 
 ### Required
 
-- `challenge_id` (String) Challenge of the file.
 - `name` (String) Name of the file as displayed to end-users.
 
 ### Optional
 
+- `challenge_id` (String) Challenge of the file.
 - `content` (String, Sensitive) Raw content of the file, perfectly fit the use-cases of a .txt document or anything with a simple binary content. You could provide it from the file-system using `file("${path.module}/...")`.
 - `contentb64` (String, Sensitive) Base 64 content of the file, perfectly fit the use-cases of complex binaries. You could provide it from the file-system using `filebase64("${path.module}/...")`.
 - `location` (String) Location where the file is stored on the CTFd instance, for download purposes.

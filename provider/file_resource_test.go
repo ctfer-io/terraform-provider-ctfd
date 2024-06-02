@@ -25,6 +25,11 @@ resource "ctfd_file" "pouet" {
 	name         = "pouet.txt"
 	content      = "Pouet is a clown cat"
 }
+
+resource "ctfd_file" "pouet_2" {
+	name         = "pouet-2.txt"
+	content      = "Pouet is a clown cat, but has not challenge"
+}
 `,
 			},
 			// ImportState testing
@@ -47,6 +52,11 @@ resource "ctfd_file" "pouet" {
 	challenge_id = ctfd_challenge.example.id
 	name         = "pouet.txt"
 	content      = "Pouet the 2nd is the clowniest cat ever"
+}
+
+resource "ctfd_file" "pouet_2" {
+	name         = "pouet-2.txt"
+	content      = "Pouet is a clown cat, but has not challenge"
 }
 `,
 			},

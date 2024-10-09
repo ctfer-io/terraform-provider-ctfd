@@ -25,6 +25,7 @@ description: |-
 
 Read-Only:
 
+- `attribution` (String) Who created the challenge (support markdown).
 - `category` (String) Category of the challenge that CTFd groups by on the web UI.
 - `connection_info` (String) Connection Information to connect to the challenge instance, useful for pwn or web pentest.
 - `decay` (Number)

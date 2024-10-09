@@ -59,6 +59,10 @@ func (ch *challengeDataSource) Schema(ctx context.Context, req datasource.Schema
 							MarkdownDescription: "Description of the challenge, consider using multiline descriptions for better style.",
 							Computed:            true,
 						},
+						"attribution": schema.StringAttribute{
+							MarkdownDescription: "Who created the challenge (support markdown).",
+							Computed:            true,
+						},
 						"connection_info": schema.StringAttribute{
 							MarkdownDescription: "Connection Information to connect to the challenge instance, useful for pwn or web pentest.",
 							Computed:            true,

@@ -2,6 +2,7 @@ resource "ctfd_challenge" "http" {
   name        = "My Challenge"
   category    = "misc"
   description = "..."
+  attribution = "creator"
   value       = 500
   decay       = 100
   minimum     = 50

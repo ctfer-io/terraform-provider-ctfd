@@ -45,6 +45,7 @@ type challengeResourceModel struct {
 	Name           types.String                  `tfsdk:"name"`
 	Category       types.String                  `tfsdk:"category"`
 	Description    types.String                  `tfsdk:"description"`
+	Attribution    types.String                  `tfsdk:"attribution"`
 	ConnectionInfo types.String                  `tfsdk:"connection_info"`
 	MaxAttempts    types.Int64                   `tfsdk:"max_attempts"`
 	Function       types.String                  `tfsdk:"function"`
@@ -86,17 +87,26 @@ func (r *challengeResource) Schema(ctx context.Context, req resource.SchemaReque
 				MarkdownDescription: "Description of the challenge, consider using multiline descriptions for better style.",
 				Required:            true,
 			},
+			"attribution": schema.StringAttribute{
+				MarkdownDescription: "Who created the challenge (support markdown).",
+				Optional:            true,
+				Computed:            true,
+				Default:             defaults.String(nil),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
 			"connection_info": schema.StringAttribute{
 				MarkdownDescription: "Connection Information to connect to the challenge instance, useful for pwn, web and infrastructure pentests.",
 				Optional:            true,
 				Computed:            true,
-				Default:             stringdefault.StaticString(""),
+				Default:             defaults.String(stringdefault.StaticString("")),
 			},
 			"max_attempts": schema.Int64Attribute{
 				MarkdownDescription: "Maximum amount of attempts before being unable to flag the challenge.",
 				Optional:            true,
 				Computed:            true,
-				Default:             int64default.StaticInt64(0),
+				Default:             defaults.Int64(int64default.StaticInt64(0)),
 			},
 			"function": schema.StringAttribute{
 				MarkdownDescription: "Decay function to define how the challenge value evolve through solves, either linear or logarithmic.",
@@ -135,7 +145,7 @@ func (r *challengeResource) Schema(ctx context.Context, req resource.SchemaReque
 				MarkdownDescription: "State of the challenge, either hidden or visible.",
 				Optional:            true,
 				Computed:            true,
-				Default:             stringdefault.StaticString("hidden"),
+				Default:             defaults.String(stringdefault.StaticString("hidden")),
 				Validators: []validator.String{
 					validators.NewStringEnumValidator([]basetypes.StringValue{
 						types.StringValue("hidden"),
@@ -147,7 +157,7 @@ func (r *challengeResource) Schema(ctx context.Context, req resource.SchemaReque
 				MarkdownDescription: "Type of the challenge defining its layout/behavior, either standard or dynamic (default).",
 				Optional:            true,
 				Computed:            true,
-				Default:             stringdefault.StaticString("dynamic"),
+				Default:             defaults.String(stringdefault.StaticString("dynamic")),
 				Validators: []validator.String{
 					validators.NewStringEnumValidator([]basetypes.StringValue{
 						types.StringValue("standard"),
@@ -170,7 +180,7 @@ func (r *challengeResource) Schema(ctx context.Context, req resource.SchemaReque
 						MarkdownDescription: "Behavior if not unlocked, either hidden or anonymized.",
 						Optional:            true,
 						Computed:            true,
-						Default:             stringdefault.StaticString("hidden"),
+						Default:             defaults.String(stringdefault.StaticString("hidden")),
 						Validators: []validator.String{
 							validators.NewStringEnumValidator([]basetypes.StringValue{
 								BehaviorHidden,
@@ -245,6 +255,7 @@ func (r *challengeResource) Create(ctx context.Context, req resource.CreateReque
 		Name:           data.Name.ValueString(),
 		Category:       data.Category.ValueString(),
 		Description:    data.Description.ValueString(),
+		Attribution:    data.Attribution.ValueStringPointer(),
 		ConnectionInfo: data.ConnectionInfo.ValueStringPointer(),
 		MaxAttempts:    utils.ToInt(data.MaxAttempts),
 		Function:       data.Function.ValueString(),
@@ -360,6 +371,7 @@ func (r *challengeResource) Update(ctx context.Context, req resource.UpdateReque
 		Name:           data.Name.ValueString(),
 		Category:       data.Category.ValueString(),
 		Description:    data.Description.ValueString(),
+		Attribution:    data.Attribution.ValueStringPointer(),
 		ConnectionInfo: data.ConnectionInfo.ValueStringPointer(),
 		MaxAttempts:    utils.ToInt(data.MaxAttempts),
 		Function:       data.Function.ValueString(),
@@ -497,6 +509,7 @@ func (chall *challengeResourceModel) Read(ctx context.Context, client *api.Clien
 	chall.Name = types.StringValue(res.Name)
 	chall.Category = types.StringValue(res.Category)
 	chall.Description = types.StringValue(res.Description)
+	chall.Attribution = utils.ToTFString(res.Attribution)
 	chall.ConnectionInfo = utils.ToTFString(res.ConnectionInfo)
 	chall.MaxAttempts = utils.ToTFInt64(res.MaxAttempts)
 	chall.Function = types.StringValue(res.Function)

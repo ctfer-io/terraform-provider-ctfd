@@ -20,6 +20,7 @@ resource "ctfd_challenge" "http" {
   name        = "My Challenge"
   category    = "misc"
   description = "..."
+  attribution = "creator"
   value       = 500
   decay       = 100
   minimum     = 50
@@ -72,6 +73,7 @@ resource "ctfd_file" "http_file" {
 
 ### Optional
 
+- `attribution` (String) Who created the challenge (support markdown).
 - `connection_info` (String) Connection Information to connect to the challenge instance, useful for pwn, web and infrastructure pentests.
 - `decay` (Number) The decay defines from each number of solves does the decay function triggers until reaching minimum. This function is defined by CTFd and could be configured through `.function`.
 - `function` (String) Decay function to define how the challenge value evolve through solves, either linear or logarithmic.

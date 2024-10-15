@@ -1,7 +1,6 @@
 module github.com/ctfer-io/terraform-provider-ctfd
 
-go 1.22
-toolchain go1.22.5
+go 1.23.2
 
 require (
 	github.com/ctfer-io/go-ctfd v0.9.0

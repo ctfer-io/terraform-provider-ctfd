@@ -13,7 +13,7 @@ func TestAcc_Flag_Lifecycle(t *testing.T) {
 			// Create and Read testing
 			{
 				Config: providerConfig + `
-resource "ctfd_challenge" "example" {
+resource "ctfd_challenge_standard" "example" {
 	name        = "Example challenge"
 	category    = "test"
 	description = "Example challenge description..."
@@ -21,7 +21,7 @@ resource "ctfd_challenge" "example" {
 }
 
 resource "ctfd_flag" "static" {
-	challenge_id = ctfd_challenge.example.id
+	challenge_id = ctfd_challenge_standard.example.id
 	content      = "This is a first flag"
 	type         = "static"
 }
@@ -36,7 +36,7 @@ resource "ctfd_flag" "static" {
 			// Update and Read testing
 			{
 				Config: providerConfig + `
-resource "ctfd_challenge" "example" {
+resource "ctfd_challenge_standard" "example" {
 	name        = "Example challenge"
 	category    = "test"
 	description = "Example challenge description..."
@@ -44,14 +44,14 @@ resource "ctfd_challenge" "example" {
 }
 
 resource "ctfd_flag" "static" {
-	challenge_id = ctfd_challenge.example.id
+	challenge_id = ctfd_challenge_standard.example.id
 	content      = "This is a first flag"
 	data         = "case_insensitive"
 	type         = "static"
 }
 
 resource "ctfd_flag" "regex" {
-	challenge_id = ctfd_challenge.example.id
+	challenge_id = ctfd_challenge_standard.example.id
 	content      = "CTFER{.*}"
 	type         = "regex"
 }

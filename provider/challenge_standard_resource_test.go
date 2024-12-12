@@ -6,14 +6,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
-func TestAcc_Challenge_Lifecycle(t *testing.T) {
+func TestAcc_ChallengeStandard_Lifecycle(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Create and Read testing
 			{
 				Config: providerConfig + `
-resource "ctfd_challenge" "http" {
+resource "ctfd_challenge_standard" "http" {
 	name        = "HTTP Authentication"
 	category    = "network"
 	description = <<-EOT
@@ -24,8 +24,6 @@ resource "ctfd_challenge" "http" {
         - Nicolas
     EOT
 	value    = 500
-    decay    = 20
-    minimum  = 50
     state    = "hidden"
 
 	topics = [
@@ -38,19 +36,19 @@ resource "ctfd_challenge" "http" {
 `,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					// Verify dynamic values have any value set in the state.
-					resource.TestCheckResourceAttrSet("ctfd_challenge.http", "id"),
+					resource.TestCheckResourceAttrSet("ctfd_challenge_standard.http", "id"),
 				),
 			},
 			// ImportState testing
 			{
-				ResourceName:      "ctfd_challenge.http",
+				ResourceName:      "ctfd_challenge_standard.http",
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
 			// Update and Read testing
 			{
 				Config: providerConfig + `
-resource "ctfd_challenge" "http" {
+resource "ctfd_challenge_standard" "http" {
 	name        = "HTTP Authentication"
 	category    = "network"
 	description = <<-EOT
@@ -61,8 +59,6 @@ resource "ctfd_challenge" "http" {
         - NicolasFgrx
     EOT
 	value    = 500
-    decay    = 17
-    minimum  = 50
     state    = "visible"
 
 	topics = [
@@ -74,7 +70,7 @@ resource "ctfd_challenge" "http" {
 	]
 }
 
-resource "ctfd_challenge" "icmp" {
+resource "ctfd_challenge_standard" "icmp" {
 	name        = "Stealing data"
 	category    = "network"
 	description = <<-EOT
@@ -90,12 +86,12 @@ resource "ctfd_challenge" "icmp" {
 
 	requirements = {
 		behavior      = "anonymized"
-		prerequisites = [ctfd_challenge.http.id]
+		prerequisites = [ctfd_challenge_standard.http.id]
 	}
 }
 `,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("ctfd_challenge.icmp", "requirements.prerequisites.#", "1"),
+					resource.TestCheckResourceAttr("ctfd_challenge_standard.icmp", "requirements.prerequisites.#", "1"),
 				),
 			},
 			// Delete testing automatically occurs in TestCase

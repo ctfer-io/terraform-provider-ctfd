@@ -12,7 +12,7 @@ provider "ctfd" {
 
 
 
-resource "ctfd_challenge" "http" {
+resource "ctfd_challenge_dynamic" "http" {
   name        = "HTTP Authentication"
   category    = "network"
   description = <<-EOT
@@ -37,32 +37,32 @@ resource "ctfd_challenge" "http" {
 }
 
 resource "ctfd_flag" "http_flag" {
-  challenge_id = ctfd_challenge.http.id
+  challenge_id = ctfd_challenge_dynamic.http.id
   content      = "24HIUT{Http_1s_n0t_s3cuR3}"
 }
 
 resource "ctfd_hint" "http_hint_1" {
-  challenge_id = ctfd_challenge.http.id
+  challenge_id = ctfd_challenge_dynamic.http.id
   content      = "Les flux http ne sont pas chiffrés"
   cost         = 50
 }
 
 resource "ctfd_hint" "http_hint_2" {
-  challenge_id = ctfd_challenge.http.id
+  challenge_id = ctfd_challenge_dynamic.http.id
   content      = "Les informations sont POSTées en HTTP :)"
   cost         = 50
   requirements = [ctfd_hint.http_hint_1.id]
 }
 
 resource "ctfd_file" "http_file" {
-  challenge_id = ctfd_challenge.http.id
+  challenge_id = ctfd_challenge_dynamic.http.id
   name         = "capture.pcapng"
   contentb64   = filebase64("${path.module}/capture.pcapng")
 }
 
 
 
-resource "ctfd_challenge" "icmp" {
+resource "ctfd_challenge_dynamic" "icmp" {
   name        = "Stealing data"
   category    = "network"
   description = <<-EOT
@@ -78,7 +78,7 @@ resource "ctfd_challenge" "icmp" {
   state       = "visible"
   requirements = {
     behavior      = "anonymized"
-    prerequisites = [ctfd_challenge.http.id]
+    prerequisites = [ctfd_challenge_dynamic.http.id]
   }
 
   flags = [{
@@ -95,25 +95,25 @@ resource "ctfd_challenge" "icmp" {
 }
 
 resource "ctfd_flag" "icmp_flag" {
-  challenge_id = ctfd_challenge.icmp.id
+  challenge_id = ctfd_challenge_dynamic.icmp.id
   content      = "24HIUT{IcmpExfiltrationIsEasy}"
 }
 
 resource "ctfd_hint" "icmp_hint_1" {
-  challenge_id = ctfd_challenge.icmp.id
+  challenge_id = ctfd_challenge_dynamic.icmp.id
   content      = "Vous ne trouvez pas qu'il ya beaucoup de requêtes ICMP ?"
   cost         = 50
 }
 
 resource "ctfd_hint" "icmp_hint_2" {
-  challenge_id = ctfd_challenge.icmp.id
+  challenge_id = ctfd_challenge_dynamic.icmp.id
   content      = "Pour l'exo, le ttl a été modifié, tente un `ip.ttl<=20`"
   cost         = 50
   requirements = [ctfd_hint.icmp_hint_2.id]
 }
 
 resource "ctfd_file" "icmp_file" {
-  challenge_id = ctfd_challenge.icmp.id
+  challenge_id = ctfd_challenge_dynamic.icmp.id
   name         = "icmp.pcap"
   contentb64   = filebase64("${path.module}/icmp.pcap")
 }

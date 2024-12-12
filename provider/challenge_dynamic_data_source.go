@@ -6,34 +6,35 @@ import (
 	"strconv"
 
 	"github.com/ctfer-io/go-ctfd/api"
+	"github.com/ctfer-io/terraform-provider-ctfd/provider/utils"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 var (
-	_ datasource.DataSource              = (*challengeDataSource)(nil)
-	_ datasource.DataSourceWithConfigure = (*challengeDataSource)(nil)
+	_ datasource.DataSource              = (*challengeDynamicDataSource)(nil)
+	_ datasource.DataSourceWithConfigure = (*challengeDynamicDataSource)(nil)
 )
 
-func NewChallengeDataSource() datasource.DataSource {
-	return &challengeDataSource{}
+func NewChallengeDynamicDataSource() datasource.DataSource {
+	return &challengeDynamicDataSource{}
 }
 
-type challengeDataSource struct {
+type challengeDynamicDataSource struct {
 	client *api.Client
 }
 
-type challengesDataSourceModel struct {
-	ID         types.String             `tfsdk:"id"`
-	Challenges []challengeResourceModel `tfsdk:"challenges"`
+type challengesDynamicDataSourceModel struct {
+	ID         types.String                    `tfsdk:"id"`
+	Challenges []ChallengeDynamicResourceModel `tfsdk:"challenges"`
 }
 
-func (ch *challengeDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_challenges"
+func (ch *challengeDynamicDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_challenges_dynamic"
 }
 
-func (ch *challengeDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (ch *challengeDynamicDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
@@ -59,10 +60,6 @@ func (ch *challengeDataSource) Schema(ctx context.Context, req datasource.Schema
 							MarkdownDescription: "Description of the challenge, consider using multiline descriptions for better style.",
 							Computed:            true,
 						},
-						"attribution": schema.StringAttribute{
-							MarkdownDescription: "Attribution to the creator(s) of the challenge.",
-							Computed:            true,
-						},
 						"connection_info": schema.StringAttribute{
 							MarkdownDescription: "Connection Information to connect to the challenge instance, useful for pwn or web pentest.",
 							Computed:            true,
@@ -71,25 +68,11 @@ func (ch *challengeDataSource) Schema(ctx context.Context, req datasource.Schema
 							MarkdownDescription: "Maximum amount of attempts before being unable to flag the challenge.",
 							Computed:            true,
 						},
-						"function": schema.StringAttribute{
-							MarkdownDescription: "Decay function to define how the challenge value evolve through solves, either linear or logarithmic.",
-							Computed:            true,
-						},
 						"value": schema.Int64Attribute{
-							Computed: true,
-						},
-						"decay": schema.Int64Attribute{
-							Computed: true,
-						},
-						"minimum": schema.Int64Attribute{
 							Computed: true,
 						},
 						"state": schema.StringAttribute{
 							MarkdownDescription: "State of the challenge, either hidden or visible.",
-							Computed:            true,
-						},
-						"type": schema.StringAttribute{
-							MarkdownDescription: "Type of the challenge defining its layout, either standard or dynamic.",
 							Computed:            true,
 						},
 						"next": schema.Int64Attribute{
@@ -129,7 +112,7 @@ func (ch *challengeDataSource) Schema(ctx context.Context, req datasource.Schema
 	}
 }
 
-func (ch *challengeDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+func (ch *challengeDynamicDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -146,10 +129,12 @@ func (ch *challengeDataSource) Configure(ctx context.Context, req datasource.Con
 	ch.client = client
 }
 
-func (ch *challengeDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var state challengesDataSourceModel
+func (ch *challengeDynamicDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	var state challengesDynamicDataSourceModel
 
-	challs, err := ch.client.GetChallenges(&api.GetChallengesParams{}, api.WithContext(ctx))
+	challs, err := ch.client.GetChallenges(&api.GetChallengesParams{
+		Type: utils.Ptr("dynamic"),
+	}, api.WithContext(ctx))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unable to Read CTFd Challenges",
@@ -158,11 +143,10 @@ func (ch *challengeDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		return
 	}
 
-	state.Challenges = make([]challengeResourceModel, 0, len(challs))
+	state.Challenges = make([]ChallengeDynamicResourceModel, 0, len(challs))
 	for _, c := range challs {
-		chall := challengeResourceModel{
-			ID: types.StringValue(strconv.Itoa(c.ID)),
-		}
+		chall := ChallengeDynamicResourceModel{}
+		chall.ID = types.StringValue(strconv.Itoa(c.ID))
 		chall.Read(ctx, ch.client, resp.Diagnostics)
 		if resp.Diagnostics.HasError() {
 			return

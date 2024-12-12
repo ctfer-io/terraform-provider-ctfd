@@ -13,7 +13,7 @@ func TestAcc_File_Lifecycle(t *testing.T) {
 			// Create and Read testing
 			{
 				Config: providerConfig + `
-resource "ctfd_challenge" "example" {
+resource "ctfd_challenge_standard" "example" {
 	name        = "Example challenge"
 	category    = "test"
 	description = "Example challenge description..."
@@ -21,7 +21,7 @@ resource "ctfd_challenge" "example" {
 }
 
 resource "ctfd_file" "pouet" {
-	challenge_id = ctfd_challenge.example.id
+	challenge_id = ctfd_challenge_standard.example.id
 	name         = "pouet.txt"
 	content      = "Pouet is a clown cat"
 }
@@ -41,7 +41,7 @@ resource "ctfd_file" "pouet_2" {
 			// Update and Read testing
 			{
 				Config: providerConfig + `
-resource "ctfd_challenge" "example" {
+resource "ctfd_challenge_standard" "example" {
 	name        = "Example challenge"
 	category    = "test"
 	description = "Example challenge description..."
@@ -49,7 +49,7 @@ resource "ctfd_challenge" "example" {
 }
 
 resource "ctfd_file" "pouet" {
-	challenge_id = ctfd_challenge.example.id
+	challenge_id = ctfd_challenge_standard.example.id
 	name         = "pouet.txt"
 	content      = "Pouet the 2nd is the clowniest cat ever"
 }

@@ -87,6 +87,7 @@ resource "ctfd_challenge" "icmp" {
 		- NicolasFgrx
 	EOT
 	value   = 500
+	type    = "standard"
 
 	requirements = {
 		behavior      = "anonymized"
@@ -96,6 +97,7 @@ resource "ctfd_challenge" "icmp" {
 `,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("ctfd_challenge.icmp", "requirements.prerequisites.#", "1"),
+					resource.TestCheckNoResourceAttr("ctfd_challenge.icmp", "function"),
 				),
 			},
 			// Delete testing automatically occurs in TestCase

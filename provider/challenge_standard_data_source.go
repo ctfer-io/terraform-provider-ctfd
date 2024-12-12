@@ -6,34 +6,35 @@ import (
 	"strconv"
 
 	"github.com/ctfer-io/go-ctfd/api"
+	"github.com/ctfer-io/terraform-provider-ctfd/provider/utils"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 var (
-	_ datasource.DataSource              = (*challengeDataSource)(nil)
-	_ datasource.DataSourceWithConfigure = (*challengeDataSource)(nil)
+	_ datasource.DataSource              = (*challengeStandardDataSource)(nil)
+	_ datasource.DataSourceWithConfigure = (*challengeStandardDataSource)(nil)
 )
 
-func NewChallengeDataSource() datasource.DataSource {
-	return &challengeDataSource{}
+func NewChallengeStandardDataSource() datasource.DataSource {
+	return &challengeStandardDataSource{}
 }
 
-type challengeDataSource struct {
+type challengeStandardDataSource struct {
 	client *api.Client
 }
 
-type challengesDataSourceModel struct {
-	ID         types.String             `tfsdk:"id"`
-	Challenges []challengeResourceModel `tfsdk:"challenges"`
+type challengesStandardDataSourceModel struct {
+	ID         types.String                     `tfsdk:"id"`
+	Challenges []ChallengeStandardResourceModel `tfsdk:"challenges"`
 }
 
-func (ch *challengeDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_challenges"
+func (ch *challengeStandardDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_challenges_standard"
 }
 
-func (ch *challengeDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (ch *challengeStandardDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
@@ -67,25 +68,11 @@ func (ch *challengeDataSource) Schema(ctx context.Context, req datasource.Schema
 							MarkdownDescription: "Maximum amount of attempts before being unable to flag the challenge.",
 							Computed:            true,
 						},
-						"function": schema.StringAttribute{
-							MarkdownDescription: "Decay function to define how the challenge value evolve through solves, either linear or logarithmic.",
-							Computed:            true,
-						},
 						"value": schema.Int64Attribute{
-							Computed: true,
-						},
-						"decay": schema.Int64Attribute{
-							Computed: true,
-						},
-						"minimum": schema.Int64Attribute{
 							Computed: true,
 						},
 						"state": schema.StringAttribute{
 							MarkdownDescription: "State of the challenge, either hidden or visible.",
-							Computed:            true,
-						},
-						"type": schema.StringAttribute{
-							MarkdownDescription: "Type of the challenge defining its layout, either standard or dynamic.",
 							Computed:            true,
 						},
 						"next": schema.Int64Attribute{
@@ -125,7 +112,7 @@ func (ch *challengeDataSource) Schema(ctx context.Context, req datasource.Schema
 	}
 }
 
-func (ch *challengeDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+func (ch *challengeStandardDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -142,10 +129,12 @@ func (ch *challengeDataSource) Configure(ctx context.Context, req datasource.Con
 	ch.client = client
 }
 
-func (ch *challengeDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var state challengesDataSourceModel
+func (ch *challengeStandardDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	var state challengesStandardDataSourceModel
 
-	challs, err := ch.client.GetChallenges(&api.GetChallengesParams{}, api.WithContext(ctx))
+	challs, err := ch.client.GetChallenges(&api.GetChallengesParams{
+		Type: utils.Ptr("standard"),
+	}, api.WithContext(ctx))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unable to Read CTFd Challenges",
@@ -154,9 +143,9 @@ func (ch *challengeDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		return
 	}
 
-	state.Challenges = make([]challengeResourceModel, 0, len(challs))
+	state.Challenges = make([]ChallengeStandardResourceModel, 0, len(challs))
 	for _, c := range challs {
-		chall := challengeResourceModel{
+		chall := ChallengeStandardResourceModel{
 			ID: types.StringValue(strconv.Itoa(c.ID)),
 		}
 		chall.Read(ctx, ch.client, resp.Diagnostics)

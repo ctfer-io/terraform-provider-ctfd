@@ -40,7 +40,7 @@ provider "ctfd" {
 
 We recommend setting the environment variable `CTFD_API_KEY` to enable the provider to communicate with your CTFd instance.
 
-Then, you could use a `ctfd_challenge` resource to setup your CTFd challenge, with for instance the following configuration.
+Then, you could use a `ctfd_challenge_standard` resource to setup your CTFd challenges, with for instance the following configuration.
 ```hcl
 resource "ctfd_challenge" "my_challenge" {
     name        = "My Challenge"

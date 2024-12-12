@@ -13,7 +13,7 @@ func TestAcc_Hint_Lifecycle(t *testing.T) {
 			// Create and Read testing
 			{
 				Config: providerConfig + `
-resource "ctfd_challenge" "example" {
+resource "ctfd_challenge_standard" "example" {
 	name        = "Example challenge"
 	category    = "test"
 	description = "Example challenge description..."
@@ -21,7 +21,7 @@ resource "ctfd_challenge" "example" {
 }
 
 resource "ctfd_hint" "first" {
-	challenge_id = ctfd_challenge.example.id
+	challenge_id = ctfd_challenge_standard.example.id
 	content      = "This is a first hint"
 	cost         = 1
 }
@@ -40,7 +40,7 @@ resource "ctfd_hint" "first" {
 			// Update and Read testing
 			{
 				Config: providerConfig + `
-resource "ctfd_challenge" "example" {
+resource "ctfd_challenge_standard" "example" {
 	name        = "Example challenge"
 	category    = "test"
 	description = "Example challenge description..."
@@ -48,13 +48,13 @@ resource "ctfd_challenge" "example" {
 }
 
 resource "ctfd_hint" "first" {
-	challenge_id = ctfd_challenge.example.id
+	challenge_id = ctfd_challenge_standard.example.id
 	content      = "This is a first hint"
 	cost         = 1
 }
 
 resource "ctfd_hint" "second" {
-	challenge_id = ctfd_challenge.example.id
+	challenge_id = ctfd_challenge_standard.example.id
 	content      = "This is a second hint"
 	cost         = 2
 	requirements = [ctfd_hint.first.id]

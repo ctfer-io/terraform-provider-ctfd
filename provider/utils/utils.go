@@ -56,3 +56,17 @@ func Atoi(s string) int {
 	v, _ := strconv.Atoi(s)
 	return v
 }
+
+// BlindMerge combines the two inputs maps into a new one,
+// with preference over the second.
+// In case the same key is defined in both, b takes privilege.
+func BlindMerge[T comparable, U any](a, b map[T]U) map[T]U {
+	c := map[T]U{}
+	for k, v := range a {
+		c[k] = v
+	}
+	for k, v := range b {
+		c[k] = v
+	}
+	return c
+}

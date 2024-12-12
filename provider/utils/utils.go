@@ -37,6 +37,15 @@ func ToInt(itf types.Int64) *int {
 	return &i
 }
 
+// ToIntOnDynamic returns the value of itf as an integer pointer iif
+// the challType is dynamic.
+func ToIntOnDynamic(itf types.Int64, challType types.String) *int {
+	if challType == types.StringValue("dynamic") {
+		return ToInt(itf)
+	}
+	return nil
+}
+
 func Ptr[T any](t T) *T {
 	return &t
 }

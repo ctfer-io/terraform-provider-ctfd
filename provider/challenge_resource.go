@@ -13,9 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/defaults"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
@@ -102,34 +100,23 @@ func (r *challengeResource) Schema(ctx context.Context, req resource.SchemaReque
 				MarkdownDescription: "Decay function to define how the challenge value evolve through solves, either linear or logarithmic.",
 				Optional:            true,
 				Computed:            true,
-				Default:             defaults.String(stringdefault.StaticString("linear")),
-				Validators: []validator.String{
-					validators.NewStringEnumValidator([]basetypes.StringValue{
-						FunctionLinear,
-						FunctionLogarithmic,
-					}),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
 			"value": schema.Int64Attribute{
 				MarkdownDescription: "The value (points) of the challenge once solved. Internally, the provider will handle what target is legitimate depending on the `.type` value, i.e. either `value` for \"standard\" or `initial` for \"dynamic\".",
 				Required:            true,
 			},
-			// XXX decay and minimum are only required if .type == "dynamic"
 			"decay": schema.Int64Attribute{
 				MarkdownDescription: "The decay defines from each number of solves does the decay function triggers until reaching minimum. This function is defined by CTFd and could be configured through `.function`.",
 				Optional:            true,
 				Computed:            true,
-				PlanModifiers: []planmodifier.Int64{
-					int64planmodifier.UseStateForUnknown(),
-				},
 			},
 			"minimum": schema.Int64Attribute{
 				MarkdownDescription: "The minimum points for a dynamic-score challenge to reach with the decay function. Once there, no solve could have more value.",
 				Optional:            true,
 				Computed:            true,
-				PlanModifiers: []planmodifier.Int64{
-					int64planmodifier.UseStateForUnknown(),
-				},
 			},
 			"state": schema.StringAttribute{
 				MarkdownDescription: "State of the challenge, either hidden or visible.",
@@ -228,6 +215,26 @@ func (r *challengeResource) Create(ctx context.Context, req resource.CreateReque
 		return
 	}
 
+	// Configuration checks
+	if data.Type.Equal(types.StringValue("dynamic")) {
+		if data.Decay.IsNull() {
+			resp.Diagnostics.AddError("Configuration error", "decay must be set for dynamic challenges")
+		}
+		if data.Minimum.IsNull() {
+			resp.Diagnostics.AddError("Configuration error", "minimum must be set for dynamic challenges")
+		}
+		if data.Function.IsNull() || data.Function.IsUnknown() {
+			data.Function = FunctionLogarithmic
+		}
+	} else {
+		if data.Function.IsNull() || data.Function.IsUnknown() {
+			data.Function = types.StringNull()
+		}
+	}
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	// Create Challenge
 	reqs := (*api.Requirements)(nil)
 	if data.Requirements != nil {
@@ -247,11 +254,11 @@ func (r *challengeResource) Create(ctx context.Context, req resource.CreateReque
 		Description:    data.Description.ValueString(),
 		ConnectionInfo: data.ConnectionInfo.ValueStringPointer(),
 		MaxAttempts:    utils.ToInt(data.MaxAttempts),
-		Function:       data.Function.ValueString(),
+		Function:       data.Function.ValueStringPointer(),
 		Value:          int(data.Value.ValueInt64()),
-		Initial:        utils.ToInt(data.Value),
-		Decay:          utils.ToInt(data.Decay),
-		Minimum:        utils.ToInt(data.Minimum),
+		Initial:        utils.ToIntOnDynamic(data.Value, data.Type),
+		Decay:          utils.ToIntOnDynamic(data.Decay, data.Type),
+		Minimum:        utils.ToIntOnDynamic(data.Minimum, data.Type),
 		State:          data.State.ValueString(),
 		Type:           data.Type.ValueString(),
 		NextID:         utils.ToInt(data.Next),
@@ -343,6 +350,22 @@ func (r *challengeResource) Update(ctx context.Context, req resource.UpdateReque
 	var dataState challengeResourceModel
 	req.State.Get(ctx, &dataState)
 
+	// Configuration checks
+	if data.Type.Equal(types.StringValue("dynamic")) {
+		if data.Decay.IsNull() {
+			resp.Diagnostics.AddError("Configuration error", "decay must be set for dynamic challenges")
+		}
+		if data.Minimum.IsNull() {
+			resp.Diagnostics.AddError("Configuration error", "minimum must be set for dynamic challenges")
+		}
+		if data.Function.IsNull() {
+			data.Function = FunctionLogarithmic
+		}
+	}
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	// Patch direct attributes
 	reqs := (*api.Requirements)(nil)
 	if data.Requirements != nil {
@@ -362,7 +385,7 @@ func (r *challengeResource) Update(ctx context.Context, req resource.UpdateReque
 		Description:    data.Description.ValueString(),
 		ConnectionInfo: data.ConnectionInfo.ValueStringPointer(),
 		MaxAttempts:    utils.ToInt(data.MaxAttempts),
-		Function:       data.Function.ValueString(),
+		Function:       data.Function.ValueStringPointer(),
 		Value:          utils.ToInt(data.Value),
 		Initial:        utils.ToInt(data.Value),
 		Decay:          utils.ToInt(data.Decay),
@@ -499,7 +522,7 @@ func (chall *challengeResourceModel) Read(ctx context.Context, client *api.Clien
 	chall.Description = types.StringValue(res.Description)
 	chall.ConnectionInfo = utils.ToTFString(res.ConnectionInfo)
 	chall.MaxAttempts = utils.ToTFInt64(res.MaxAttempts)
-	chall.Function = types.StringValue(res.Function)
+	chall.Function = utils.ToTFString(res.Function)
 	chall.Decay = utils.ToTFInt64(res.Decay)
 	chall.Minimum = utils.ToTFInt64(res.Minimum)
 	chall.State = types.StringValue(res.State)

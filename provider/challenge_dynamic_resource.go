@@ -98,6 +98,7 @@ func (r *challengeDynamicResource) Create(ctx context.Context, req resource.Crea
 		Name:           data.Name.ValueString(),
 		Category:       data.Category.ValueString(),
 		Description:    data.Description.ValueString(),
+		Attribution:    data.Attribution.ValueStringPointer(),
 		ConnectionInfo: data.ConnectionInfo.ValueStringPointer(),
 		MaxAttempts:    utils.ToInt(data.MaxAttempts),
 		Function:       data.Function.ValueStringPointer(),
@@ -210,6 +211,7 @@ func (r *challengeDynamicResource) Update(ctx context.Context, req resource.Upda
 		Name:           data.Name.ValueString(),
 		Category:       data.Category.ValueString(),
 		Description:    data.Description.ValueString(),
+		Attribution:    data.Attribution.ValueStringPointer(),
 		ConnectionInfo: data.ConnectionInfo.ValueStringPointer(),
 		MaxAttempts:    utils.ToInt(data.MaxAttempts),
 		Function:       data.Function.ValueStringPointer(),
@@ -346,6 +348,7 @@ func (chall *ChallengeDynamicResourceModel) Read(ctx context.Context, client *ap
 	chall.Name = types.StringValue(res.Name)
 	chall.Category = types.StringValue(res.Category)
 	chall.Description = types.StringValue(res.Description)
+	chall.Attribution = types.StringPointerValue(res.Attribution)
 	chall.ConnectionInfo = utils.ToTFString(res.ConnectionInfo)
 	chall.MaxAttempts = utils.ToTFInt64(res.MaxAttempts)
 	chall.Function = utils.ToTFString(res.Function)

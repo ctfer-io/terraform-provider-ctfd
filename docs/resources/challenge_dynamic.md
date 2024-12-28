@@ -74,6 +74,7 @@ resource "ctfd_file" "http_file" {
 
 ### Optional
 
+- `attribution` (String) Attribution to the creator(s) of the challenge.
 - `connection_info` (String) Connection Information to connect to the challenge instance, useful for pwn, web and infrastructure pentests.
 - `function` (String) Decay function to define how the challenge value evolve through solves, either linear or logarithmic.
 - `max_attempts` (Number) Maximum amount of attempts before being unable to flag the challenge.

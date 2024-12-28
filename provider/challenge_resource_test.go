@@ -19,14 +19,12 @@ resource "ctfd_challenge" "http" {
 	description = <<-EOT
         Oh no ! I did not see my connection was no encrypted !
         I hope no one spied me...
-
-        Authors:
-        - Nicolas
     EOT
-	value    = 500
-    decay    = 20
-    minimum  = 50
-    state    = "hidden"
+	attribution = "Nicolas"
+	value       = 500
+    decay       = 20
+    minimum     = 50
+    state       = "hidden"
 
 	topics = [
 		"Network"
@@ -56,14 +54,12 @@ resource "ctfd_challenge" "http" {
 	description = <<-EOT
         Oh no ! I did not see my connection was no encrypted !
         I hope no one spied me...
-
-        Authors:
-        - NicolasFgrx
     EOT
-	value    = 500
-    decay    = 17
-    minimum  = 50
-    state    = "visible"
+	attribution = "NicolasFgrx"
+	value       = 500
+    decay       = 17
+    minimum     = 50
+    state       = "visible"
 
 	topics = [
 		"Network"
@@ -82,12 +78,10 @@ resource "ctfd_challenge" "icmp" {
 		At first glance, it seems to be an internal one. Can you tell what it is ?
 
 		(The network capture was realized out of the CTF infrastructure)
-
-		Authors:
-		- NicolasFgrx
 	EOT
-	value   = 500
-	type    = "standard"
+	attribution = "NicolasFgrx"
+	value       = 500
+	type        = "standard"
 
 	requirements = {
 		behavior      = "anonymized"

@@ -18,10 +18,8 @@ resource "ctfd_challenge" "http" {
   description = <<-EOT
         Oh non ! Je n'avais pas vu que ma connexion n'était pas chiffrée ! 
         J'espère que personne ne m'espionnait...
-
-        Authors:
-        - NicolasFgrx
     EOT
+  attribution = "NicolasFgrx"
   value       = 500
   initial     = 500
   decay       = 17
@@ -72,10 +70,8 @@ resource "ctfd_challenge" "icmp" {
         Visiblement, il s'agit d'un serveur interne. Vous pouvez nous dire de quoi il s'agit ?
 
         (La capture a été réalisée en dehors de l'infrastructure du CTF)
-
-        Authors:
-        - NicolasFgrx
     EOT
+  attribution = "NicolasFgrx"
   value       = 500
   decay       = 17
   minimum     = 50

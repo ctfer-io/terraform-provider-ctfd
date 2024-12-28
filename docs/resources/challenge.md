@@ -72,6 +72,7 @@ resource "ctfd_file" "http_file" {
 
 ### Optional
 
+- `attribution` (String) Attribution to the creator(s) of the challenge.
 - `connection_info` (String) Connection Information to connect to the challenge instance, useful for pwn, web and infrastructure pentests.
 - `decay` (Number) The decay defines from each number of solves does the decay function triggers until reaching minimum. This function is defined by CTFd and could be configured through `.function`.
 - `function` (String) Decay function to define how the challenge value evolve through solves, either linear or logarithmic.

@@ -43,6 +43,7 @@ type challengeResourceModel struct {
 	Name           types.String                  `tfsdk:"name"`
 	Category       types.String                  `tfsdk:"category"`
 	Description    types.String                  `tfsdk:"description"`
+	Attribution    types.String                  `tfsdk:"attribution"`
 	ConnectionInfo types.String                  `tfsdk:"connection_info"`
 	MaxAttempts    types.Int64                   `tfsdk:"max_attempts"`
 	Function       types.String                  `tfsdk:"function"`
@@ -83,6 +84,10 @@ func (r *challengeResource) Schema(ctx context.Context, req resource.SchemaReque
 			"description": schema.StringAttribute{
 				MarkdownDescription: "Description of the challenge, consider using multiline descriptions for better style.",
 				Required:            true,
+			},
+			"attribution": schema.StringAttribute{
+				MarkdownDescription: "Attribution to the creator(s) of the challenge.",
+				Optional:            true,
 			},
 			"connection_info": schema.StringAttribute{
 				MarkdownDescription: "Connection Information to connect to the challenge instance, useful for pwn, web and infrastructure pentests.",
@@ -252,6 +257,7 @@ func (r *challengeResource) Create(ctx context.Context, req resource.CreateReque
 		Name:           data.Name.ValueString(),
 		Category:       data.Category.ValueString(),
 		Description:    data.Description.ValueString(),
+		Attribution:    data.Attribution.ValueStringPointer(),
 		ConnectionInfo: data.ConnectionInfo.ValueStringPointer(),
 		MaxAttempts:    utils.ToInt(data.MaxAttempts),
 		Function:       data.Function.ValueStringPointer(),
@@ -383,6 +389,7 @@ func (r *challengeResource) Update(ctx context.Context, req resource.UpdateReque
 		Name:           data.Name.ValueString(),
 		Category:       data.Category.ValueString(),
 		Description:    data.Description.ValueString(),
+		Attribution:    data.Attribution.ValueStringPointer(),
 		ConnectionInfo: data.ConnectionInfo.ValueStringPointer(),
 		MaxAttempts:    utils.ToInt(data.MaxAttempts),
 		Function:       data.Function.ValueStringPointer(),
@@ -520,6 +527,7 @@ func (chall *challengeResourceModel) Read(ctx context.Context, client *api.Clien
 	chall.Name = types.StringValue(res.Name)
 	chall.Category = types.StringValue(res.Category)
 	chall.Description = types.StringValue(res.Description)
+	chall.Attribution = types.StringPointerValue(res.Attribution)
 	chall.ConnectionInfo = utils.ToTFString(res.ConnectionInfo)
 	chall.MaxAttempts = utils.ToTFInt64(res.MaxAttempts)
 	chall.Function = utils.ToTFString(res.Function)

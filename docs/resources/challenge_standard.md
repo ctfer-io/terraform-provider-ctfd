@@ -68,6 +68,7 @@ resource "ctfd_file" "http_file" {
 
 ### Optional
 
+- `attribution` (String) Attribution to the creator(s) of the challenge.
 - `connection_info` (String) Connection Information to connect to the challenge instance, useful for pwn, web and infrastructure pentests.
 - `max_attempts` (Number) Maximum amount of attempts before being unable to flag the challenge.
 - `next` (Number) Suggestion for the end-user as next challenge to work on.

@@ -439,6 +439,10 @@ var (
 			MarkdownDescription: "Description of the challenge, consider using multiline descriptions for better style.",
 			Required:            true,
 		},
+		"attribution": schema.StringAttribute{
+			MarkdownDescription: "Attribution to the creator(s) of the challenge.",
+			Optional:            true,
+		},
 		"connection_info": schema.StringAttribute{
 			MarkdownDescription: "Connection Information to connect to the challenge instance, useful for pwn, web and infrastructure pentests.",
 			Optional:            true,

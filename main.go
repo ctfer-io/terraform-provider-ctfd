@@ -5,7 +5,7 @@ import (
 	"flag"
 	"log"
 
-	"github.com/ctfer-io/terraform-provider-ctfd/provider"
+	"github.com/ctfer-io/terraform-provider-ctfd/v2/provider"
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 )
 

@@ -1,4 +1,4 @@
-module github.com/ctfer-io/terraform-provider-ctfd
+module github.com/ctfer-io/terraform-provider-ctfd/v2
 
 go 1.23.2
 

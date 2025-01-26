@@ -39,7 +39,6 @@ type fileResourceModel struct {
 	Name        types.String `tfsdk:"name"`
 	Location    types.String `tfsdk:"location"`
 	SHA1Sum     types.String `tfsdk:"sha1sum"`
-	Content     types.String `tfsdk:"content"`
 	ContentB64  types.String `tfsdk:"contentb64"`
 }
 
@@ -82,23 +81,12 @@ func (r *fileResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
-			"content": schema.StringAttribute{
-				MarkdownDescription: "Raw content of the file, perfectly fit the use-cases of a .txt document or anything with a simple binary content. You could provide it from the file-system using `file(\"${path.module}/...\")`.",
-				Optional:            true,
-				Computed:            true,
-				Sensitive:           true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-					stringplanmodifier.RequiresReplace(),
-				},
-			},
 			"contentb64": schema.StringAttribute{
 				MarkdownDescription: "Base 64 content of the file, perfectly fit the use-cases of complex binaries. You could provide it from the file-system using `filebase64(\"${path.module}/...\")`.",
 				Optional:            true,
 				Computed:            true,
-				Sensitive:           true,
+				Sensitive:           true, // define as sensitive, because content could be + avoid printing it
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
 					stringplanmodifier.RequiresReplace(),
 				},
 			},
@@ -131,18 +119,20 @@ func (r *fileResource) Create(ctx context.Context, req resource.CreateRequest, r
 		return
 	}
 
-	// Fetch raw or base64 content prior to creating it with raw
-	data.PropagateContent(ctx, resp.Diagnostics)
-	if resp.Diagnostics.HasError() {
+	// Create file
+	content, err := base64.StdEncoding.DecodeString(data.ContentB64.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Content Error",
+			fmt.Sprintf("base64 content is invalid: %s", err),
+		)
 		return
 	}
-
-	// Create file
 	params := &api.PostFilesParams{
 		Files: []*api.InputFile{
 			{
 				Name:    data.Name.ValueString(),
-				Content: []byte(data.Content.ValueString()),
+				Content: content,
 			},
 		},
 		Location: data.Location.ValueStringPointer(),
@@ -208,7 +198,6 @@ func (r *fileResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	}
 
 	data.ContentB64 = types.StringValue(base64.StdEncoding.EncodeToString(content))
-	data.PropagateContent(ctx, resp.Diagnostics)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -243,27 +232,6 @@ func (r *fileResource) ImportState(ctx context.Context, req resource.ImportState
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 
 	// Automatically call r.Read
-}
-
-func (data *fileResourceModel) PropagateContent(ctx context.Context, diags diag.Diagnostics) {
-	// If the other content source is set, get the other from it
-	if len(data.Content.ValueString()) != 0 {
-		cb64 := base64.StdEncoding.EncodeToString([]byte(data.Content.ValueString()))
-		data.ContentB64 = types.StringValue(cb64)
-		return
-	}
-	if len(data.ContentB64.ValueString()) != 0 {
-		c, err := base64.StdEncoding.DecodeString(data.ContentB64.ValueString())
-		diags.AddError(
-			"File Error",
-			fmt.Sprintf("Base64 file content failed at decoding: %s", err),
-		)
-		data.Content = types.StringValue(string(c))
-		return
-	}
-	// If no content seems to be set, set them both empty
-	data.Content = types.StringValue("")
-	data.ContentB64 = types.StringValue("")
 }
 
 // XXX this helper only exist because CTFd does not return the challenge id of a file if it exist...

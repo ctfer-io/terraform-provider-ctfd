@@ -23,18 +23,22 @@ resource "ctfd_challenge_standard" "example" {
 resource "ctfd_file" "pouet" {
 	challenge_id = ctfd_challenge_standard.example.id
 	name         = "pouet.txt"
-	content      = "Pouet is a clown cat"
+	contentb64   = "UG91ZXQgaXMgYSBjbG93biBjYXQK"
 }
 
 resource "ctfd_file" "pouet_2" {
-	name         = "pouet-2.txt"
-	content      = "Pouet is a clown cat, but has not challenge"
+	name       = "pouet-2.txt"
+	contentb64 = "UG91ZXQgaXMgYSBjbG93biBjYXQsIGJ1dCBoYXMgbm90IGNoYWxsZW5nZQo="
 }
 `,
 			},
 			// ImportState testing
 			{
 				ResourceName:      "ctfd_file.pouet",
+				ImportState:       true,
+				ImportStateVerify: true,
+			}, {
+				ResourceName:      "ctfd_file.pouet_2",
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
@@ -51,12 +55,12 @@ resource "ctfd_challenge_standard" "example" {
 resource "ctfd_file" "pouet" {
 	challenge_id = ctfd_challenge_standard.example.id
 	name         = "pouet.txt"
-	content      = "Pouet the 2nd is the clowniest cat ever"
+	contentb64   = "UG91ZXQgdGhlIDJuZCBpcyB0aGUgY2xvd25pZXN0IGNhdCBldmVyCg=="
 }
 
 resource "ctfd_file" "pouet_2" {
-	name         = "pouet-2.txt"
-	content      = "Pouet is a clown cat, but has not challenge"
+	name       = "pouet-2.txt"
+	contentb64 = "UG91ZXQgaXMgYSBjbG93biBjYXQsIGJ1dCBoYXMgbm90IGNoYWxsZW5nZQo="
 }
 `,
 			},

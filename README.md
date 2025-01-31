@@ -42,7 +42,7 @@ We recommend setting the environment variable `CTFD_API_KEY` to enable the provi
 
 Then, you could use a `ctfd_challenge_standard` resource to setup your CTFd challenges, with for instance the following configuration.
 ```hcl
-resource "ctfd_challenge" "my_challenge" {
+resource "ctfd_challenge_standard" "my_challenge" {
     name        = "My Challenge"
     category    = "Some category"
     description = <<-EOT

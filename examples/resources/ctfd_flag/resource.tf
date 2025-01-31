@@ -1,4 +1,4 @@
-resource "ctfd_challenge" "http" {
+resource "ctfd_challenge_dynamic" "http" {
   name        = "My Challenge"
   category    = "misc"
   description = "..."
@@ -18,6 +18,6 @@ resource "ctfd_challenge" "http" {
 }
 
 resource "ctfd_flag" "http_flag" {
-  challenge_id = ctfd_challenge.http.id
+  challenge_id = ctfd_challenge_dynamic.http.id
   content      = "CTF{some_flag}"
 }

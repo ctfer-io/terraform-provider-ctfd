@@ -17,9 +17,6 @@ jobs:
         image: ctfd/ctfd:3.7.5@sha256:7f456b23727286c9df2b58e0b7398cc0196e2b74e4c1c5b3cda7a5b71034637d
         ports:
           - 8000:8000
-    env:
-      NAME: ctfer
-      PASSWORD: password
     steps:
       - name: Checkout code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -61,21 +58,16 @@ jobs:
           appearance_name: TFP-CTFd
           appearance_description: Terraform Provider CTFd.
           mode: teams
-          admin_name: ${{ env.NAME }}
+          admin_name: ctfer
           admin_email: ctfer-io@protonmail.com
-          admin_password: ${{ env.PASSWORD }}
-
-      - name: Generate token
-        run: go run cmd/token/main.go
-        env:
-          CTFD_URL: http://localhost:8000
-          CTFD_NAME: ${{ env.NAME }}
-          CTFD_PASSWORD: ${{ env.PASSWORD }}
+          admin_password: ctfer
 
       - name: Run go acceptance tests
         run: make test-acc
         env:
           CTFD_URL: http://localhost:8000
+          CTFD_ADMIN_USERNAME: ctfer
+          CTFD_ADMIN_PASSWORD: ctfer
       
       - name: Upload coverage to Coveralls
         uses: shogo82148/actions-goveralls@e6875f831db61e6abffbd8df91a2eb6cd24b46c9 # v1.9.1

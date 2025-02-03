@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"fmt"
 	"os"
 
 	"github.com/ctfer-io/go-ctfd/api"
@@ -30,10 +31,12 @@ func New(version string) func() provider.Provider {
 }
 
 type CTFdProviderModel struct {
-	URL     types.String `tfsdk:"url"`
-	Session types.String `tfsdk:"session"`
-	Nonce   types.String `tfsdk:"nonce"`
-	APIKey  types.String `tfsdk:"api_key"`
+	URL      types.String `tfsdk:"url"`
+	Session  types.String `tfsdk:"session"`
+	Nonce    types.String `tfsdk:"nonce"`
+	APIKey   types.String `tfsdk:"api_key"`
+	Username types.String `tfsdk:"username"`
+	Password types.String `tfsdk:"password"`
 }
 
 func (p *CTFdProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
@@ -83,6 +86,16 @@ public version control system.
 				Sensitive:           true,
 				Optional:            true,
 			},
+			"username": schema.StringAttribute{
+				MarkdownDescription: "The administrator or service account username to login with. Could use `CTFD_ADMIN_USERNAME` environment variable instead.",
+				Sensitive:           true,
+				Optional:            true,
+			},
+			"password": schema.StringAttribute{
+				MarkdownDescription: "The administrator or service account password to login with. Could use `CTFD_ADMIN_PASSWORD` environment variable instead.",
+				Sensitive:           true,
+				Optional:            true,
+			},
 		},
 	}
 }
@@ -124,6 +137,20 @@ func (p *CTFdProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 			"The provider cannot create the CTFd API client as there is an unknown API key value.",
 		)
 	}
+	if config.Username.IsUnknown() {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("username"),
+			"Unknown CTFd admin or service account username.",
+			"The provider cannot create the CTFd API client as there is an unknown username.",
+		)
+	}
+	if config.APIKey.IsUnknown() {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("password"),
+			"Unknown CTFd admin or service account password.",
+			"The provider cannot create the CTFd API client as there is an unknown password.",
+		)
+	}
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -134,6 +161,8 @@ func (p *CTFdProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 	session := os.Getenv("CTFD_SESSION")
 	nonce := os.Getenv("CTFD_NONCE")
 	apiKey := os.Getenv("CTFD_API_KEY")
+	username := os.Getenv("CTFD_ADMIN_USERNAME")
+	password := os.Getenv("CTFD_ADMIN_PASSWORD")
 
 	if !config.URL.IsNull() {
 		url = config.URL.ValueString()
@@ -147,26 +176,23 @@ func (p *CTFdProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 	if !config.APIKey.IsNull() {
 		apiKey = config.APIKey.ValueString()
 	}
-
-	// Check there is enough content
-	if apiKey == "" {
-		if session == "" {
-			resp.Diagnostics.AddAttributeError(
-				path.Root("session"),
-				"Missing CTFd session",
-				"The provider cannot create the CTFd API client as there is a missing value for the CTFd API session, as the API key is not defined.",
-			)
-		}
-		if nonce == "" {
-			resp.Diagnostics.AddAttributeError(
-				path.Root("nonce"),
-				"Missing CTFd nonce",
-				"The provider cannot create the CTFd API client as there is a missing value for the CTFd API nonce, as the API key is not defined.",
-			)
-		}
+	if !config.Username.IsNull() {
+		username = config.Username.ValueString()
+	}
+	if !config.Password.IsNull() {
+		password = config.Password.ValueString()
 	}
 
-	if resp.Diagnostics.HasError() {
+	// Check there is enough content
+	sn := session != "" && nonce != ""
+	ak := apiKey != ""
+	up := username != "" && password != ""
+	if !sn && !ak && !up {
+		resp.Diagnostics.AddAttributeError(
+			path.Empty(),
+			"Invalid provider configuration",
+			"The provider cannot create the CTFd API client as there is an invalid configuration. Expected either an API key, a nonce and session, or a username and password.",
+		)
 		return
 	}
 
@@ -175,9 +201,23 @@ func (p *CTFdProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 	ctx = utils.AddSensitive(ctx, "ctfd_session", session)
 	ctx = utils.AddSensitive(ctx, "ctfd_nonce", nonce)
 	ctx = utils.AddSensitive(ctx, "ctfd_api_key", apiKey)
+	ctx = utils.AddSensitive(ctx, "ctfd_username", username)
+	ctx = utils.AddSensitive(ctx, "ctfd_password", password)
 	tflog.Debug(ctx, "Creating CTFd API client")
 
 	client := api.NewClient(url, session, nonce, apiKey)
+	if up {
+		if err := client.Login(&api.LoginParams{
+			Name:     username,
+			Password: password,
+		}, api.WithContext(ctx)); err != nil {
+			resp.Diagnostics.AddError(
+				"CTFd error",
+				fmt.Sprintf("Failed to login: %s", err),
+			)
+		}
+		return
+	}
 	resp.DataSourceData = client
 	resp.ResourceData = client
 

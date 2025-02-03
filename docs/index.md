@@ -53,5 +53,7 @@ provider "ctfd" {
 
 - `api_key` (String, Sensitive) User API key. Could use `CTFD_API_KEY` environment variable instead. Despite being the most convenient way to authenticate yourself, we do not recommend it as you will probably generate a long-live token without any rotation policy.
 - `nonce` (String, Sensitive) User session nonce, comes with session. Could use `CTFD_NONCE` environment variable instead.
+- `password` (String, Sensitive) The administrator or service account password to login with. Could use `CTFD_ADMIN_PASSWORD` environment variable instead.
 - `session` (String, Sensitive) User session token, comes with nonce. Could use `CTFD_SESSION` environment variable instead.
 - `url` (String) CTFd base URL (e.g. `https://my-ctf.lan`). Could use `CTFD_URL` environment variable instead.
+- `username` (String, Sensitive) The administrator or service account username to login with. Could use `CTFD_ADMIN_USERNAME` environment variable instead.

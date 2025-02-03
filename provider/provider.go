@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/ctfer-io/go-ctfd/api"
 	"github.com/ctfer-io/terraform-provider-ctfd/v2/provider/utils"
@@ -32,8 +33,6 @@ func New(version string) func() provider.Provider {
 
 type CTFdProviderModel struct {
 	URL      types.String `tfsdk:"url"`
-	Session  types.String `tfsdk:"session"`
-	Nonce    types.String `tfsdk:"nonce"`
 	APIKey   types.String `tfsdk:"api_key"`
 	Username types.String `tfsdk:"username"`
 	Password types.String `tfsdk:"password"`
@@ -62,6 +61,10 @@ With a paradigm-shifting vision of setting up CTFs, the Terraform Provider for C
 
 You must configure the provider with the proper credentials before you can use it.
 
+If you are using the username/password configuration, remember that CTFd comes with a
+ratelimiter on rare methods and endpoints, but ` + "`POST /login`" + ` is one of them.
+This could lead to unexpected failures under intensive work.
+
 !> **Warning:** Hard-coded credentials are not recommended in any Terraform
 configuration and risks secret leakage should this file ever be committed to a
 public version control system.
@@ -71,23 +74,13 @@ public version control system.
 				MarkdownDescription: "CTFd base URL (e.g. `https://my-ctf.lan`). Could use `CTFD_URL` environment variable instead.",
 				Optional:            true,
 			},
-			"session": schema.StringAttribute{
-				MarkdownDescription: "User session token, comes with nonce. Could use `CTFD_SESSION` environment variable instead.",
-				Sensitive:           true,
-				Optional:            true,
-			},
-			"nonce": schema.StringAttribute{
-				MarkdownDescription: "User session nonce, comes with session. Could use `CTFD_NONCE` environment variable instead.",
-				Sensitive:           true,
-				Optional:            true,
-			},
 			"api_key": schema.StringAttribute{
 				MarkdownDescription: "User API key. Could use `CTFD_API_KEY` environment variable instead. Despite being the most convenient way to authenticate yourself, we do not recommend it as you will probably generate a long-live token without any rotation policy.",
 				Sensitive:           true,
 				Optional:            true,
 			},
 			"username": schema.StringAttribute{
-				MarkdownDescription: "The administrator or service account username to login with. Could use `CTFD_ADMIN_USERNAME` environment variable instead.",
+				MarkdownDescription: `The administrator or service account username to login with. Could use ` + "`CTFD_ADMIN_USERNAME`" + ` environment variable instead.`,
 				Sensitive:           true,
 				Optional:            true,
 			},
@@ -114,20 +107,6 @@ func (p *CTFdProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 			path.Root("url"),
 			"Unknown CTFD url.",
 			"The provider cannot guess where to reach the CTFd instance.",
-		)
-	}
-	if config.Session.IsUnknown() {
-		resp.Diagnostics.AddAttributeError(
-			path.Root("session"),
-			"Unknown CTFd session.",
-			"The provider cannot create the CTFd API client as there is an unknown session value.",
-		)
-	}
-	if config.Nonce.IsUnknown() {
-		resp.Diagnostics.AddAttributeError(
-			path.Root("nonce"),
-			"Unknown CTFd nonce.",
-			"The provider cannot create the CTFd API client as there is an unknown nonce value.",
 		)
 	}
 	if config.APIKey.IsUnknown() {
@@ -158,20 +137,12 @@ func (p *CTFdProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 
 	// Extract environment variables values
 	url := os.Getenv("CTFD_URL")
-	session := os.Getenv("CTFD_SESSION")
-	nonce := os.Getenv("CTFD_NONCE")
 	apiKey := os.Getenv("CTFD_API_KEY")
 	username := os.Getenv("CTFD_ADMIN_USERNAME")
 	password := os.Getenv("CTFD_ADMIN_PASSWORD")
 
 	if !config.URL.IsNull() {
 		url = config.URL.ValueString()
-	}
-	if !config.Session.IsNull() {
-		session = config.Session.ValueString()
-	}
-	if !config.Nonce.IsNull() {
-		nonce = config.Nonce.ValueString()
 	}
 	if !config.APIKey.IsNull() {
 		apiKey = config.APIKey.ValueString()
@@ -184,13 +155,11 @@ func (p *CTFdProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 	}
 
 	// Check there is enough content
-	sn := session != "" && nonce != ""
 	ak := apiKey != ""
 	up := username != "" && password != ""
-	if !sn && !ak && !up {
-		resp.Diagnostics.AddAttributeError(
-			path.Empty(),
-			"Invalid provider configuration",
+	if !ak && !up {
+		resp.Diagnostics.AddError(
+			"CTFd provider configuration error",
 			"The provider cannot create the CTFd API client as there is an invalid configuration. Expected either an API key, a nonce and session, or a username and password.",
 		)
 		return
@@ -198,15 +167,27 @@ func (p *CTFdProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 
 	// Instantiate CTFd API client
 	ctx = tflog.SetField(ctx, "ctfd_url", url)
-	ctx = utils.AddSensitive(ctx, "ctfd_session", session)
-	ctx = utils.AddSensitive(ctx, "ctfd_nonce", nonce)
 	ctx = utils.AddSensitive(ctx, "ctfd_api_key", apiKey)
 	ctx = utils.AddSensitive(ctx, "ctfd_username", username)
 	ctx = utils.AddSensitive(ctx, "ctfd_password", password)
 	tflog.Debug(ctx, "Creating CTFd API client")
 
-	client := api.NewClient(url, session, nonce, apiKey)
+	nonce, session, err := api.GetNonceAndSession(url, api.WithContext(ctx))
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"CTFd error",
+			fmt.Sprintf("Failed to fetch nonce and session: %s", err),
+		)
+		return
+	}
+
+	client := api.NewClient(url, nonce, session, apiKey)
 	if up {
+		// XXX due to the CTFd ratelimiter on rare endpoint
+		if _, ok := os.LookupEnv("TF_ACC"); ok {
+			time.Sleep(5 * time.Second)
+		}
+
 		if err := client.Login(&api.LoginParams{
 			Name:     username,
 			Password: password,
@@ -215,14 +196,16 @@ func (p *CTFdProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 				"CTFd error",
 				fmt.Sprintf("Failed to login: %s", err),
 			)
+			return
 		}
-		return
 	}
+
 	resp.DataSourceData = client
 	resp.ResourceData = client
 
 	tflog.Info(ctx, "Configure CTFd API client", map[string]any{
 		"success": true,
+		"login":   up,
 	})
 }
 

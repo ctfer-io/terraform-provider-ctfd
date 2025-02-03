@@ -11,6 +11,9 @@ description: |-
   With a paradigm-shifting vision of setting up CTFs, the Terraform Provider for CTFd avoid shitty scripts, ctfcli and other tools that does not solve the problem of reproductibility, ease of deployment and resiliency.
   Authentication
   You must configure the provider with the proper credentials before you can use it.
+  If you are using the username/password configuration, remember that CTFd comes with a
+  ratelimiter on rare methods and endpoints, but POST /loginis one of them.
+  This could lead to unexpected failures under intensive work.
   !> Warning: Hard-coded credentials are not recommended in any Terraform
   configuration and risks secret leakage should this file ever be committed to a
   public version control system.
@@ -33,6 +36,10 @@ With a paradigm-shifting vision of setting up CTFs, the Terraform Provider for C
 
 You must configure the provider with the proper credentials before you can use it.
 
+If you are using the username/password configuration, remember that CTFd comes with a
+ratelimiter on rare methods and endpoints, but `POST /login`is one of them.
+This could lead to unexpected failures under intensive work.
+
 !> **Warning:** Hard-coded credentials are not recommended in any Terraform
 configuration and risks secret leakage should this file ever be committed to a
 public version control system.
@@ -52,8 +59,6 @@ provider "ctfd" {
 ### Optional
 
 - `api_key` (String, Sensitive) User API key. Could use `CTFD_API_KEY` environment variable instead. Despite being the most convenient way to authenticate yourself, we do not recommend it as you will probably generate a long-live token without any rotation policy.
-- `nonce` (String, Sensitive) User session nonce, comes with session. Could use `CTFD_NONCE` environment variable instead.
 - `password` (String, Sensitive) The administrator or service account password to login with. Could use `CTFD_ADMIN_PASSWORD` environment variable instead.
-- `session` (String, Sensitive) User session token, comes with nonce. Could use `CTFD_SESSION` environment variable instead.
 - `url` (String) CTFd base URL (e.g. `https://my-ctf.lan`). Could use `CTFD_URL` environment variable instead.
 - `username` (String, Sensitive) The administrator or service account username to login with. Could use `CTFD_ADMIN_USERNAME` environment variable instead.

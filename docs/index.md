@@ -12,7 +12,7 @@ description: |-
   Authentication
   You must configure the provider with the proper credentials before you can use it.
   If you are using the username/password configuration, remember that CTFd comes with a
-  ratelimiter on rare methods and endpoints, but POST /loginis one of them.
+  ratelimiter on rare methods and endpoints, but POST /login is one of them.
   This could lead to unexpected failures under intensive work.
   !> Warning: Hard-coded credentials are not recommended in any Terraform
   configuration and risks secret leakage should this file ever be committed to a
@@ -37,7 +37,7 @@ With a paradigm-shifting vision of setting up CTFs, the Terraform Provider for C
 You must configure the provider with the proper credentials before you can use it.
 
 If you are using the username/password configuration, remember that CTFd comes with a
-ratelimiter on rare methods and endpoints, but `POST /login`is one of them.
+ratelimiter on rare methods and endpoints, but `POST /login` is one of them.
 This could lead to unexpected failures under intensive work.
 
 !> **Warning:** Hard-coded credentials are not recommended in any Terraform

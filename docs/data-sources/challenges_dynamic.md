@@ -28,16 +28,19 @@ Read-Only:
 - `attribution` (String) Attribution to the creator(s) of the challenge.
 - `category` (String) Category of the challenge that CTFd groups by on the web UI.
 - `connection_info` (String) Connection Information to connect to the challenge instance, useful for pwn or web pentest.
+- `decay` (Number) The decay defines from each number of solves does the decay function triggers until reaching minimum. This function is defined by CTFd and could be configured through `.function`.
 - `description` (String) Description of the challenge, consider using multiline descriptions for better style.
+- `function` (String) Decay function to define how the challenge value evolve through solves, either linear or logarithmic.
 - `id` (String) Identifier of the challenge.
 - `max_attempts` (Number) Maximum amount of attempts before being unable to flag the challenge.
+- `minimum` (Number) The minimum points for a dynamic-score challenge to reach with the decay function. Once there, no solve could have more value.
 - `name` (String) Name of the challenge, displayed as it.
 - `next` (Number) Suggestion for the end-user as next challenge to work on.
 - `requirements` (Attributes) List of required challenges that needs to get flagged before this one being accessible. Useful for skill-trees-like strategy CTF. (see [below for nested schema](#nestedatt--challenges--requirements))
 - `state` (String) State of the challenge, either hidden or visible.
 - `tags` (List of String) List of challenge tags that will be displayed to the end-user. You could use them to give some quick insights of what a challenge involves.
 - `topics` (List of String) List of challenge topics that are displayed to the administrators for maintenance and planification.
-- `value` (Number)
+- `value` (Number) The value (points) of the challenge once solved. It is mapped to `initial` under the hood, but displayed as `value` for consistency with the standard challenge.
 
 <a id="nestedatt--challenges--requirements"></a>
 ### Nested Schema for `challenges.requirements`

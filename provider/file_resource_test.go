@@ -59,7 +59,7 @@ resource "ctfd_file" "pouet" {
 }
 
 resource "ctfd_file" "pouet_2" {
-	name       = "pouet-2.txt"
+	name       = "pouet-second.txt"
 	contentb64 = "UG91ZXQgaXMgYSBjbG93biBjYXQsIGJ1dCBoYXMgbm90IGNoYWxsZW5nZQo="
 }
 `,

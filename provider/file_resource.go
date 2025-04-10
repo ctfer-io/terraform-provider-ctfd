@@ -60,10 +60,16 @@ func (r *fileResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 			"challenge_id": schema.StringAttribute{
 				MarkdownDescription: "Challenge of the file.",
 				Optional:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
 			},
 			"name": schema.StringAttribute{
 				MarkdownDescription: "Name of the file as displayed to end-users.",
 				Required:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
 			},
 			"location": schema.StringAttribute{
 				MarkdownDescription: "Location where the file is stored on the CTFd instance, for download purposes.",

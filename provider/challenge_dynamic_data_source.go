@@ -73,7 +73,20 @@ func (ch *challengeDynamicDataSource) Schema(ctx context.Context, req datasource
 							Computed:            true,
 						},
 						"value": schema.Int64Attribute{
-							Computed: true,
+							MarkdownDescription: "The value (points) of the challenge once solved. It is mapped to `initial` under the hood, but displayed as `value` for consistency with the standard challenge.",
+							Computed:            true,
+						},
+						"decay": schema.Int64Attribute{
+							MarkdownDescription: "The decay defines from each number of solves does the decay function triggers until reaching minimum. This function is defined by CTFd and could be configured through `.function`.",
+							Computed:            true,
+						},
+						"minimum": schema.Int64Attribute{
+							MarkdownDescription: "The minimum points for a dynamic-score challenge to reach with the decay function. Once there, no solve could have more value.",
+							Computed:            true,
+						},
+						"function": schema.StringAttribute{
+							MarkdownDescription: "Decay function to define how the challenge value evolve through solves, either linear or logarithmic.",
+							Computed:            true,
 						},
 						"state": schema.StringAttribute{
 							MarkdownDescription: "State of the challenge, either hidden or visible.",

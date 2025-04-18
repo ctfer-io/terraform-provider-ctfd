@@ -37,6 +37,7 @@ type hintResource struct {
 type hintResourceModel struct {
 	ID           types.String   `tfsdk:"id"`
 	ChallengeID  types.String   `tfsdk:"challenge_id"`
+	Title        types.String   `tfsdk:"title"`
 	Content      types.String   `tfsdk:"content"`
 	Cost         types.Int64    `tfsdk:"cost"`
 	Requirements []types.String `tfsdk:"requirements"`
@@ -60,6 +61,10 @@ func (r *hintResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 			"challenge_id": schema.StringAttribute{
 				MarkdownDescription: "Challenge of the hint.",
 				Required:            true,
+			},
+			"title": schema.StringAttribute{
+				MarkdownDescription: "Title of the hint, displayed to end users before unlocking.",
+				Optional:            true,
 			},
 			"content": schema.StringAttribute{
 				MarkdownDescription: "Content of the hint as displayed to the end-user.",
@@ -115,6 +120,7 @@ func (r *hintResource) Create(ctx context.Context, req resource.CreateRequest, r
 	}
 	res, err := r.client.PostHints(&api.PostHintsParams{
 		ChallengeID: utils.Atoi(data.ChallengeID.ValueString()),
+		Title:       data.Title.ValueStringPointer(),
 		Content:     data.Content.ValueString(),
 		Cost:        int(data.Cost.ValueInt64()),
 		Requirements: api.Requirements{
@@ -175,6 +181,7 @@ func (r *hintResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 
 	// Upsert values
 	data.ChallengeID = types.StringValue(strconv.Itoa(h.ChallengeID))
+	data.Title = types.StringPointerValue(hint.Title)
 	data.Content = types.StringValue(*hint.Content)
 	data.Cost = types.Int64Value(int64(hint.Cost))
 	reqs := make([]basetypes.StringValue, 0, len(hint.Requirements.Prerequisites))
@@ -204,6 +211,7 @@ func (r *hintResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	}
 	if _, err := r.client.PatchHint(data.ID.ValueString(), &api.PatchHintsParams{
 		ChallengeID: utils.Atoi(data.ChallengeID.ValueString()),
+		Title:       data.Title.ValueStringPointer(),
 		Content:     data.Content.ValueString(),
 		Cost:        int(data.Cost.ValueInt64()),
 		Requirements: api.Requirements{

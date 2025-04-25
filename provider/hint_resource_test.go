@@ -22,6 +22,7 @@ resource "ctfd_challenge_standard" "example" {
 
 resource "ctfd_hint" "first" {
 	challenge_id = ctfd_challenge_standard.example.id
+	title        = "1st"
 	content      = "This is a first hint"
 	cost         = 1
 }
@@ -49,6 +50,7 @@ resource "ctfd_challenge_standard" "example" {
 
 resource "ctfd_hint" "first" {
 	challenge_id = ctfd_challenge_standard.example.id
+	title        = "First"
 	content      = "This is a first hint"
 	cost         = 1
 }

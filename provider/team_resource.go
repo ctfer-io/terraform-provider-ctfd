@@ -36,6 +36,7 @@ type teamResourceModel struct {
 	Banned      types.Bool     `tfsdk:"banned"`
 	Members     []types.String `tfsdk:"members"`
 	Captain     types.String   `tfsdk:"captain"`
+	BracketID   types.String   `tfsdk:"bracket_id"`
 }
 
 func NewTeamResource() resource.Resource {
@@ -109,6 +110,10 @@ func (r *teamResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				MarkdownDescription: "Member who is captain of the team. Must be part of the members too. Note it could cause a fatal error in case of resource import with an inconsistent CTFd configuration i.e. if a team has no captain yet (should not be possible).",
 				Required:            true,
 			},
+			"bracket_id": schema.StringAttribute{
+				MarkdownDescription: "The bracket id the user plays in.",
+				Optional:            true,
+			},
 		},
 	}
 }
@@ -148,6 +153,7 @@ func (r *teamResource) Create(ctx context.Context, req resource.CreateRequest, r
 		Hidden:      data.Hidden.ValueBool(),
 		Banned:      data.Banned.ValueBool(),
 		Fields:      []api.Field{},
+		BracketID:   data.BracketID.ValueStringPointer(),
 	})
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -215,6 +221,9 @@ func (r *teamResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	data.Country = types.StringPointerValue(res.Country)
 	data.Hidden = types.BoolValue(res.Hidden)
 	data.Banned = types.BoolValue(res.Banned)
+	if res.BracketID != nil {
+		data.BracketID = types.StringValue(strconv.Itoa(*res.BracketID))
+	}
 	// password is not returned, which is good :)
 
 	// => Members
@@ -257,6 +266,7 @@ func (r *teamResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		Hidden:      data.Hidden.ValueBoolPointer(),
 		Banned:      data.Banned.ValueBoolPointer(),
 		Fields:      []api.Field{},
+		BracketID:   data.BracketID.ValueStringPointer(),
 	}, api.WithContext(ctx))
 	if err != nil {
 		resp.Diagnostics.AddError(

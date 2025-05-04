@@ -158,11 +158,11 @@ func (r *hintResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
-			fmt.Sprintf("Unable to update hint %s, got error: %s", data.ID.ValueString(), err),
+			fmt.Sprintf("Unable to get hint %s, got error: %s", data.ID.ValueString(), err),
 		)
 		return
 	}
-	// Forced to pass by all hints as CTFd does not return content for direct query
+	// XXX cannot get hint by ID, so we need to query them all
 	hints, err := r.client.GetChallengeHints(h.ChallengeID, api.WithContext(ctx))
 	hint := (*api.Hint)(nil)
 	for _, h := range hints {

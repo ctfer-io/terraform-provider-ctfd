@@ -17,6 +17,14 @@ description: |-
 
 ### Read-Only
 
+- `id` (String) The ID of this resource.
+- `teams` (Attributes List) (see [below for nested schema](#nestedatt--teams))
+
+<a id="nestedatt--teams"></a>
+### Nested Schema for `teams`
+
+Read-Only:
+
 - `affiliation` (String) Affiliation to a company or agency.
 - `banned` (Boolean) Is true if the team is banned from the CTF.
 - `captain` (String) Member who is captain of the team. Must be part of the members too. Note it could cause a fatal error in case of resource import with an inconsistent CTFd configuration i.e. if a team has no captain yet (should not be possible).

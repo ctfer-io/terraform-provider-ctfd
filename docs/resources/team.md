@@ -45,6 +45,7 @@ resource "ctfd_team" "cybercombattants" {
 
 - `affiliation` (String) Affiliation to a company or agency.
 - `banned` (Boolean) Is true if the team is banned from the CTF.
+- `bracket_id` (String) The bracket id the user plays in.
 - `country` (String) Country the team represent or is hail from.
 - `hidden` (Boolean) Is true if the team is hidden to the participants.
 - `website` (String) Website, blog, or anything similar (displayed to other participants).

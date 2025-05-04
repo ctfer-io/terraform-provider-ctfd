@@ -17,6 +17,14 @@ description: |-
 
 ### Read-Only
 
+- `id` (String) The ID of this resource.
+- `users` (Attributes List) (see [below for nested schema](#nestedatt--users))
+
+<a id="nestedatt--users"></a>
+### Nested Schema for `users`
+
+Read-Only:
+
 - `affiliation` (String) Affiliation to a team, company or agency.
 - `banned` (Boolean) Is true if the user is banned from the CTF.
 - `country` (String) Country the user represent or is native from.

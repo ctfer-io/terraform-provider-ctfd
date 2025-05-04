@@ -40,6 +40,7 @@ type userResourceModel struct {
 	Verified    types.Bool   `tfsdk:"verified"`
 	Hidden      types.Bool   `tfsdk:"hidden"`
 	Banned      types.Bool   `tfsdk:"banned"`
+	BracketID   types.String `tfsdk:"bracket_id"`
 }
 
 func NewUserResource() resource.Resource {
@@ -125,6 +126,10 @@ func (r *userResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				Computed:            true,
 				Default:             defaults.Bool(booldefault.StaticBool(false)),
 			},
+			"bracket_id": schema.StringAttribute{
+				MarkdownDescription: "The bracket id the user plays in.",
+				Optional:            true,
+			},
 		},
 	}
 }
@@ -167,6 +172,7 @@ func (r *userResource) Create(ctx context.Context, req resource.CreateRequest, r
 		Hidden:      data.Hidden.ValueBool(),
 		Banned:      data.Banned.ValueBool(),
 		Fields:      []api.Field{},
+		BracketID:   data.BracketID.ValueStringPointer(),
 	}, api.WithContext(ctx))
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -210,6 +216,9 @@ func (r *userResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	data.Verified = types.BoolPointerValue(res.Verified)
 	data.Hidden = types.BoolPointerValue(res.Hidden)
 	data.Banned = types.BoolPointerValue(res.Banned)
+	if res.BracketID != nil {
+		data.BracketID = types.StringValue(strconv.Itoa(*res.BracketID))
+	}
 	// password is not returned, which is good :)
 
 	if resp.Diagnostics.HasError() {
@@ -238,6 +247,7 @@ func (r *userResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		Hidden:      data.Hidden.ValueBoolPointer(),
 		Banned:      data.Banned.ValueBoolPointer(),
 		Fields:      []api.Field{},
+		BracketID:   data.BracketID.ValueStringPointer(),
 	}, api.WithContext(ctx))
 	if err != nil {
 		resp.Diagnostics.AddError(

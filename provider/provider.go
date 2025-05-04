@@ -224,6 +224,7 @@ func (p *CTFdProvider) Resources(ctx context.Context) []func() resource.Resource
 
 func (p *CTFdProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
+		NewBracketSource,
 		NewChallengeStandardDataSource,
 		NewChallengeDynamicDataSource,
 		NewUserDataSource,

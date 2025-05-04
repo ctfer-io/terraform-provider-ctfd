@@ -38,6 +38,7 @@ resource "ctfd_user" "ctfer" {
 
 - `affiliation` (String) Affiliation to a team, company or agency.
 - `banned` (Boolean) Is true if the user is banned from the CTF.
+- `bracket_id` (String) The bracket id the user plays in.
 - `country` (String) Country the user represent or is native from.
 - `hidden` (Boolean) Is true if the user is hidden to the participants.
 - `language` (String) Language the user is fluent in.

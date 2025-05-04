@@ -38,49 +38,59 @@ func (team *teamDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				MarkdownDescription: "Identifier of the user.",
-				Computed:            true,
+				Computed: true,
 			},
-			"name": schema.StringAttribute{
-				MarkdownDescription: "Name of the team.",
-				Computed:            true,
-			},
-			"email": schema.StringAttribute{
-				MarkdownDescription: "Email of the team.",
-				Computed:            true,
-			},
-			"password": schema.StringAttribute{
-				MarkdownDescription: "Password of the team. Notice that during a CTF you may not want to update those to avoid defaulting team accesses.",
-				Computed:            true,
-			},
-			"website": schema.StringAttribute{
-				MarkdownDescription: "Website, blog, or anything similar (displayed to other participants).",
-				Computed:            true,
-			},
-			"affiliation": schema.StringAttribute{
-				MarkdownDescription: "Affiliation to a company or agency.",
-				Computed:            true,
-			},
-			"country": schema.StringAttribute{
-				MarkdownDescription: "Country the team represent or is hail from.",
-				Computed:            true,
-			},
-			"hidden": schema.BoolAttribute{
-				MarkdownDescription: "Is true if the team is hidden to the participants.",
-				Computed:            true,
-			},
-			"banned": schema.BoolAttribute{
-				MarkdownDescription: "Is true if the team is banned from the CTF.",
-				Computed:            true,
-			},
-			"members": schema.ListAttribute{
-				MarkdownDescription: "List of members (User), defined by their IDs.",
-				ElementType:         types.StringType,
-				Computed:            true,
-			},
-			"captain": schema.StringAttribute{
-				MarkdownDescription: "Member who is captain of the team. Must be part of the members too. Note it could cause a fatal error in case of resource import with an inconsistent CTFd configuration i.e. if a team has no captain yet (should not be possible).",
-				Computed:            true,
+			"teams": schema.ListNestedAttribute{
+				Computed: true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"id": schema.StringAttribute{
+							MarkdownDescription: "Identifier of the user.",
+							Computed:            true,
+						},
+						"name": schema.StringAttribute{
+							MarkdownDescription: "Name of the team.",
+							Computed:            true,
+						},
+						"email": schema.StringAttribute{
+							MarkdownDescription: "Email of the team.",
+							Computed:            true,
+						},
+						"password": schema.StringAttribute{
+							MarkdownDescription: "Password of the team. Notice that during a CTF you may not want to update those to avoid defaulting team accesses.",
+							Computed:            true,
+						},
+						"website": schema.StringAttribute{
+							MarkdownDescription: "Website, blog, or anything similar (displayed to other participants).",
+							Computed:            true,
+						},
+						"affiliation": schema.StringAttribute{
+							MarkdownDescription: "Affiliation to a company or agency.",
+							Computed:            true,
+						},
+						"country": schema.StringAttribute{
+							MarkdownDescription: "Country the team represent or is hail from.",
+							Computed:            true,
+						},
+						"hidden": schema.BoolAttribute{
+							MarkdownDescription: "Is true if the team is hidden to the participants.",
+							Computed:            true,
+						},
+						"banned": schema.BoolAttribute{
+							MarkdownDescription: "Is true if the team is banned from the CTF.",
+							Computed:            true,
+						},
+						"members": schema.ListAttribute{
+							MarkdownDescription: "List of members (User), defined by their IDs.",
+							ElementType:         types.StringType,
+							Computed:            true,
+						},
+						"captain": schema.StringAttribute{
+							MarkdownDescription: "Member who is captain of the team. Must be part of the members too. Note it could cause a fatal error in case of resource import with an inconsistent CTFd configuration i.e. if a team has no captain yet (should not be possible).",
+							Computed:            true,
+						},
+					},
+				},
 			},
 		},
 	}

@@ -37,52 +37,62 @@ func (usr *userDataSource) Schema(ctx context.Context, req datasource.SchemaRequ
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				MarkdownDescription: "Identifier of the user.",
-				Computed:            true,
+				Computed: true,
 			},
-			"name": schema.StringAttribute{
-				MarkdownDescription: "Name or pseudo of the user.",
-				Computed:            true,
-			},
-			"email": schema.StringAttribute{
-				MarkdownDescription: "Email of the user, may be used to verify the account.",
-				Computed:            true,
-			},
-			"password": schema.StringAttribute{
-				MarkdownDescription: "Password of the user. Notice that during a CTF you may not want to update those to avoid defaulting user accesses.",
-				Computed:            true,
-			},
-			"website": schema.StringAttribute{
-				MarkdownDescription: "Website, blog, or anything similar (displayed to other participants).",
-				Computed:            true,
-			},
-			"affiliation": schema.StringAttribute{
-				MarkdownDescription: "Affiliation to a team, company or agency.",
-				Computed:            true,
-			},
-			"country": schema.StringAttribute{
-				MarkdownDescription: "Country the user represent or is native from.",
-				Computed:            true,
-			},
-			"language": schema.StringAttribute{
-				MarkdownDescription: "Language the user is fluent in.",
-				Computed:            true,
-			},
-			"type": schema.StringAttribute{
-				MarkdownDescription: "Generic type for RBAC purposes.",
-				Computed:            true,
-			},
-			"verified": schema.BoolAttribute{
-				MarkdownDescription: "Is true if the user has verified its account by email, or if set by an admin.",
-				Computed:            true,
-			},
-			"hidden": schema.BoolAttribute{
-				MarkdownDescription: "Is true if the user is hidden to the participants.",
-				Computed:            true,
-			},
-			"banned": schema.BoolAttribute{
-				MarkdownDescription: "Is true if the user is banned from the CTF.",
-				Computed:            true,
+			"users": schema.ListNestedAttribute{
+				Computed: true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"id": schema.StringAttribute{
+							MarkdownDescription: "Identifier of the user.",
+							Computed:            true,
+						},
+						"name": schema.StringAttribute{
+							MarkdownDescription: "Name or pseudo of the user.",
+							Computed:            true,
+						},
+						"email": schema.StringAttribute{
+							MarkdownDescription: "Email of the user, may be used to verify the account.",
+							Computed:            true,
+						},
+						"password": schema.StringAttribute{
+							MarkdownDescription: "Password of the user. Notice that during a CTF you may not want to update those to avoid defaulting user accesses.",
+							Computed:            true,
+						},
+						"website": schema.StringAttribute{
+							MarkdownDescription: "Website, blog, or anything similar (displayed to other participants).",
+							Computed:            true,
+						},
+						"affiliation": schema.StringAttribute{
+							MarkdownDescription: "Affiliation to a team, company or agency.",
+							Computed:            true,
+						},
+						"country": schema.StringAttribute{
+							MarkdownDescription: "Country the user represent or is native from.",
+							Computed:            true,
+						},
+						"language": schema.StringAttribute{
+							MarkdownDescription: "Language the user is fluent in.",
+							Computed:            true,
+						},
+						"type": schema.StringAttribute{
+							MarkdownDescription: "Generic type for RBAC purposes.",
+							Computed:            true,
+						},
+						"verified": schema.BoolAttribute{
+							MarkdownDescription: "Is true if the user has verified its account by email, or if set by an admin.",
+							Computed:            true,
+						},
+						"hidden": schema.BoolAttribute{
+							MarkdownDescription: "Is true if the user is hidden to the participants.",
+							Computed:            true,
+						},
+						"banned": schema.BoolAttribute{
+							MarkdownDescription: "Is true if the user is banned from the CTF.",
+							Computed:            true,
+						},
+					},
+				},
 			},
 		},
 	}

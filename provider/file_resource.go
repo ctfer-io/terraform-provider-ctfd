@@ -94,6 +94,7 @@ func (r *fileResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				Sensitive:           true, // define as sensitive, because content could be + avoid printing it
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
+					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
 		},
@@ -162,6 +163,9 @@ func (r *fileResource) Create(ctx context.Context, req resource.CreateRequest, r
 	data.SHA1Sum = types.StringValue(res[0].SHA1sum)
 	data.Location = types.StringValue(res[0].Location)
 
+	// Nullify content so it doesn’t go into state
+	data.ContentB64 = types.StringNull()
+
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -192,18 +196,18 @@ func (r *fileResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		return
 	}
 
-	content, err := r.client.GetFileContent(&api.File{
-		Location: res.Location,
-	}, api.WithContext(ctx))
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"CTFd Error",
-			fmt.Sprintf("Unable to read file at location %s, got error: %s", res.Location, err),
-		)
-		return
-	}
+	// content, err := r.client.GetFileContent(&api.File{
+	// 	Location: res.Location,
+	// }, api.WithContext(ctx))
+	// if err != nil {
+	// 	resp.Diagnostics.AddError(
+	// 		"CTFd Error",
+	// 		fmt.Sprintf("Unable to read file at location %s, got error: %s", res.Location, err),
+	// 	)
+	// 	return
+	// }
 
-	data.ContentB64 = types.StringValue(base64.StdEncoding.EncodeToString(content))
+	// data.ContentB64 = types.StringValue(base64.StdEncoding.EncodeToString(content))
 
 	if resp.Diagnostics.HasError() {
 		return

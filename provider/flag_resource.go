@@ -18,6 +18,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 var (
@@ -130,7 +131,7 @@ func (r *flagResource) Create(ctx context.Context, req resource.CreateRequest, r
 		Content:   data.Content.ValueString(),
 		Data:      data.Data.ValueString(),
 		Type:      data.Type.ValueString(),
-	}, api.WithContext(ctx))
+	}, api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil)))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -158,7 +159,7 @@ func (r *flagResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	}
 
 	// Retrieve flag
-	res, err := r.client.GetFlag(data.ID.ValueString(), api.WithContext(ctx))
+	res, err := r.client.GetFlag(data.ID.ValueString(), api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil)))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -192,7 +193,7 @@ func (r *flagResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		Content: data.Content.ValueString(),
 		Data:    data.Data.ValueString(),
 		Type:    data.Type.ValueString(),
-	}, api.WithContext(ctx)); err != nil {
+	}, api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil))); err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf("Unable to update flag %s, got error: %s", data.ID.ValueString(), err),
@@ -213,7 +214,7 @@ func (r *flagResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 		return
 	}
 
-	if err := r.client.DeleteFlag(data.ID.ValueString(), api.WithContext(ctx)); err != nil {
+	if err := r.client.DeleteFlag(data.ID.ValueString(), api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil))); err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete flag %s, got error: %s", data.ID.ValueString(), err))
 		return
 	}

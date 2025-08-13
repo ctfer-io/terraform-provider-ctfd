@@ -15,6 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 var _ provider.Provider = (*CTFdProvider)(nil)
@@ -172,7 +173,7 @@ func (p *CTFdProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 	ctx = utils.AddSensitive(ctx, "ctfd_password", password)
 	tflog.Debug(ctx, "Creating CTFd API client")
 
-	nonce, session, err := api.GetNonceAndSession(url, api.WithContext(ctx))
+	nonce, session, err := api.GetNonceAndSession(url, api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil)))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"CTFd error",
@@ -191,7 +192,7 @@ func (p *CTFdProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 		if err := client.Login(&api.LoginParams{
 			Name:     username,
 			Password: password,
-		}, api.WithContext(ctx)); err != nil {
+		}, api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil))); err != nil {
 			resp.Diagnostics.AddError(
 				"CTFd error",
 				fmt.Sprintf("Failed to login: %s", err),

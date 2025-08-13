@@ -18,6 +18,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 var (
@@ -110,7 +111,7 @@ func (r *bracketResource) Create(ctx context.Context, req resource.CreateRequest
 		Name:        data.Name.ValueString(),
 		Description: data.Description.ValueString(),
 		Type:        data.Type.ValueString(),
-	}, api.WithContext(ctx))
+	}, api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil)))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -138,7 +139,7 @@ func (r *bracketResource) Read(ctx context.Context, req resource.ReadRequest, re
 	}
 
 	// XXX cannot get bracket by ID, so we need to query them all
-	brackets, err := r.client.GetBrackets(&api.GetBracketsParams{}, api.WithContext(ctx))
+	brackets, err := r.client.GetBrackets(&api.GetBracketsParams{}, api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil)))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -184,7 +185,7 @@ func (r *bracketResource) Update(ctx context.Context, req resource.UpdateRequest
 		Name:        data.Name.ValueStringPointer(),
 		Description: data.Description.ValueStringPointer(),
 		Type:        data.Type.ValueStringPointer(),
-	}, api.WithContext(ctx)); err != nil {
+	}, api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil))); err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf("Unable to update bracket %s, got error: %s", data.ID.ValueString(), err),
@@ -205,7 +206,7 @@ func (r *bracketResource) Delete(ctx context.Context, req resource.DeleteRequest
 		return
 	}
 
-	if err := r.client.DeleteBrackets(utils.Atoi(data.ID.ValueString()), api.WithContext(ctx)); err != nil {
+	if err := r.client.DeleteBrackets(utils.Atoi(data.ID.ValueString()), api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil))); err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete bracket %s, got error: %s", data.ID.ValueString(), err))
 		return
 	}

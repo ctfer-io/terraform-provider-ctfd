@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 var (
@@ -116,7 +117,7 @@ func (team *teamDataSource) Configure(ctx context.Context, req datasource.Config
 func (team *teamDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var state teamsDataSourceModel
 
-	teams, err := team.client.GetTeams(&api.GetTeamsParams{}, api.WithContext(ctx))
+	teams, err := team.client.GetTeams(&api.GetTeamsParams{}, api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil)))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unable to Read CTFd Teams",

@@ -16,6 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 var (
@@ -169,7 +170,7 @@ func (r *teamResource) Create(ctx context.Context, req resource.CreateRequest, r
 	for _, mem := range data.Members {
 		_, err := r.client.PostTeamMembers(res.ID, &api.PostTeamsMembersParams{
 			UserID: utils.Atoi(mem.ValueString()),
-		}, api.WithContext(ctx))
+		}, api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil)))
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Client Error",
@@ -205,7 +206,7 @@ func (r *teamResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	}
 
 	teamId := utils.Atoi(data.ID.ValueString())
-	res, err := r.client.GetTeam(teamId, api.WithContext(ctx))
+	res, err := r.client.GetTeam(teamId, api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil)))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -227,7 +228,7 @@ func (r *teamResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	// password is not returned, which is good :)
 
 	// => Members
-	mems, err := r.client.GetTeamMembers(teamId, api.WithContext(ctx))
+	mems, err := r.client.GetTeamMembers(teamId, api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil)))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -267,7 +268,7 @@ func (r *teamResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		Banned:      data.Banned.ValueBoolPointer(),
 		Fields:      []api.Field{},
 		BracketID:   data.BracketID.ValueStringPointer(),
-	}, api.WithContext(ctx))
+	}, api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil)))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -277,7 +278,7 @@ func (r *teamResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	}
 
 	// => Members
-	currentMembers, err := r.client.GetTeamMembers(teamId, api.WithContext(ctx))
+	currentMembers, err := r.client.GetTeamMembers(teamId, api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil)))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -297,7 +298,7 @@ func (r *teamResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		if !exists {
 			if _, err := r.client.PostTeamMembers(teamId, &api.PostTeamsMembersParams{
 				UserID: utils.Atoi(tfMember.ValueString()),
-			}, api.WithContext(ctx)); err != nil {
+			}, api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil))); err != nil {
 				resp.Diagnostics.AddError(
 					"Client Error",
 					fmt.Sprintf("Unable to post team's %d member %s, got error: %s", teamId, tfMember.ValueString(), err),
@@ -319,7 +320,7 @@ func (r *teamResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		if !exists {
 			if _, err := r.client.DeleteTeamMembers(teamId, &api.DeleteTeamMembersParams{
 				UserID: currentMember,
-			}, api.WithContext(ctx)); err != nil {
+			}, api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil))); err != nil {
 				resp.Diagnostics.AddError(
 					"Client Error",
 					fmt.Sprintf("Unable to delete team's %d member %d, got error: %s", teamId, currentMember, err),
@@ -357,7 +358,7 @@ func (r *teamResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 		return
 	}
 
-	if err := r.client.DeleteTeam(utils.Atoi(data.ID.ValueString()), api.WithContext(ctx)); err != nil {
+	if err := r.client.DeleteTeam(utils.Atoi(data.ID.ValueString()), api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil))); err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf("Unable to delete team %s, got error: %s", data.ID.ValueString(), err),

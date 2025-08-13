@@ -22,6 +22,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 var (
@@ -118,7 +119,7 @@ func (r *challengeStandardResource) Create(ctx context.Context, req resource.Cre
 		Type:           "standard",
 		NextID:         utils.ToInt(data.Next),
 		Requirements:   reqs,
-	}, api.WithContext(ctx))
+	}, api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil)))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -138,7 +139,7 @@ func (r *challengeStandardResource) Create(ctx context.Context, req resource.Cre
 		_, err := r.client.PostTags(&api.PostTagsParams{
 			Challenge: utils.Atoi(data.ID.ValueString()),
 			Value:     tag.ValueString(),
-		}, api.WithContext(ctx))
+		}, api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil)))
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Client Error",
@@ -159,7 +160,7 @@ func (r *challengeStandardResource) Create(ctx context.Context, req resource.Cre
 			Challenge: utils.Atoi(data.ID.ValueString()),
 			Type:      "challenge",
 			Value:     topic.ValueString(),
-		}, api.WithContext(ctx))
+		}, api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil)))
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Client Error",
@@ -227,7 +228,7 @@ func (r *challengeStandardResource) Update(ctx context.Context, req resource.Upd
 		State:          data.State.ValueString(),
 		NextID:         utils.ToInt(data.Next),
 		Requirements:   reqs,
-	}, api.WithContext(ctx))
+	}, api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil)))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -237,7 +238,7 @@ func (r *challengeStandardResource) Update(ctx context.Context, req resource.Upd
 	}
 
 	// Update its tags (drop them all, create new ones)
-	challTags, err := r.client.GetChallengeTags(utils.Atoi(data.ID.ValueString()), api.WithContext(ctx))
+	challTags, err := r.client.GetChallengeTags(utils.Atoi(data.ID.ValueString()), api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil)))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -246,7 +247,7 @@ func (r *challengeStandardResource) Update(ctx context.Context, req resource.Upd
 		return
 	}
 	for _, tag := range challTags {
-		if err := r.client.DeleteTag(strconv.Itoa(tag.ID), api.WithContext(ctx)); err != nil {
+		if err := r.client.DeleteTag(strconv.Itoa(tag.ID), api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil))); err != nil {
 			resp.Diagnostics.AddError(
 				"Client Error",
 				fmt.Sprintf("Unable to delete tag %d of challenge %s, got error: %s", tag.ID, data.ID.ValueString(), err),
@@ -259,7 +260,7 @@ func (r *challengeStandardResource) Update(ctx context.Context, req resource.Upd
 		_, err := r.client.PostTags(&api.PostTagsParams{
 			Challenge: utils.Atoi(data.ID.ValueString()),
 			Value:     tag.ValueString(),
-		}, api.WithContext(ctx))
+		}, api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil)))
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Client Error",
@@ -274,7 +275,7 @@ func (r *challengeStandardResource) Update(ctx context.Context, req resource.Upd
 	}
 
 	// Update its topics (drop them all, create new ones)
-	challTopics, err := r.client.GetChallengeTopics(utils.Atoi(data.ID.ValueString()), api.WithContext(ctx))
+	challTopics, err := r.client.GetChallengeTopics(utils.Atoi(data.ID.ValueString()), api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil)))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -286,7 +287,7 @@ func (r *challengeStandardResource) Update(ctx context.Context, req resource.Upd
 		if err := r.client.DeleteTopic(&api.DeleteTopicArgs{
 			ID:   strconv.Itoa(topic.ID),
 			Type: "challenge",
-		}, api.WithContext(ctx)); err != nil {
+		}, api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil))); err != nil {
 			resp.Diagnostics.AddError(
 				"Client Error",
 				fmt.Sprintf("Unable to delete topic %d of challenge %s, got error: %s", topic.ID, data.ID.ValueString(), err),
@@ -300,7 +301,7 @@ func (r *challengeStandardResource) Update(ctx context.Context, req resource.Upd
 			Challenge: utils.Atoi(data.ID.ValueString()),
 			Type:      "challenge",
 			Value:     topic.ValueString(),
-		}, api.WithContext(ctx))
+		}, api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil)))
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Client Error",
@@ -327,7 +328,7 @@ func (r *challengeStandardResource) Delete(ctx context.Context, req resource.Del
 		return
 	}
 
-	if err := r.client.DeleteChallenge(utils.Atoi(data.ID.ValueString()), api.WithContext(ctx)); err != nil {
+	if err := r.client.DeleteChallenge(utils.Atoi(data.ID.ValueString()), api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil))); err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete challenge, got error: %s", err))
 		return
 	}
@@ -346,7 +347,7 @@ func (r *challengeStandardResource) ImportState(ctx context.Context, req resourc
 //
 
 func (chall *ChallengeStandardResourceModel) Read(ctx context.Context, client *api.Client, diags diag.Diagnostics) {
-	res, err := client.GetChallenge(utils.Atoi(chall.ID.ValueString()), api.WithContext(ctx))
+	res, err := client.GetChallenge(utils.Atoi(chall.ID.ValueString()), api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil)))
 	if err != nil {
 		diags.AddError("Client Error", fmt.Sprintf("Unable to read challenge %s, got error: %s", chall.ID.ValueString(), err))
 		return
@@ -365,7 +366,7 @@ func (chall *ChallengeStandardResourceModel) Read(ctx context.Context, client *a
 
 	// Get subresources
 	// => Requirements
-	resReqs, err := client.GetChallengeRequirements(id, api.WithContext(ctx))
+	resReqs, err := client.GetChallengeRequirements(id, api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil)))
 	if err != nil {
 		diags.AddError(
 			"Client Error",
@@ -387,7 +388,7 @@ func (chall *ChallengeStandardResourceModel) Read(ctx context.Context, client *a
 	chall.Requirements = reqs
 
 	// => Tags
-	resTags, err := client.GetChallengeTags(id, api.WithContext(ctx))
+	resTags, err := client.GetChallengeTags(id, api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil)))
 	if err != nil {
 		diags.AddError(
 			"Client Error",
@@ -401,7 +402,7 @@ func (chall *ChallengeStandardResourceModel) Read(ctx context.Context, client *a
 	}
 
 	// => Topics
-	resTopics, err := client.GetChallengeTopics(id, api.WithContext(ctx))
+	resTopics, err := client.GetChallengeTopics(id, api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil)))
 	if err != nil {
 		diags.AddError(
 			"Client Error",

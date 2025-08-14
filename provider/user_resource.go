@@ -19,6 +19,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 var (
@@ -173,7 +174,7 @@ func (r *userResource) Create(ctx context.Context, req resource.CreateRequest, r
 		Banned:      data.Banned.ValueBool(),
 		Fields:      []api.Field{},
 		BracketID:   data.BracketID.ValueStringPointer(),
-	}, api.WithContext(ctx))
+	}, api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil)))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -197,7 +198,7 @@ func (r *userResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		return
 	}
 
-	res, err := r.client.GetUser(utils.Atoi(data.ID.ValueString()), api.WithContext(ctx))
+	res, err := r.client.GetUser(utils.Atoi(data.ID.ValueString()), api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil)))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -248,7 +249,7 @@ func (r *userResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		Banned:      data.Banned.ValueBoolPointer(),
 		Fields:      []api.Field{},
 		BracketID:   data.BracketID.ValueStringPointer(),
-	}, api.WithContext(ctx))
+	}, api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil)))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -270,7 +271,7 @@ func (r *userResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 		return
 	}
 
-	if err := r.client.DeleteUser(utils.Atoi(data.ID.ValueString()), api.WithContext(ctx)); err != nil {
+	if err := r.client.DeleteUser(utils.Atoi(data.ID.ValueString()), api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil))); err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf("Unable to delete user %s, got error: %s", data.ID.ValueString(), err),

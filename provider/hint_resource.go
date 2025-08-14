@@ -18,6 +18,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 var (
@@ -126,7 +127,7 @@ func (r *hintResource) Create(ctx context.Context, req resource.CreateRequest, r
 		Requirements: api.Requirements{
 			Prerequisites: reqs,
 		},
-	}, api.WithContext(ctx))
+	}, api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil)))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -154,7 +155,7 @@ func (r *hintResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	}
 
 	// Retrieve hint
-	h, err := r.client.GetHint(data.ID.ValueString(), api.WithContext(ctx))
+	h, err := r.client.GetHint(data.ID.ValueString(), api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil)))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -163,7 +164,7 @@ func (r *hintResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		return
 	}
 	// XXX cannot get hint by ID, so we need to query them all
-	hints, err := r.client.GetChallengeHints(h.ChallengeID, api.WithContext(ctx))
+	hints, err := r.client.GetChallengeHints(h.ChallengeID, api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil)))
 	hint := (*api.Hint)(nil)
 	for _, h := range hints {
 		if h.ID == utils.Atoi(data.ID.ValueString()) {
@@ -217,7 +218,7 @@ func (r *hintResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		Requirements: api.Requirements{
 			Prerequisites: preqs,
 		},
-	}, api.WithContext(ctx)); err != nil {
+	}, api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil))); err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf("Unable to update hint %s, got error: %s", data.ID.ValueString(), err),
@@ -238,7 +239,7 @@ func (r *hintResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 		return
 	}
 
-	if err := r.client.DeleteHint(data.ID.ValueString(), api.WithContext(ctx)); err != nil {
+	if err := r.client.DeleteHint(data.ID.ValueString(), api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil))); err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete hint %s, got error: %s", data.ID.ValueString(), err))
 		return
 	}

@@ -17,6 +17,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 var (
@@ -146,7 +147,7 @@ func (r *fileResource) Create(ctx context.Context, req resource.CreateRequest, r
 	if !data.ChallengeID.IsNull() {
 		params.Challenge = utils.Ptr(utils.Atoi(data.ChallengeID.ValueString()))
 	}
-	res, err := r.client.PostFiles(params, api.WithContext(ctx))
+	res, err := r.client.PostFiles(params, api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil)))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -175,7 +176,7 @@ func (r *fileResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		return
 	}
 
-	res, err := r.client.GetFile(data.ID.ValueString(), api.WithContext(ctx))
+	res, err := r.client.GetFile(data.ID.ValueString(), api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil)))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"CTFd Error",
@@ -194,7 +195,7 @@ func (r *fileResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 
 	content, err := r.client.GetFileContent(&api.File{
 		Location: res.Location,
-	}, api.WithContext(ctx))
+	}, api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil)))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"CTFd Error",
@@ -228,7 +229,7 @@ func (r *fileResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 		return
 	}
 
-	if err := r.client.DeleteFile(data.ID.ValueString(), api.WithContext(ctx)); err != nil {
+	if err := r.client.DeleteFile(data.ID.ValueString(), api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil))); err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete file %s, got error: %s", data.ID.ValueString(), err))
 		return
 	}
@@ -244,7 +245,7 @@ func (r *fileResource) ImportState(ctx context.Context, req resource.ImportState
 func lookForChallengeId(ctx context.Context, client *api.Client, fileID int, diags diag.Diagnostics) types.String {
 	challs, err := client.GetChallenges(&api.GetChallengesParams{
 		View: utils.Ptr("admin"), // required, else CTFd only returns the "visible" challenges
-	}, api.WithContext(ctx))
+	}, api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil)))
 	if err != nil {
 		diags.AddError(
 			"CTFd Error",
@@ -254,7 +255,7 @@ func lookForChallengeId(ctx context.Context, client *api.Client, fileID int, dia
 	}
 
 	for _, chall := range challs {
-		files, err := client.GetChallengeFiles(chall.ID, api.WithContext(ctx))
+		files, err := client.GetChallengeFiles(chall.ID, api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil)))
 		if err != nil {
 			diags.AddError(
 				"CTFd Error",

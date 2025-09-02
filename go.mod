@@ -9,7 +9,7 @@ require (
 	github.com/hashicorp/terraform-plugin-go v0.28.0
 	github.com/hashicorp/terraform-plugin-log v0.9.0
 	github.com/hashicorp/terraform-plugin-testing v1.13.3
-	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.62.0
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.63.0
 )
 
 require (
@@ -76,15 +76,15 @@ require (
 	github.com/zclconf/go-cty v1.16.3 // indirect
 	go.abhg.dev/goldmark/frontmatter v0.2.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
-	go.opentelemetry.io/otel v1.37.0 // indirect
-	go.opentelemetry.io/otel/metric v1.37.0 // indirect
-	go.opentelemetry.io/otel/trace v1.37.0 // indirect
+	go.opentelemetry.io/otel v1.38.0 // indirect
+	go.opentelemetry.io/otel/metric v1.38.0 // indirect
+	go.opentelemetry.io/otel/trace v1.38.0 // indirect
 	golang.org/x/crypto v0.39.0 // indirect
 	golang.org/x/exp v0.0.0-20230809150735-7b3493d9a819 // indirect
 	golang.org/x/mod v0.25.0 // indirect
 	golang.org/x/net v0.40.0 // indirect
 	golang.org/x/sync v0.15.0 // indirect
-	golang.org/x/sys v0.33.0 // indirect
+	golang.org/x/sys v0.35.0 // indirect
 	golang.org/x/text v0.26.0 // indirect
 	golang.org/x/tools v0.33.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect

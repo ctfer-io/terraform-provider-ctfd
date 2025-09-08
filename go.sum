@@ -29,8 +29,8 @@ github.com/bufbuild/protocompile v0.4.0 h1:LbFKd2XowZvQ/kajzguUp2DC9UEIQhIq77fZZ
 github.com/bufbuild/protocompile v0.4.0/go.mod h1:3v93+mbWn/v3xzN+31nwkJfrEpAUwp+BagBSZWx+TP8=
 github.com/cloudflare/circl v1.6.1 h1:zqIqSPIndyBh1bjLVVDHMPpVKqp8Su/V+6MeDzzQBQ0=
 github.com/cloudflare/circl v1.6.1/go.mod h1:uddAzsPgqdMAYatqJ0lsjX1oECcQLIlRpzZh3pJrofs=
-github.com/ctfer-io/go-ctfd v0.14.0 h1:yEETB4oMWzvEJjyWwQPt/rUrNKyLBFx7NB6e2/IcgII=
-github.com/ctfer-io/go-ctfd v0.14.0/go.mod h1:ebgSW8LdP/qtRCpglK4djBp+g6kU5YM98XBZKowiCeY=
+github.com/ctfer-io/go-ctfd v0.15.0 h1:gdZK83cOIWassyW+PsyMqlSBFxHhsKh+yjU+fsc5A58=
+github.com/ctfer-io/go-ctfd v0.15.0/go.mod h1:cUAbm6dv5OhjR3E3/QaJBGTJ/GJ7vsXdL92SmyN/aQo=
 github.com/cyphar/filepath-securejoin v0.4.1 h1:JyxxyPEaktOD+GAnqIqTf9A8tHyAG22rowi7HkoSU1s=
 github.com/cyphar/filepath-securejoin v0.4.1/go.mod h1:Sdj7gXlvMcPZsbhwhQ33GguGLDGQL7h7bg04C/+u9jI=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

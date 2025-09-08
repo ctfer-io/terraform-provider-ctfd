@@ -35,6 +35,12 @@ resource "ctfd_challenge_standard" "http" {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					// Verify dynamic values have any value set in the state.
 					resource.TestCheckResourceAttrSet("ctfd_challenge_standard.http", "id"),
+					// CTFd v3.8.0 introduced the "logic" attribute.
+					// It modifies the flag (partial) submission process.
+					// Previous work with the provider are backward-compatible as the default logic
+					// of CTFd is "any" meaning that any flag validates the challenge, which keeps
+					// consistent behavior with previous versions of CTFd.
+					resource.TestCheckResourceAttr("ctfd_challenge_standard.http", "logic", "any"),
 				),
 			},
 			// ImportState testing

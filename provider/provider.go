@@ -213,13 +213,14 @@ func (p *CTFdProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 func (p *CTFdProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		NewBracketResource,
-		NewChallengeStandardResource,
 		NewChallengeDynamicResource,
-		NewHintResource,
-		NewFlagResource,
+		NewChallengeStandardResource,
 		NewFileResource,
-		NewUserResource,
+		NewFlagResource,
+		NewHintResource,
+		NewSolutionResource,
 		NewTeamResource,
+		NewUserResource,
 	}
 }
 

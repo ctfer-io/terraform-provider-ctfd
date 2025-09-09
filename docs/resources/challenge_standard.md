@@ -70,6 +70,7 @@ resource "ctfd_file" "http_file" {
 
 - `attribution` (String) Attribution to the creator(s) of the challenge.
 - `connection_info` (String) Connection Information to connect to the challenge instance, useful for pwn, web and infrastructure pentests.
+- `logic` (String) The flag validation logic.
 - `max_attempts` (Number) Maximum amount of attempts before being unable to flag the challenge.
 - `next` (Number) Suggestion for the end-user as next challenge to work on.
 - `requirements` (Attributes) List of required challenges that needs to get flagged before this one being accessible. Useful for skill-trees-like strategy CTF. (see [below for nested schema](#nestedatt--requirements))

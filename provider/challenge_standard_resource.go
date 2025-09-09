@@ -51,6 +51,7 @@ type ChallengeStandardResourceModel struct {
 	ConnectionInfo types.String                  `tfsdk:"connection_info"`
 	MaxAttempts    types.Int64                   `tfsdk:"max_attempts"`
 	Value          types.Int64                   `tfsdk:"value"`
+	Logic          types.String                  `tfsdk:"logic"`
 	State          types.String                  `tfsdk:"state"`
 	Next           types.Int64                   `tfsdk:"next"`
 	Requirements   *RequirementsSubresourceModel `tfsdk:"requirements"`
@@ -115,6 +116,7 @@ func (r *challengeStandardResource) Create(ctx context.Context, req resource.Cre
 		ConnectionInfo: data.ConnectionInfo.ValueStringPointer(),
 		MaxAttempts:    utils.ToInt(data.MaxAttempts),
 		Value:          int(data.Value.ValueInt64()),
+		Logic:          data.Logic.ValueString(),
 		State:          data.State.ValueString(),
 		Type:           "standard",
 		NextID:         utils.ToInt(data.Next),
@@ -225,6 +227,7 @@ func (r *challengeStandardResource) Update(ctx context.Context, req resource.Upd
 		ConnectionInfo: data.ConnectionInfo.ValueStringPointer(),
 		MaxAttempts:    utils.ToInt(data.MaxAttempts),
 		Value:          utils.ToInt(data.Value),
+		Logic:          data.Logic.ValueStringPointer(),
 		State:          data.State.ValueString(),
 		NextID:         utils.ToInt(data.Next),
 		Requirements:   reqs,
@@ -359,6 +362,7 @@ func (chall *ChallengeStandardResourceModel) Read(ctx context.Context, client *a
 	chall.ConnectionInfo = utils.ToTFString(res.ConnectionInfo)
 	chall.MaxAttempts = utils.ToTFInt64(res.MaxAttempts)
 	chall.Value = types.Int64Value(int64(res.Value))
+	chall.Logic = types.StringValue(res.Logic)
 	chall.State = types.StringValue(res.State)
 	chall.Next = utils.ToTFInt64(res.NextID)
 
@@ -459,6 +463,19 @@ var (
 		"value": schema.Int64Attribute{
 			MarkdownDescription: "The value (points) of the challenge once solved.",
 			Required:            true,
+		},
+		"logic": schema.StringAttribute{
+			MarkdownDescription: "The flag validation logic.",
+			Optional:            true,
+			Computed:            true,
+			Default:             stringdefault.StaticString("any"),
+			Validators: []validator.String{
+				validators.NewStringEnumValidator([]basetypes.StringValue{
+					types.StringValue("any"),
+					types.StringValue("all"),
+					types.StringValue("team"),
+				}),
+			},
 		},
 		"state": schema.StringAttribute{
 			MarkdownDescription: "State of the challenge, either hidden or visible.",

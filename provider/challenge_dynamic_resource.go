@@ -106,6 +106,7 @@ func (r *challengeDynamicResource) Create(ctx context.Context, req resource.Crea
 		Initial:        utils.ToInt(data.Value),
 		Decay:          utils.ToInt(data.Decay),
 		Minimum:        utils.ToInt(data.Minimum),
+		Logic:          data.Logic.ValueString(),
 		State:          data.State.ValueString(),
 		Type:           "dynamic",
 		NextID:         utils.ToInt(data.Next),
@@ -219,6 +220,7 @@ func (r *challengeDynamicResource) Update(ctx context.Context, req resource.Upda
 		Initial:        utils.ToInt(data.Value),
 		Decay:          utils.ToInt(data.Decay),
 		Minimum:        utils.ToInt(data.Minimum),
+		Logic:          data.Logic.ValueStringPointer(),
 		State:          data.State.ValueString(),
 		NextID:         utils.ToInt(data.Next),
 		Requirements:   reqs,
@@ -356,6 +358,7 @@ func (chall *ChallengeDynamicResourceModel) Read(ctx context.Context, client *ap
 	chall.Value = utils.ToTFInt64(res.Initial)
 	chall.Decay = utils.ToTFInt64(res.Decay)
 	chall.Minimum = utils.ToTFInt64(res.Minimum)
+	chall.Logic = types.StringValue(res.Logic)
 	chall.State = types.StringValue(res.State)
 	chall.Next = utils.ToTFInt64(res.NextID)
 

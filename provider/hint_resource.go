@@ -155,7 +155,9 @@ func (r *hintResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	}
 
 	// Retrieve hint
-	h, err := r.client.GetHint(data.ID.ValueString(), api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil)))
+	h, err := r.client.GetHint(data.ID.ValueString(), &api.GetHintParams{
+		Preview: utils.Ptr(true), // mimic a preview to get the hint even if not unlocked by the admin
+	}, api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil)))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",

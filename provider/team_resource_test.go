@@ -19,19 +19,26 @@ resource "ctfd_user" "ctfer" {
 	password = "password"
 }
 
+resource "ctfd_user" "sa" {
+	name     = "SA Bot"
+	email    = "ctfer-io-bot@protonmail.com"
+	password = "sa-password"
+}
+
 resource "ctfd_team" "cybercombattants" {
 	name = "Les cybercombattants de l'innovation"
 	email = "lucastesson@protonmail.com"
 	password = "password"
 	members = [
 	  ctfd_user.ctfer.id,
+	  ctfd_user.sa.id,
 	]
 	captain = ctfd_user.ctfer.id
 }
 `,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("ctfd_team.cybercombattants", "id"),
-					resource.TestCheckResourceAttr("ctfd_team.cybercombattants", "members.#", "1"),
+					resource.TestCheckResourceAttr("ctfd_team.cybercombattants", "members.#", "2"), // 2 members for regression on #269
 				),
 			},
 			// ImportState testing
@@ -50,6 +57,12 @@ resource "ctfd_user" "ctfer" {
 	password = "new-password"
 }
 
+resource "ctfd_user" "sa" {
+	name     = "SA Bot"
+	email    = "ctfer-io-bot@protonmail.com"
+	password = "sa-password"
+}
+
 resource "ctfd_team" "cybercombattants" {
 	name = "Les cybercombattants de l'innovation"
 	email = "lucastesson@protonmail.com"
@@ -57,12 +70,13 @@ resource "ctfd_team" "cybercombattants" {
 	banned = true
 	members = [
 	  ctfd_user.ctfer.id,
+	  ctfd_user.sa.id,
 	]
 	captain = ctfd_user.ctfer.id
 }
 `,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("ctfd_team.cybercombattants", "members.#", "1"),
+					resource.TestCheckResourceAttr("ctfd_team.cybercombattants", "members.#", "2"),
 				),
 			},
 		},

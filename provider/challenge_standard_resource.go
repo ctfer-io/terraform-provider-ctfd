@@ -14,8 +14,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -509,26 +509,26 @@ var (
 						}),
 					},
 				},
-				"prerequisites": schema.ListAttribute{
+				"prerequisites": schema.SetAttribute{
 					MarkdownDescription: "List of the challenges ID.",
-					Optional:            true,
 					ElementType:         types.StringType,
+					Optional:            true,
 				},
 			},
 		},
-		"tags": schema.ListAttribute{
+		"tags": schema.SetAttribute{
 			MarkdownDescription: "List of challenge tags that will be displayed to the end-user. You could use them to give some quick insights of what a challenge involves.",
 			ElementType:         types.StringType,
 			Optional:            true,
 			Computed:            true,
-			Default:             listdefault.StaticValue(basetypes.NewListValueMust(types.StringType, []attr.Value{})),
+			Default:             setdefault.StaticValue(basetypes.NewSetValueMust(types.StringType, []attr.Value{})),
 		},
-		"topics": schema.ListAttribute{
+		"topics": schema.SetAttribute{
 			MarkdownDescription: "List of challenge topics that are displayed to the administrators for maintenance and planification.",
 			ElementType:         types.StringType,
 			Optional:            true,
 			Computed:            true,
-			Default:             listdefault.StaticValue(basetypes.NewListValueMust(types.StringType, []attr.Value{})),
+			Default:             setdefault.StaticValue(basetypes.NewSetValueMust(types.StringType, []attr.Value{})),
 		},
 	}
 )

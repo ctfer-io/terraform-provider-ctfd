@@ -102,7 +102,7 @@ func (r *teamResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				Computed:            true,
 				Default:             defaults.Bool(booldefault.StaticBool(false)),
 			},
-			"members": schema.ListAttribute{
+			"members": schema.SetAttribute{
 				MarkdownDescription: "List of members (User), defined by their IDs.",
 				ElementType:         types.StringType,
 				Required:            true,

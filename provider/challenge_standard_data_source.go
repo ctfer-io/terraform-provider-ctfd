@@ -92,20 +92,19 @@ func (ch *challengeStandardDataSource) Schema(ctx context.Context, req datasourc
 									MarkdownDescription: "Behavior if not unlocked, either hidden or anonymized.",
 									Computed:            true,
 								},
-								"prerequisites": schema.ListAttribute{
-
+								"prerequisites": schema.SetAttribute{
 									MarkdownDescription: "List of the challenges ID.",
-									Computed:            true,
 									ElementType:         types.StringType,
+									Computed:            true,
 								},
 							},
 						},
-						"tags": schema.ListAttribute{
+						"tags": schema.SetAttribute{
 							MarkdownDescription: "List of challenge tags that will be displayed to the end-user. You could use them to give some quick insights of what a challenge involves.",
 							ElementType:         types.StringType,
 							Computed:            true,
 						},
-						"topics": schema.ListAttribute{
+						"topics": schema.SetAttribute{
 							MarkdownDescription: "List of challenge topics that are displayed to the administrators for maintenance and planification.",
 							ElementType:         types.StringType,
 							Computed:            true,

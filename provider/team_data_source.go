@@ -81,7 +81,7 @@ func (team *teamDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 							MarkdownDescription: "Is true if the team is banned from the CTF.",
 							Computed:            true,
 						},
-						"members": schema.ListAttribute{
+						"members": schema.SetAttribute{
 							MarkdownDescription: "List of members (User), defined by their IDs.",
 							ElementType:         types.StringType,
 							Computed:            true,

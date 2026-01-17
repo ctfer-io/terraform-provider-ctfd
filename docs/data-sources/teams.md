@@ -32,7 +32,7 @@ Read-Only:
 - `email` (String) Email of the team.
 - `hidden` (Boolean) Is true if the team is hidden to the participants.
 - `id` (String) Identifier of the user.
-- `members` (List of String) List of members (User), defined by their IDs.
+- `members` (Set of String) List of members (User), defined by their IDs.
 - `name` (String) Name of the team.
 - `password` (String) Password of the team. Notice that during a CTF you may not want to update those to avoid defaulting team accesses.
 - `website` (String) Website, blog, or anything similar (displayed to other participants).

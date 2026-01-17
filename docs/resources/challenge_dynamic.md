@@ -82,8 +82,8 @@ resource "ctfd_file" "http_file" {
 - `next` (Number) Suggestion for the end-user as next challenge to work on.
 - `requirements` (Attributes) List of required challenges that needs to get flagged before this one being accessible. Useful for skill-trees-like strategy CTF. (see [below for nested schema](#nestedatt--requirements))
 - `state` (String) State of the challenge, either hidden or visible.
-- `tags` (List of String) List of challenge tags that will be displayed to the end-user. You could use them to give some quick insights of what a challenge involves.
-- `topics` (List of String) List of challenge topics that are displayed to the administrators for maintenance and planification.
+- `tags` (Set of String) List of challenge tags that will be displayed to the end-user. You could use them to give some quick insights of what a challenge involves.
+- `topics` (Set of String) List of challenge topics that are displayed to the administrators for maintenance and planification.
 
 ### Read-Only
 
@@ -95,4 +95,4 @@ resource "ctfd_file" "http_file" {
 Optional:
 
 - `behavior` (String) Behavior if not unlocked, either hidden or anonymized.
-- `prerequisites` (List of String) List of the challenges ID.
+- `prerequisites` (Set of String) List of the challenges ID.

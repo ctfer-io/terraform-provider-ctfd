@@ -62,7 +62,7 @@ resource "ctfd_hint" "http_hint_2" {
 ### Optional
 
 - `cost` (Number) Cost of the hint, and if any specified, the end-user will consume its own (or team) points to get it.
-- `requirements` (List of String) List of the other hints it depends on.
+- `requirements` (Set of String) List of the other hints it depends on.
 - `title` (String) Title of the hint, displayed to end users before unlocking.
 
 ### Read-Only

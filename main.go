@@ -32,9 +32,19 @@ func main() {
 		Debug:   debug,
 	}
 
-	err := providerserver.Serve(context.Background(), provider.New(version), opts)
+	ctx := context.Background()
 
+	shutdown, err := provider.SetupOtelSDK(ctx, version)
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Fatal(err)
+	}
+	defer func() {
+		if err := shutdown(ctx); err != nil {
+			log.Printf("Error shutting down tracer provider: %v", err)
+		}
+	}()
+
+	if err := providerserver.Serve(ctx, provider.New(version), opts); err != nil {
+		log.Fatal(err)
 	}
 }

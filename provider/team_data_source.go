@@ -10,7 +10,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
-	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 var (
@@ -23,7 +22,7 @@ func NewTeamDataSource() datasource.DataSource {
 }
 
 type teamDataSource struct {
-	client *api.Client
+	client *Client
 }
 
 type teamsDataSourceModel struct {
@@ -31,11 +30,11 @@ type teamsDataSourceModel struct {
 	Teams []teamResourceModel `tfsdk:"teams"`
 }
 
-func (team *teamDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+func (r *teamDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_teams"
 }
 
-func (team *teamDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (r *teamDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
@@ -97,12 +96,12 @@ func (team *teamDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 	}
 }
 
-func (team *teamDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+func (r *teamDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
 
-	client, ok := req.ProviderData.(*api.Client)
+	client, ok := req.ProviderData.(*Client)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Data Source Configure Type",
@@ -111,13 +110,13 @@ func (team *teamDataSource) Configure(ctx context.Context, req datasource.Config
 		return
 	}
 
-	team.client = client
+	r.client = client
 }
 
-func (team *teamDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+func (r *teamDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var state teamsDataSourceModel
 
-	teams, err := team.client.GetTeams(&api.GetTeamsParams{}, api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil)))
+	teams, err := r.client.GetTeams(ctx, &api.GetTeamsParams{})
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unable to Read CTFd Teams",

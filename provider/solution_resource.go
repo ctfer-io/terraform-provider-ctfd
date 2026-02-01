@@ -18,7 +18,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 var (
@@ -32,7 +31,7 @@ func NewSolutionResource() resource.Resource {
 }
 
 type solutionResource struct {
-	client *api.Client
+	client *Client
 }
 
 type solutionResourceModel struct {
@@ -88,7 +87,7 @@ func (r *solutionResource) Configure(ctx context.Context, req resource.Configure
 		return
 	}
 
-	client, ok := req.ProviderData.(*api.Client)
+	client, ok := req.ProviderData.(*Client)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -108,11 +107,11 @@ func (r *solutionResource) Create(ctx context.Context, req resource.CreateReques
 	}
 
 	// Create solution
-	res, err := r.client.PostSolutions(&api.PostSolutionsParams{
+	res, err := r.client.PostSolutions(ctx, &api.PostSolutionsParams{
 		ChallengeID: utils.Atoi(data.ChallengeID.ValueString()),
 		Content:     data.Content.ValueString(),
 		State:       data.State.ValueString(),
-	}, api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil)))
+	})
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -140,9 +139,7 @@ func (r *solutionResource) Read(ctx context.Context, req resource.ReadRequest, r
 	}
 
 	// Retrieve solution
-	res, err := r.client.GetSolutions(utils.Atoi(data.ID.ValueString()), nil,
-		api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil)),
-	)
+	res, err := r.client.GetSolutions(ctx, data.ID.ValueString(), nil)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -170,10 +167,10 @@ func (r *solutionResource) Update(ctx context.Context, req resource.UpdateReques
 	}
 
 	// Update solution
-	if _, err := r.client.PatchSolutions(utils.Atoi(data.ID.ValueString()), &api.PatchSolutionsParams{
+	if _, err := r.client.PatchSolutions(ctx, data.ID.ValueString(), &api.PatchSolutionsParams{
 		Content: data.Content.ValueString(),
 		State:   data.State.ValueString(),
-	}, api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil))); err != nil {
+	}); err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf("Unable to update solution of challenge %s, got error: %s", data.ChallengeID.ValueString(), err),
@@ -194,9 +191,7 @@ func (r *solutionResource) Delete(ctx context.Context, req resource.DeleteReques
 		return
 	}
 
-	if err := r.client.DeleteSolutions(utils.Atoi(data.ID.ValueString()),
-		api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil)),
-	); err != nil {
+	if err := r.client.DeleteSolutions(ctx, data.ID.ValueString()); err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete solution of challenge %s, got error: %s", data.ChallengeID.ValueString(), err))
 		return
 	}

@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/ctfer-io/go-ctfd/api"
-	"github.com/ctfer-io/terraform-provider-ctfd/v2/provider/utils"
 	"github.com/ctfer-io/terraform-provider-ctfd/v2/provider/validators"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -18,7 +17,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 var (
@@ -32,7 +30,7 @@ func NewBracketResource() resource.Resource {
 }
 
 type bracketResource struct {
-	client *api.Client
+	client *Client
 }
 
 type bracketResourceModel struct {
@@ -87,7 +85,7 @@ func (r *bracketResource) Configure(ctx context.Context, req resource.ConfigureR
 		return
 	}
 
-	client, ok := req.ProviderData.(*api.Client)
+	client, ok := req.ProviderData.(*Client)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -107,11 +105,11 @@ func (r *bracketResource) Create(ctx context.Context, req resource.CreateRequest
 	}
 
 	// Create bracket
-	res, err := r.client.PostBrackets(&api.PostBracketsParams{
+	res, err := r.client.PostBrackets(ctx, &api.PostBracketsParams{
 		Name:        data.Name.ValueString(),
 		Description: data.Description.ValueString(),
 		Type:        data.Type.ValueString(),
-	}, api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil)))
+	})
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -139,7 +137,7 @@ func (r *bracketResource) Read(ctx context.Context, req resource.ReadRequest, re
 	}
 
 	// XXX cannot get bracket by ID, so we need to query them all
-	brackets, err := r.client.GetBrackets(&api.GetBracketsParams{}, api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil)))
+	brackets, err := r.client.GetBrackets(ctx, &api.GetBracketsParams{})
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -181,11 +179,11 @@ func (r *bracketResource) Update(ctx context.Context, req resource.UpdateRequest
 	}
 
 	// Update bracket
-	if _, err := r.client.PatchBrackets(utils.Atoi(data.ID.ValueString()), &api.PatchBracketsParams{
+	if _, err := r.client.PatchBrackets(ctx, data.ID.ValueString(), &api.PatchBracketsParams{
 		Name:        data.Name.ValueStringPointer(),
 		Description: data.Description.ValueStringPointer(),
 		Type:        data.Type.ValueStringPointer(),
-	}, api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil))); err != nil {
+	}); err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf("Unable to update bracket %s, got error: %s", data.ID.ValueString(), err),
@@ -206,7 +204,7 @@ func (r *bracketResource) Delete(ctx context.Context, req resource.DeleteRequest
 		return
 	}
 
-	if err := r.client.DeleteBrackets(utils.Atoi(data.ID.ValueString()), api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil))); err != nil {
+	if err := r.client.DeleteBrackets(ctx, data.ID.ValueString()); err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete bracket %s, got error: %s", data.ID.ValueString(), err))
 		return
 	}

@@ -10,7 +10,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 var (
@@ -23,7 +22,7 @@ func NewChallengeDynamicDataSource() datasource.DataSource {
 }
 
 type challengeDynamicDataSource struct {
-	client *api.Client
+	client *Client
 }
 
 type challengesDynamicDataSourceModel struct {
@@ -134,7 +133,7 @@ func (ch *challengeDynamicDataSource) Configure(ctx context.Context, req datasou
 		return
 	}
 
-	client, ok := req.ProviderData.(*api.Client)
+	client, ok := req.ProviderData.(*Client)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Data Source Configure Type",
@@ -149,9 +148,9 @@ func (ch *challengeDynamicDataSource) Configure(ctx context.Context, req datasou
 func (ch *challengeDynamicDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var state challengesDynamicDataSourceModel
 
-	challs, err := ch.client.GetChallenges(&api.GetChallengesParams{
+	challs, err := ch.client.GetChallenges(ctx, &api.GetChallengesParams{
 		Type: utils.Ptr("dynamic"),
-	}, api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil)))
+	})
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unable to Read CTFd Challenges",

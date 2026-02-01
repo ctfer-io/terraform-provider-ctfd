@@ -15,7 +15,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 var _ provider.Provider = (*CTFdProvider)(nil)
@@ -173,7 +172,7 @@ func (p *CTFdProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 	ctx = utils.AddSensitive(ctx, "ctfd_password", password)
 	tflog.Debug(ctx, "Creating CTFd API client")
 
-	nonce, session, err := api.GetNonceAndSession(url, api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil)))
+	nonce, session, err := GetNonceAndSession(ctx, url)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"CTFd error",
@@ -182,17 +181,17 @@ func (p *CTFdProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 		return
 	}
 
-	client := api.NewClient(url, nonce, session, apiKey)
+	client := NewClient(url, nonce, session, apiKey)
 	if up {
 		// XXX due to the CTFd ratelimiter on rare endpoint
 		if _, ok := os.LookupEnv("TF_ACC"); ok {
 			time.Sleep(5 * time.Second)
 		}
 
-		if err := client.Login(&api.LoginParams{
+		if err := client.Login(ctx, &api.LoginParams{
 			Name:     username,
 			Password: password,
-		}, api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil))); err != nil {
+		}); err != nil {
 			resp.Diagnostics.AddError(
 				"CTFd error",
 				fmt.Sprintf("Failed to login: %s", err),

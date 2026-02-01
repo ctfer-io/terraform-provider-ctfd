@@ -9,7 +9,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 var (
@@ -22,7 +21,7 @@ func NewBracketSource() datasource.DataSource {
 }
 
 type bracketDataSource struct {
-	client *api.Client
+	client *Client
 }
 
 type bracketsDataSourceModel struct {
@@ -72,7 +71,7 @@ func (bkt *bracketDataSource) Configure(ctx context.Context, req datasource.Conf
 		return
 	}
 
-	client, ok := req.ProviderData.(*api.Client)
+	client, ok := req.ProviderData.(*Client)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Data Source Configure Type",
@@ -87,7 +86,7 @@ func (bkt *bracketDataSource) Configure(ctx context.Context, req datasource.Conf
 func (usr *bracketDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var state bracketsDataSourceModel
 
-	brackets, err := usr.client.GetBrackets(&api.GetBracketsParams{}, api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil)))
+	brackets, err := usr.client.GetBrackets(ctx, &api.GetBracketsParams{})
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unable to Read CTFd Brackets",

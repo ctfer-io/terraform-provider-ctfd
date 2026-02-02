@@ -1,6 +1,10 @@
 package provider_test
 
 import (
+	"context"
+	"log"
+	"testing"
+
 	"github.com/ctfer-io/terraform-provider-ctfd/v2/provider"
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
@@ -21,3 +25,19 @@ var (
 		"ctfd": providerserver.NewProtocol6WithError(provider.New("test")()),
 	}
 )
+
+func TestMain(m *testing.M) {
+	ctx := context.Background()
+
+	shutdown, err := provider.SetupOtelSDK(ctx, "test")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer func() {
+		if err := shutdown(ctx); err != nil {
+			log.Printf("Error shutting down tracer provider: %v", err)
+		}
+	}()
+
+	m.Run()
+}

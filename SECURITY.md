@@ -1,6 +1,6 @@
 # Reporting Security Issues
 
-Please report any security issues you discovered in the API to ctfer-io@protonmail.com.
+Please report any security issues you discovered in the Terraform provider to ctfer-io@protonmail.com.
 
 We will assess the risk, plus make a fix available before we create a GitHub issue.
 

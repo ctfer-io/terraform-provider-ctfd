@@ -119,6 +119,9 @@ func (r *fileResource) Configure(ctx context.Context, req resource.ConfigureRequ
 }
 
 func (r *fileResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	ctx, span := StartTFSpan(ctx, r)
+	defer span.End()
+
 	var data fileResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -169,6 +172,9 @@ func (r *fileResource) Create(ctx context.Context, req resource.CreateRequest, r
 }
 
 func (r *fileResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	ctx, span := StartTFSpan(ctx, r)
+	defer span.End()
+
 	var data fileResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -212,6 +218,9 @@ func (r *fileResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 }
 
 func (r *fileResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	ctx, span := StartTFSpan(ctx, r)
+	defer span.End()
+
 	var data fileResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -222,6 +231,9 @@ func (r *fileResource) Update(ctx context.Context, req resource.UpdateRequest, r
 }
 
 func (r *fileResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	ctx, span := StartTFSpan(ctx, r)
+	defer span.End()
+
 	var data fileResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {

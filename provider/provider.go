@@ -17,6 +17,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
+const (
+	providerTypeName = "ctfd"
+)
+
 var _ provider.Provider = (*CTFdProvider)(nil)
 
 type CTFdProvider struct {
@@ -39,7 +43,7 @@ type CTFdProviderModel struct {
 }
 
 func (p *CTFdProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
-	resp.TypeName = "ctfd"
+	resp.TypeName = providerTypeName
 	resp.Version = p.version
 }
 

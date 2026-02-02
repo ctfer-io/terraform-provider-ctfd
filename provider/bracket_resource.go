@@ -98,6 +98,9 @@ func (r *bracketResource) Configure(ctx context.Context, req resource.ConfigureR
 }
 
 func (r *bracketResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	ctx, span := StartTFSpan(ctx, r)
+	defer span.End()
+
 	var data bracketResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -130,6 +133,9 @@ func (r *bracketResource) Create(ctx context.Context, req resource.CreateRequest
 }
 
 func (r *bracketResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	ctx, span := StartTFSpan(ctx, r)
+	defer span.End()
+
 	var data bracketResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -172,6 +178,9 @@ func (r *bracketResource) Read(ctx context.Context, req resource.ReadRequest, re
 }
 
 func (r *bracketResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	ctx, span := StartTFSpan(ctx, r)
+	defer span.End()
+
 	var data bracketResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -198,6 +207,9 @@ func (r *bracketResource) Update(ctx context.Context, req resource.UpdateRequest
 }
 
 func (r *bracketResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	ctx, span := StartTFSpan(ctx, r)
+	defer span.End()
+
 	var data bracketResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {

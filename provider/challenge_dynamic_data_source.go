@@ -30,11 +30,11 @@ type challengesDynamicDataSourceModel struct {
 	Challenges []ChallengeDynamicResourceModel `tfsdk:"challenges"`
 }
 
-func (ch *challengeDynamicDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+func (data *challengeDynamicDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_challenges_dynamic"
 }
 
-func (ch *challengeDynamicDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (data *challengeDynamicDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
@@ -128,7 +128,7 @@ func (ch *challengeDynamicDataSource) Schema(ctx context.Context, req datasource
 	}
 }
 
-func (ch *challengeDynamicDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+func (data *challengeDynamicDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -142,13 +142,16 @@ func (ch *challengeDynamicDataSource) Configure(ctx context.Context, req datasou
 		return
 	}
 
-	ch.client = client
+	data.client = client
 }
 
-func (ch *challengeDynamicDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+func (data *challengeDynamicDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	ctx, span := StartTFSpan(ctx, data)
+	defer span.End()
+
 	var state challengesDynamicDataSourceModel
 
-	challs, err := ch.client.GetChallenges(ctx, &api.GetChallengesParams{
+	challs, err := data.client.GetChallenges(ctx, &api.GetChallengesParams{
 		Type: utils.Ptr("dynamic"),
 	})
 	if err != nil {
@@ -163,7 +166,7 @@ func (ch *challengeDynamicDataSource) Read(ctx context.Context, req datasource.R
 	for _, c := range challs {
 		chall := ChallengeDynamicResourceModel{}
 		chall.ID = types.StringValue(strconv.Itoa(c.ID))
-		chall.Read(ctx, ch.client, resp.Diagnostics)
+		chall.Read(ctx, data.client, resp.Diagnostics)
 		if resp.Diagnostics.HasError() {
 			return
 		}

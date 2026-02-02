@@ -29,11 +29,11 @@ type usersDataSourceModel struct {
 	Users []userResourceModel `tfsdk:"users"`
 }
 
-func (r *userDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+func (data *userDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_users"
 }
 
-func (r *userDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (data *userDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
@@ -98,7 +98,7 @@ func (r *userDataSource) Schema(ctx context.Context, req datasource.SchemaReques
 	}
 }
 
-func (r *userDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+func (data *userDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -112,13 +112,16 @@ func (r *userDataSource) Configure(ctx context.Context, req datasource.Configure
 		return
 	}
 
-	r.client = client
+	data.client = client
 }
 
-func (r *userDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+func (data *userDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	ctx, span := StartTFSpan(ctx, data)
+	defer span.End()
+
 	var state usersDataSourceModel
 
-	users, err := r.client.GetUsers(ctx, &api.GetUsersParams{})
+	users, err := data.client.GetUsers(ctx, &api.GetUsersParams{})
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unable to Read CTFd Users",

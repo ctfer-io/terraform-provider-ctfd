@@ -100,6 +100,9 @@ func (r *solutionResource) Configure(ctx context.Context, req resource.Configure
 }
 
 func (r *solutionResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	ctx, span := StartTFSpan(ctx, r)
+	defer span.End()
+
 	var data solutionResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -132,6 +135,9 @@ func (r *solutionResource) Create(ctx context.Context, req resource.CreateReques
 }
 
 func (r *solutionResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	ctx, span := StartTFSpan(ctx, r)
+	defer span.End()
+
 	var data solutionResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -160,6 +166,9 @@ func (r *solutionResource) Read(ctx context.Context, req resource.ReadRequest, r
 }
 
 func (r *solutionResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	ctx, span := StartTFSpan(ctx, r)
+	defer span.End()
+
 	var data solutionResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -185,6 +194,9 @@ func (r *solutionResource) Update(ctx context.Context, req resource.UpdateReques
 }
 
 func (r *solutionResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	ctx, span := StartTFSpan(ctx, r)
+	defer span.End()
+
 	var data solutionResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {

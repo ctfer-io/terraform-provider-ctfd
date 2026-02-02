@@ -88,6 +88,9 @@ func (r *challengeStandardResource) Configure(ctx context.Context, req resource.
 }
 
 func (r *challengeStandardResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	ctx, span := StartTFSpan(ctx, r)
+	defer span.End()
+
 	var data ChallengeStandardResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -182,6 +185,9 @@ func (r *challengeStandardResource) Create(ctx context.Context, req resource.Cre
 }
 
 func (r *challengeStandardResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	ctx, span := StartTFSpan(ctx, r)
+	defer span.End()
+
 	var data ChallengeStandardResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -197,6 +203,9 @@ func (r *challengeStandardResource) Read(ctx context.Context, req resource.ReadR
 }
 
 func (r *challengeStandardResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	ctx, span := StartTFSpan(ctx, r)
+	defer span.End()
+
 	var data ChallengeStandardResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -324,6 +333,9 @@ func (r *challengeStandardResource) Update(ctx context.Context, req resource.Upd
 }
 
 func (r *challengeStandardResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	ctx, span := StartTFSpan(ctx, r)
+	defer span.End()
+
 	var data ChallengeStandardResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {

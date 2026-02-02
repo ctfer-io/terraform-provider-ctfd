@@ -75,6 +75,9 @@ func (r *challengeDynamicResource) Configure(ctx context.Context, req resource.C
 }
 
 func (r *challengeDynamicResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	ctx, span := StartTFSpan(ctx, r)
+	defer span.End()
+
 	var data ChallengeDynamicResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -172,6 +175,9 @@ func (r *challengeDynamicResource) Create(ctx context.Context, req resource.Crea
 }
 
 func (r *challengeDynamicResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	ctx, span := StartTFSpan(ctx, r)
+	defer span.End()
+
 	var data ChallengeDynamicResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -187,6 +193,9 @@ func (r *challengeDynamicResource) Read(ctx context.Context, req resource.ReadRe
 }
 
 func (r *challengeDynamicResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	ctx, span := StartTFSpan(ctx, r)
+	defer span.End()
+
 	var data ChallengeDynamicResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -317,6 +326,9 @@ func (r *challengeDynamicResource) Update(ctx context.Context, req resource.Upda
 }
 
 func (r *challengeDynamicResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	ctx, span := StartTFSpan(ctx, r)
+	defer span.End()
+
 	var data ChallengeDynamicResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {

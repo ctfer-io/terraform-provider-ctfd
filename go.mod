@@ -1,9 +1,9 @@
 module github.com/ctfer-io/terraform-provider-ctfd/v2
 
-go 1.24.0
+go 1.25.4
 
 require (
-	github.com/ctfer-io/go-ctfd v0.15.1
+	github.com/ctfer-io/go-ctfd v0.16.0
 	github.com/hashicorp/terraform-plugin-docs v0.24.0
 	github.com/hashicorp/terraform-plugin-framework v1.17.0
 	github.com/hashicorp/terraform-plugin-go v0.29.0

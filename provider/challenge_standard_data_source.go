@@ -10,7 +10,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 var (
@@ -23,7 +22,7 @@ func NewChallengeStandardDataSource() datasource.DataSource {
 }
 
 type challengeStandardDataSource struct {
-	client *api.Client
+	client *Client
 }
 
 type challengesStandardDataSourceModel struct {
@@ -31,11 +30,11 @@ type challengesStandardDataSourceModel struct {
 	Challenges []ChallengeStandardResourceModel `tfsdk:"challenges"`
 }
 
-func (ch *challengeStandardDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+func (data *challengeStandardDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_challenges_standard"
 }
 
-func (ch *challengeStandardDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (data *challengeStandardDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
@@ -116,12 +115,12 @@ func (ch *challengeStandardDataSource) Schema(ctx context.Context, req datasourc
 	}
 }
 
-func (ch *challengeStandardDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+func (data *challengeStandardDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
 
-	client, ok := req.ProviderData.(*api.Client)
+	client, ok := req.ProviderData.(*Client)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Data Source Configure Type",
@@ -130,15 +129,18 @@ func (ch *challengeStandardDataSource) Configure(ctx context.Context, req dataso
 		return
 	}
 
-	ch.client = client
+	data.client = client
 }
 
-func (ch *challengeStandardDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+func (data *challengeStandardDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	ctx, span := StartTFSpan(ctx, data)
+	defer span.End()
+
 	var state challengesStandardDataSourceModel
 
-	challs, err := ch.client.GetChallenges(&api.GetChallengesParams{
+	challs, err := data.client.GetChallenges(ctx, &api.GetChallengesParams{
 		Type: utils.Ptr("standard"),
-	}, api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil)))
+	})
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unable to Read CTFd Challenges",
@@ -152,7 +154,7 @@ func (ch *challengeStandardDataSource) Read(ctx context.Context, req datasource.
 		chall := ChallengeStandardResourceModel{
 			ID: types.StringValue(strconv.Itoa(c.ID)),
 		}
-		chall.Read(ctx, ch.client, resp.Diagnostics)
+		chall.Read(ctx, data.client, resp.Diagnostics)
 		if resp.Diagnostics.HasError() {
 			return
 		}

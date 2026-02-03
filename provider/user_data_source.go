@@ -9,7 +9,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 var (
@@ -22,7 +21,7 @@ func NewUserDataSource() datasource.DataSource {
 }
 
 type userDataSource struct {
-	client *api.Client
+	client *Client
 }
 
 type usersDataSourceModel struct {
@@ -30,11 +29,11 @@ type usersDataSourceModel struct {
 	Users []userResourceModel `tfsdk:"users"`
 }
 
-func (usr *userDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+func (data *userDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_users"
 }
 
-func (usr *userDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (data *userDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
@@ -99,12 +98,12 @@ func (usr *userDataSource) Schema(ctx context.Context, req datasource.SchemaRequ
 	}
 }
 
-func (usr *userDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+func (data *userDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
 
-	client, ok := req.ProviderData.(*api.Client)
+	client, ok := req.ProviderData.(*Client)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Data Source Configure Type",
@@ -113,13 +112,16 @@ func (usr *userDataSource) Configure(ctx context.Context, req datasource.Configu
 		return
 	}
 
-	usr.client = client
+	data.client = client
 }
 
-func (usr *userDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+func (data *userDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	ctx, span := StartTFSpan(ctx, data)
+	defer span.End()
+
 	var state usersDataSourceModel
 
-	users, err := usr.client.GetUsers(&api.GetUsersParams{}, api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil)))
+	users, err := data.client.GetUsers(ctx, &api.GetUsersParams{})
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unable to Read CTFd Users",

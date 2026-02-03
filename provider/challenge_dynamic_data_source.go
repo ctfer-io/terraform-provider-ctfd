@@ -10,7 +10,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 var (
@@ -23,7 +22,7 @@ func NewChallengeDynamicDataSource() datasource.DataSource {
 }
 
 type challengeDynamicDataSource struct {
-	client *api.Client
+	client *Client
 }
 
 type challengesDynamicDataSourceModel struct {
@@ -31,11 +30,11 @@ type challengesDynamicDataSourceModel struct {
 	Challenges []ChallengeDynamicResourceModel `tfsdk:"challenges"`
 }
 
-func (ch *challengeDynamicDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+func (data *challengeDynamicDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_challenges_dynamic"
 }
 
-func (ch *challengeDynamicDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (data *challengeDynamicDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
@@ -129,12 +128,12 @@ func (ch *challengeDynamicDataSource) Schema(ctx context.Context, req datasource
 	}
 }
 
-func (ch *challengeDynamicDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+func (data *challengeDynamicDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
 
-	client, ok := req.ProviderData.(*api.Client)
+	client, ok := req.ProviderData.(*Client)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Data Source Configure Type",
@@ -143,15 +142,18 @@ func (ch *challengeDynamicDataSource) Configure(ctx context.Context, req datasou
 		return
 	}
 
-	ch.client = client
+	data.client = client
 }
 
-func (ch *challengeDynamicDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+func (data *challengeDynamicDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	ctx, span := StartTFSpan(ctx, data)
+	defer span.End()
+
 	var state challengesDynamicDataSourceModel
 
-	challs, err := ch.client.GetChallenges(&api.GetChallengesParams{
+	challs, err := data.client.GetChallenges(ctx, &api.GetChallengesParams{
 		Type: utils.Ptr("dynamic"),
-	}, api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil)))
+	})
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unable to Read CTFd Challenges",
@@ -164,7 +166,7 @@ func (ch *challengeDynamicDataSource) Read(ctx context.Context, req datasource.R
 	for _, c := range challs {
 		chall := ChallengeDynamicResourceModel{}
 		chall.ID = types.StringValue(strconv.Itoa(c.ID))
-		chall.Read(ctx, ch.client, resp.Diagnostics)
+		chall.Read(ctx, data.client, resp.Diagnostics)
 		if resp.Diagnostics.HasError() {
 			return
 		}

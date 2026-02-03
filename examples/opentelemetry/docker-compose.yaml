@@ -1,0 +1,55 @@
+networks:
+  otel-demo:
+    name: otel-demo
+    driver: bridge
+
+services:
+  jaeger:
+    image: jaegertracing/jaeger:2.8.0
+    ports:
+      - "16686:16686"   # Jaeger UI
+      - "14317:4317"    # OTLP gRPC ingest
+    networks:
+      - otel-demo
+
+  collector:
+    image: otel/opentelemetry-collector:0.144.0
+    command: ["--config=/otel-collector.yaml"]
+    volumes:
+      - ./otel-collector.yaml:/otel-collector.yaml:ro
+    ports:
+      - "4317:4317"     # OTLP gRPC
+    depends_on:
+      - jaeger
+    networks:
+      - otel-demo
+
+  ctfd:
+    image: ctferio/ctfd:3.8.1-0.9.0
+    ports:
+      - "8000:8000"
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: "dns://collector:4317"
+      OTEL_EXPORTER_OTLP_INSECURE: "true"
+    depends_on:
+      - collector
+    networks:
+      - otel-demo
+    healthcheck:
+      test: python3 -c 'import requests; requests.get("http://localhost:8000")'
+      interval: 10s
+      retries: 3
+      timeout: 10s
+
+  ctfd-setup:
+    image: ctferio/ctfd-setup:v1.7.1@sha256:d555410c10f66eb88a6579078d3f2c9131279e3057c21831a69feb447479b877
+    environment:
+      URL: http://ctfd:8000
+      FILE: /.ctfd.yaml
+    volumes:
+      - .ctfd.yaml:/.ctfd.yaml
+    networks:
+      - otel-demo
+    depends_on:
+      ctfd:
+        condition: service_healthy

@@ -54,3 +54,28 @@ resource "ctfd_challenge_standard" "my_challenge" {
     value       = 500
 }
 ```
+
+## OpenTelemetry support
+
+Understanding what is going on under the hood or what could fail throughout the CTF lifecycle remains an important concern, even with such provider. For better understandability, we ship support for OpenTelemetry.
+
+You can configure it using [the SDK environment variables](https://opentelemetry.io/docs/specs/otel/configuration/sdk-environment-variables/).
+
+Note that CTFd **does not support it natively**, you may want to use our [instrumented and packaged CTFd](https://github.com/ctfer-io/ctfd-packaged) or proceed similarly for auto-instrumentation.
+
+Also, the provider uses the `always` sampler hence we recommend you use a [Collector probability sampler](https://opentelemetry.io/docs/specs/otel/trace/tracestate-probability-sampling/). An example follows, with arbitrary values.
+```yaml
+processors:
+  probabilistic_sampler:
+    hash_seed: 22
+    sampling_percentage: 22
+
+service:
+  pipelines:
+    traces:
+      receivers: [...]
+      processors: [probabilistic_sampler, ...]
+      exporters: [...]
+```
+
+A more complete example is [available here](./examples/opentelemetry).

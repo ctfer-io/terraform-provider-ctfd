@@ -18,7 +18,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 var (
@@ -32,7 +31,7 @@ func NewHintResource() resource.Resource {
 }
 
 type hintResource struct {
-	client *api.Client
+	client *Client
 }
 
 type hintResourceModel struct {
@@ -94,7 +93,7 @@ func (r *hintResource) Configure(ctx context.Context, req resource.ConfigureRequ
 		return
 	}
 
-	client, ok := req.ProviderData.(*api.Client)
+	client, ok := req.ProviderData.(*Client)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -107,6 +106,9 @@ func (r *hintResource) Configure(ctx context.Context, req resource.ConfigureRequ
 }
 
 func (r *hintResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	ctx, span := StartTFSpan(ctx, r)
+	defer span.End()
+
 	var data hintResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -119,7 +121,7 @@ func (r *hintResource) Create(ctx context.Context, req resource.CreateRequest, r
 		id, _ := strconv.Atoi(preq.ValueString())
 		reqs = append(reqs, id)
 	}
-	res, err := r.client.PostHints(&api.PostHintsParams{
+	res, err := r.client.PostHints(ctx, &api.PostHintsParams{
 		ChallengeID: utils.Atoi(data.ChallengeID.ValueString()),
 		Title:       data.Title.ValueStringPointer(),
 		Content:     data.Content.ValueString(),
@@ -127,7 +129,7 @@ func (r *hintResource) Create(ctx context.Context, req resource.CreateRequest, r
 		Requirements: api.Requirements{
 			Prerequisites: reqs,
 		},
-	}, api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil)))
+	})
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -148,6 +150,9 @@ func (r *hintResource) Create(ctx context.Context, req resource.CreateRequest, r
 }
 
 func (r *hintResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	ctx, span := StartTFSpan(ctx, r)
+	defer span.End()
+
 	var data hintResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -155,9 +160,9 @@ func (r *hintResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	}
 
 	// Retrieve hint
-	h, err := r.client.GetHint(data.ID.ValueString(), &api.GetHintParams{
+	h, err := r.client.GetHint(ctx, data.ID.ValueString(), &api.GetHintParams{
 		Preview: utils.Ptr(true), // mimic a preview to get the hint even if not unlocked by the admin
-	}, api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil)))
+	})
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -166,7 +171,7 @@ func (r *hintResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		return
 	}
 	// XXX cannot get hint by ID, so we need to query them all
-	hints, err := r.client.GetChallengeHints(h.ChallengeID, api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil)))
+	hints, err := r.client.GetChallengeHints(ctx, strconv.Itoa(h.ChallengeID))
 	hint := (*api.Hint)(nil)
 	for _, h := range hints {
 		if h.ID == utils.Atoi(data.ID.ValueString()) {
@@ -200,6 +205,9 @@ func (r *hintResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 }
 
 func (r *hintResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	ctx, span := StartTFSpan(ctx, r)
+	defer span.End()
+
 	var data hintResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -212,7 +220,7 @@ func (r *hintResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		id, _ := strconv.Atoi(preq.ValueString())
 		preqs = append(preqs, id)
 	}
-	if _, err := r.client.PatchHint(data.ID.ValueString(), &api.PatchHintsParams{
+	if _, err := r.client.PatchHint(ctx, data.ID.ValueString(), &api.PatchHintsParams{
 		ChallengeID: utils.Atoi(data.ChallengeID.ValueString()),
 		Title:       data.Title.ValueStringPointer(),
 		Content:     data.Content.ValueString(),
@@ -220,7 +228,7 @@ func (r *hintResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		Requirements: api.Requirements{
 			Prerequisites: preqs,
 		},
-	}, api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil))); err != nil {
+	}); err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf("Unable to update hint %s, got error: %s", data.ID.ValueString(), err),
@@ -235,13 +243,16 @@ func (r *hintResource) Update(ctx context.Context, req resource.UpdateRequest, r
 }
 
 func (r *hintResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	ctx, span := StartTFSpan(ctx, r)
+	defer span.End()
+
 	var data hintResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	if err := r.client.DeleteHint(data.ID.ValueString(), api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil))); err != nil {
+	if err := r.client.DeleteHint(ctx, data.ID.ValueString()); err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete hint %s, got error: %s", data.ID.ValueString(), err))
 		return
 	}

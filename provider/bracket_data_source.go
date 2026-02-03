@@ -9,7 +9,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 var (
@@ -22,7 +21,7 @@ func NewBracketSource() datasource.DataSource {
 }
 
 type bracketDataSource struct {
-	client *api.Client
+	client *Client
 }
 
 type bracketsDataSourceModel struct {
@@ -30,11 +29,11 @@ type bracketsDataSourceModel struct {
 	Brackets []bracketResourceModel `tfsdk:"brackets"`
 }
 
-func (bkt *bracketDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+func (data *bracketDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_brackets"
 }
 
-func (bkt *bracketDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (data *bracketDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
@@ -67,12 +66,12 @@ func (bkt *bracketDataSource) Schema(ctx context.Context, req datasource.SchemaR
 	}
 }
 
-func (bkt *bracketDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+func (data *bracketDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
 
-	client, ok := req.ProviderData.(*api.Client)
+	client, ok := req.ProviderData.(*Client)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Data Source Configure Type",
@@ -81,13 +80,16 @@ func (bkt *bracketDataSource) Configure(ctx context.Context, req datasource.Conf
 		return
 	}
 
-	bkt.client = client
+	data.client = client
 }
 
-func (usr *bracketDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+func (data *bracketDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	ctx, span := StartTFSpan(ctx, data)
+	defer span.End()
+
 	var state bracketsDataSourceModel
 
-	brackets, err := usr.client.GetBrackets(&api.GetBracketsParams{}, api.WithContext(ctx), api.WithTransport(otelhttp.NewTransport(nil)))
+	brackets, err := data.client.GetBrackets(ctx, &api.GetBracketsParams{})
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unable to Read CTFd Brackets",

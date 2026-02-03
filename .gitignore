@@ -1,6 +1,8 @@
 # examples
 *.pcap*
 *.tfstate*
+*.terraform
+*.lock.hcl
 
 # ci files
 cov.out

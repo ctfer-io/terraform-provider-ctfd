@@ -18,6 +18,7 @@ As the provider supports OpenTelemetry, this example shows how to technically us
     ```bash
     export OTEL_EXPORTER_OTLP_ENDPOINT=dns://localhost:4317
     export OTEL_EXPORTER_OTLP_INSECURE=true
+    export OTEL_EXPORTER_OTLP_PROTOCOL=grpc
     export CTFD_URL=http://localhost:8000
     export CTFD_ADMIN_USERNAME=ctfer
     export CTFD_ADMIN_PASSWORD=ctfer

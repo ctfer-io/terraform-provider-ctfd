@@ -5,10 +5,9 @@ networks:
 
 services:
   jaeger:
-    image: jaegertracing/jaeger:2.8.0
+    image: jaegertracing/jaeger:2.14.0
     ports:
       - "16686:16686"   # Jaeger UI
-      - "14317:4317"    # OTLP gRPC ingest
     networks:
       - otel-demo
 
@@ -25,7 +24,7 @@ services:
       - otel-demo
 
   ctfd:
-    image: ctferio/ctfd:3.8.1-0.9.0
+    image: ctferio/ctfd:3.8.2-0.9.0
     ports:
       - "8000:8000"
     environment:
@@ -42,7 +41,7 @@ services:
       timeout: 10s
 
   ctfd-setup:
-    image: ctferio/ctfd-setup:v1.7.1@sha256:d555410c10f66eb88a6579078d3f2c9131279e3057c21831a69feb447479b877
+    image: ctferio/ctfd-setup:v1.7.3@sha256:735a9b56747b901d00a9e9d78715c3ceee067828f5dc38bf08d79b8d07a028c0
     environment:
       URL: http://ctfd:8000
       FILE: /.ctfd.yaml

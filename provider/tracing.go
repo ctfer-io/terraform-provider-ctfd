@@ -8,8 +8,8 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	tpfresource "github.com/hashicorp/terraform-plugin-framework/resource"
+	"go.opentelemetry.io/contrib/exporters/autoexport"
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
@@ -36,13 +36,15 @@ func newPropagator() propagation.TextMapPropagator {
 }
 
 func setupTraceProvider(ctx context.Context, r *resource.Resource) error {
-	traceExporter, err := otlptracegrpc.New(ctx)
+	exp, err := autoexport.NewSpanExporter(ctx)
 	if err != nil {
 		return err
 	}
 
 	tracerProvider = sdktrace.NewTracerProvider(
-		sdktrace.WithBatcher(traceExporter),
+		// We need to have the burden of a simple span processor as the process might be short-lived
+		// because a batch processor can not give enough time to export data...
+		sdktrace.WithSpanProcessor(sdktrace.NewSimpleSpanProcessor(exp)),
 		sdktrace.WithResource(r),
 	)
 	Tracer = tracerProvider.Tracer(serviceName)

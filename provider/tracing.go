@@ -52,11 +52,20 @@ func setupTraceProvider(ctx context.Context, r *resource.Resource) error {
 }
 
 func SetupOtelSDK(ctx context.Context, version string) (shutdown func(context.Context) error, err error) {
-	// Set up propagator.
+	// Set up propagator
 	prop := newPropagator()
 	otel.SetTextMapPropagator(prop)
 
-	// Ensure default SDK resources and the required service name are set.
+	// Get existing provider to avoid overrides, and if none set defines our own
+	existingProvider := otel.GetTracerProvider()
+	if _, isNoop := existingProvider.(tracenoop.TracerProvider); isNoop {
+		return func(_ context.Context) error {
+			// Do nothing, it is externally managed
+			return nil
+		}, nil
+	}
+
+	// Ensure default SDK resources and the required service name are set
 	r, err := resource.Merge(
 		resource.Default(),
 		resource.NewWithAttributes(
@@ -69,7 +78,7 @@ func SetupOtelSDK(ctx context.Context, version string) (shutdown func(context.Co
 		return nil, err
 	}
 
-	// Set up trace provider.
+	// Set up trace provider
 	if nerr := setupTraceProvider(ctx, r); nerr != nil {
 		return nil, err
 	}

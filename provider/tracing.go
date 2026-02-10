@@ -58,9 +58,12 @@ func SetupOtelSDK(ctx context.Context, version string) (shutdown func(context.Co
 
 	// Get existing provider to avoid overrides, and if none set defines our own
 	existingProvider := otel.GetTracerProvider()
-	if _, isNoop := existingProvider.(tracenoop.TracerProvider); isNoop {
+	if _, isNoop := existingProvider.(tracenoop.TracerProvider); !isNoop {
+		// Configure lib tracer so it does not remain a noop thus drop traces
+		Tracer = existingProvider.Tracer(serviceName)
+
+		// Do nothing, it is externally managed
 		return func(_ context.Context) error {
-			// Do nothing, it is externally managed
 			return nil
 		}, nil
 	}

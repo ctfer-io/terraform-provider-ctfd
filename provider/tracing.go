@@ -70,7 +70,7 @@ func SetupOtelSDK(ctx context.Context, version string) (shutdown func(context.Co
 
 	// Ensure default SDK resources and the required service name are set
 	r, err := resource.Merge(
-		resource.Default(),
+		resource.Environment(),
 		resource.NewWithAttributes(
 			semconv.SchemaURL,
 			semconv.ServiceName(serviceName),

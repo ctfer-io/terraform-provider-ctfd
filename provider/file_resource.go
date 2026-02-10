@@ -30,7 +30,7 @@ func NewFileResource() resource.Resource {
 }
 
 type fileResource struct {
-	client *Client
+	fm *Framework
 }
 
 type fileResourceModel struct {
@@ -106,20 +106,20 @@ func (r *fileResource) Configure(ctx context.Context, req resource.ConfigureRequ
 		return
 	}
 
-	client, ok := req.ProviderData.(*Client)
+	fm, ok := req.ProviderData.(*Framework)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *github.com/ctfer-io/go-ctfd/api.Client, got: %T. Please open an issue at https://github.com/ctfer-io/terraform-provider-ctfd", req.ProviderData),
+			fmt.Sprintf("Expected %T, got: %T. Please open an issue at https://github.com/ctfer-io/terraform-provider-ctfd", (*Framework)(nil), req.ProviderData),
 		)
 		return
 	}
 
-	r.client = client
+	r.fm = fm
 }
 
 func (r *fileResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	ctx, span := StartTFSpan(ctx, r)
+	ctx, span := StartTFSpan(ctx, r.fm.Tp.Tracer(serviceName), r)
 	defer span.End()
 
 	var data fileResourceModel
@@ -149,7 +149,7 @@ func (r *fileResource) Create(ctx context.Context, req resource.CreateRequest, r
 	if !data.ChallengeID.IsNull() {
 		params.Challenge = utils.Ptr(utils.Atoi(data.ChallengeID.ValueString()))
 	}
-	res, err := r.client.PostFiles(ctx, params)
+	res, err := r.fm.Client.PostFiles(ctx, params, WithTracerProvider(r.fm.Tp))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -172,7 +172,7 @@ func (r *fileResource) Create(ctx context.Context, req resource.CreateRequest, r
 }
 
 func (r *fileResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	ctx, span := StartTFSpan(ctx, r)
+	ctx, span := StartTFSpan(ctx, r.fm.Tp.Tracer(serviceName), r)
 	defer span.End()
 
 	var data fileResourceModel
@@ -181,7 +181,7 @@ func (r *fileResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		return
 	}
 
-	res, err := r.client.GetFile(ctx, data.ID.ValueString())
+	res, err := r.fm.Client.GetFile(ctx, data.ID.ValueString(), WithTracerProvider(r.fm.Tp))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"CTFd Error",
@@ -193,14 +193,14 @@ func (r *fileResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	data.Name = types.StringValue(filepath.Base(res.Location))
 	data.Location = types.StringValue(res.Location)
 	data.SHA1Sum = types.StringValue(res.SHA1sum)
-	data.ChallengeID = lookForChallengeId(ctx, r.client, res.ID, resp.Diagnostics)
+	data.ChallengeID = lookForChallengeId(ctx, r.fm.Client, res.ID, resp.Diagnostics, WithTracerProvider(r.fm.Tp))
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	content, err := r.client.GetFileContent(ctx, &api.File{
+	content, err := r.fm.Client.GetFileContent(ctx, &api.File{
 		Location: res.Location,
-	})
+	}, WithTracerProvider(r.fm.Tp))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"CTFd Error",
@@ -218,7 +218,7 @@ func (r *fileResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 }
 
 func (r *fileResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	ctx, span := StartTFSpan(ctx, r)
+	ctx, span := StartTFSpan(ctx, r.fm.Tp.Tracer(serviceName), r)
 	defer span.End()
 
 	var data fileResourceModel
@@ -231,7 +231,7 @@ func (r *fileResource) Update(ctx context.Context, req resource.UpdateRequest, r
 }
 
 func (r *fileResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	ctx, span := StartTFSpan(ctx, r)
+	ctx, span := StartTFSpan(ctx, r.fm.Tp.Tracer(serviceName), r)
 	defer span.End()
 
 	var data fileResourceModel
@@ -240,7 +240,7 @@ func (r *fileResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 		return
 	}
 
-	if err := r.client.DeleteFile(ctx, data.ID.ValueString()); err != nil {
+	if err := r.fm.Client.DeleteFile(ctx, data.ID.ValueString(), WithTracerProvider(r.fm.Tp)); err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete file %s, got error: %s", data.ID.ValueString(), err))
 		return
 	}
@@ -253,10 +253,10 @@ func (r *fileResource) ImportState(ctx context.Context, req resource.ImportState
 }
 
 // XXX this helper only exist because CTFd does not return the challenge id of a file if it exist...
-func lookForChallengeId(ctx context.Context, client *Client, fileID int, diags diag.Diagnostics) types.String {
+func lookForChallengeId(ctx context.Context, client *Client, fileID int, diags diag.Diagnostics, opts ...Option) types.String {
 	challs, err := client.GetChallenges(ctx, &api.GetChallengesParams{
 		View: utils.Ptr("admin"), // required, else CTFd only returns the "visible" challenges
-	})
+	}, opts...)
 	if err != nil {
 		diags.AddError(
 			"CTFd Error",
@@ -266,7 +266,7 @@ func lookForChallengeId(ctx context.Context, client *Client, fileID int, diags d
 	}
 
 	for _, chall := range challs {
-		files, err := client.GetChallengeFiles(ctx, strconv.Itoa(chall.ID))
+		files, err := client.GetChallengeFiles(ctx, strconv.Itoa(chall.ID), opts...)
 		if err != nil {
 			diags.AddError(
 				"CTFd Error",

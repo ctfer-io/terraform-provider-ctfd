@@ -15,6 +15,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -25,12 +27,17 @@ var _ provider.Provider = (*CTFdProvider)(nil)
 
 type CTFdProvider struct {
 	version string
+	tracer  trace.TracerProvider
 }
 
-func New(version string) func() provider.Provider {
+func New(version string, tracer trace.TracerProvider) func() provider.Provider {
+	if tracer == nil {
+		tracer = otel.GetTracerProvider()
+	}
 	return func() provider.Provider {
 		return &CTFdProvider{
 			version: version,
+			tracer:  tracer,
 		}
 	}
 }
@@ -176,7 +183,7 @@ func (p *CTFdProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 	ctx = utils.AddSensitive(ctx, "ctfd_password", password)
 	tflog.Debug(ctx, "Creating CTFd API client")
 
-	nonce, session, err := GetNonceAndSession(ctx, url)
+	nonce, session, err := GetNonceAndSession(ctx, url, WithTracerProvider(p.tracer))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"CTFd error",
@@ -195,7 +202,7 @@ func (p *CTFdProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 		if err := client.Login(ctx, &api.LoginParams{
 			Name:     username,
 			Password: password,
-		}); err != nil {
+		}, WithTracerProvider(p.tracer)); err != nil {
 			resp.Diagnostics.AddError(
 				"CTFd error",
 				fmt.Sprintf("Failed to login: %s", err),
@@ -204,8 +211,12 @@ func (p *CTFdProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 		}
 	}
 
-	resp.DataSourceData = client
-	resp.ResourceData = client
+	d := &Framework{
+		Client: client,
+		Tp:     p.tracer,
+	}
+	resp.DataSourceData = d
+	resp.ResourceData = d
 
 	tflog.Info(ctx, "Configure CTFd API client", map[string]any{
 		"success": true,
@@ -235,4 +246,9 @@ func (p *CTFdProvider) DataSources(ctx context.Context) []func() datasource.Data
 		NewUserDataSource,
 		NewTeamDataSource,
 	}
+}
+
+type Framework struct {
+	Client *Client
+	Tp     trace.TracerProvider
 }

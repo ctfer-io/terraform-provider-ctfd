@@ -21,7 +21,7 @@ func NewBracketSource() datasource.DataSource {
 }
 
 type bracketDataSource struct {
-	client *Client
+	fm *Framework
 }
 
 type bracketsDataSourceModel struct {
@@ -71,25 +71,25 @@ func (data *bracketDataSource) Configure(ctx context.Context, req datasource.Con
 		return
 	}
 
-	client, ok := req.ProviderData.(*Client)
+	fm, ok := req.ProviderData.(*Framework)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Data Source Configure Type",
-			fmt.Sprintf("Expected *github.com/ctfer-io/go-ctfd/api.Client, got: %T. Please open an issue at https://github.com/ctfer-io/terraform-provider-ctfd", req.ProviderData),
+			fmt.Sprintf("Expected %T, got: %T. Please open an issue at https://github.com/ctfer-io/terraform-provider-ctfd", (*Framework)(nil), req.ProviderData),
 		)
 		return
 	}
 
-	data.client = client
+	data.fm = fm
 }
 
 func (data *bracketDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	ctx, span := StartTFSpan(ctx, data)
+	ctx, span := StartTFSpan(ctx, data.fm.Tp.Tracer(serviceName), data)
 	defer span.End()
 
 	var state bracketsDataSourceModel
 
-	brackets, err := data.client.GetBrackets(ctx, &api.GetBracketsParams{})
+	brackets, err := data.fm.Client.GetBrackets(ctx, &api.GetBracketsParams{}, WithTracerProvider(data.fm.Tp))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unable to Read CTFd Brackets",

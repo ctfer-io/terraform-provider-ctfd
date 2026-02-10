@@ -44,7 +44,7 @@ func NewTeamResource() resource.Resource {
 }
 
 type teamResource struct {
-	client *Client
+	fm *Framework
 }
 
 func (r *teamResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -124,20 +124,20 @@ func (r *teamResource) Configure(ctx context.Context, req resource.ConfigureRequ
 		return
 	}
 
-	client, ok := req.ProviderData.(*Client)
+	fm, ok := req.ProviderData.(*Framework)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *github.com/ctfer-io/go-ctfd/api.Client, got: %T. Please open an issue at https://github.com/ctfer-io/terraform-provider-ctfd", req.ProviderData),
+			fmt.Sprintf("Expected %T, got: %T. Please open an issue at https://github.com/ctfer-io/terraform-provider-ctfd", (*Framework)(nil), req.ProviderData),
 		)
 		return
 	}
 
-	r.client = client
+	r.fm = fm
 }
 
 func (r *teamResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	ctx, span := StartTFSpan(ctx, r)
+	ctx, span := StartTFSpan(ctx, r.fm.Tp.Tracer(serviceName), r)
 	defer span.End()
 
 	var data teamResourceModel
@@ -146,7 +146,7 @@ func (r *teamResource) Create(ctx context.Context, req resource.CreateRequest, r
 		return
 	}
 
-	res, err := r.client.PostTeams(ctx, &api.PostTeamsParams{
+	res, err := r.fm.Client.PostTeams(ctx, &api.PostTeamsParams{
 		Name:        data.Name.ValueString(),
 		Email:       data.Email.ValueString(),
 		Password:    data.Password.ValueString(),
@@ -157,7 +157,7 @@ func (r *teamResource) Create(ctx context.Context, req resource.CreateRequest, r
 		Banned:      data.Banned.ValueBool(),
 		Fields:      []api.Field{},
 		BracketID:   data.BracketID.ValueStringPointer(),
-	})
+	}, WithTracerProvider(r.fm.Tp))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -170,9 +170,9 @@ func (r *teamResource) Create(ctx context.Context, req resource.CreateRequest, r
 
 	// => Members
 	for _, mem := range data.Members {
-		_, err := r.client.PostTeamMembers(ctx, strconv.Itoa(res.ID), &api.PostTeamsMembersParams{
+		_, err := r.fm.Client.PostTeamMembers(ctx, strconv.Itoa(res.ID), &api.PostTeamsMembersParams{
 			UserID: utils.Atoi(mem.ValueString()),
-		})
+		}, WithTracerProvider(r.fm.Tp))
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Client Error",
@@ -183,10 +183,10 @@ func (r *teamResource) Create(ctx context.Context, req resource.CreateRequest, r
 	}
 	// => Captain
 	cap := utils.Atoi(data.Captain.ValueString())
-	if _, err := r.client.PatchTeam(ctx, strconv.Itoa(res.ID), &api.PatchTeamsParams{
+	if _, err := r.fm.Client.PatchTeam(ctx, strconv.Itoa(res.ID), &api.PatchTeamsParams{
 		CaptainID: &cap,
 		Fields:    []api.Field{},
-	}); err != nil {
+	}, WithTracerProvider(r.fm.Tp)); err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf("Unable to set user %d as team %d captain, got error: %s", cap, res.ID, err),
@@ -201,7 +201,7 @@ func (r *teamResource) Create(ctx context.Context, req resource.CreateRequest, r
 }
 
 func (r *teamResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	ctx, span := StartTFSpan(ctx, r)
+	ctx, span := StartTFSpan(ctx, r.fm.Tp.Tracer(serviceName), r)
 	defer span.End()
 
 	var data teamResourceModel
@@ -211,7 +211,7 @@ func (r *teamResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	}
 
 	teamId := utils.Atoi(data.ID.ValueString())
-	res, err := r.client.GetTeam(ctx, strconv.Itoa(teamId))
+	res, err := r.fm.Client.GetTeam(ctx, strconv.Itoa(teamId), WithTracerProvider(r.fm.Tp))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -233,7 +233,7 @@ func (r *teamResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	// password is not returned, which is good :)
 
 	// => Members
-	mems, err := r.client.GetTeamMembers(ctx, strconv.Itoa(teamId))
+	mems, err := r.fm.Client.GetTeamMembers(ctx, strconv.Itoa(teamId), WithTracerProvider(r.fm.Tp))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -255,7 +255,7 @@ func (r *teamResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 }
 
 func (r *teamResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	ctx, span := StartTFSpan(ctx, r)
+	ctx, span := StartTFSpan(ctx, r.fm.Tp.Tracer(serviceName), r)
 	defer span.End()
 
 	var data teamResourceModel
@@ -264,7 +264,7 @@ func (r *teamResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		return
 	}
 
-	_, err := r.client.PatchTeam(ctx, data.ID.ValueString(), &api.PatchTeamsParams{
+	_, err := r.fm.Client.PatchTeam(ctx, data.ID.ValueString(), &api.PatchTeamsParams{
 		Name:        data.Name.ValueStringPointer(),
 		Email:       data.Email.ValueStringPointer(),
 		Password:    data.Password.ValueStringPointer(),
@@ -275,7 +275,7 @@ func (r *teamResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		Banned:      data.Banned.ValueBoolPointer(),
 		Fields:      []api.Field{},
 		BracketID:   data.BracketID.ValueStringPointer(),
-	})
+	}, WithTracerProvider(r.fm.Tp))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -285,7 +285,7 @@ func (r *teamResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	}
 
 	// => Members
-	currentMembers, err := r.client.GetTeamMembers(ctx, data.ID.ValueString())
+	currentMembers, err := r.fm.Client.GetTeamMembers(ctx, data.ID.ValueString(), WithTracerProvider(r.fm.Tp))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -303,9 +303,9 @@ func (r *teamResource) Update(ctx context.Context, req resource.UpdateRequest, r
 			}
 		}
 		if !exists {
-			if _, err := r.client.PostTeamMembers(ctx, data.ID.ValueString(), &api.PostTeamsMembersParams{
+			if _, err := r.fm.Client.PostTeamMembers(ctx, data.ID.ValueString(), &api.PostTeamsMembersParams{
 				UserID: utils.Atoi(tfMember.ValueString()),
-			}); err != nil {
+			}, WithTracerProvider(r.fm.Tp)); err != nil {
 				resp.Diagnostics.AddError(
 					"Client Error",
 					fmt.Sprintf("Unable to post team's %s member %s, got error: %s", data.ID.ValueString(), tfMember.ValueString(), err),
@@ -325,9 +325,9 @@ func (r *teamResource) Update(ctx context.Context, req resource.UpdateRequest, r
 			}
 		}
 		if !exists {
-			if _, err := r.client.DeleteTeamMembers(ctx, data.ID.ValueString(), &api.DeleteTeamMembersParams{
+			if _, err := r.fm.Client.DeleteTeamMembers(ctx, data.ID.ValueString(), &api.DeleteTeamMembersParams{
 				UserID: currentMember,
-			}); err != nil {
+			}, WithTracerProvider(r.fm.Tp)); err != nil {
 				resp.Diagnostics.AddError(
 					"Client Error",
 					fmt.Sprintf("Unable to delete team's %s member %d, got error: %s", data.ID.ValueString(), currentMember, err),
@@ -341,10 +341,10 @@ func (r *teamResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	}
 	// => Captain
 	cap := utils.Ptr(utils.Atoi(data.Captain.ValueString()))
-	if _, err := r.client.PatchTeam(ctx, data.ID.ValueString(), &api.PatchTeamsParams{
+	if _, err := r.fm.Client.PatchTeam(ctx, data.ID.ValueString(), &api.PatchTeamsParams{
 		CaptainID: cap,
 		Fields:    []api.Field{},
-	}); err != nil {
+	}, WithTracerProvider(r.fm.Tp)); err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf("Unable to set user %d as team %s captain, got error: %s", cap, data.ID.ValueString(), err),
@@ -359,7 +359,7 @@ func (r *teamResource) Update(ctx context.Context, req resource.UpdateRequest, r
 }
 
 func (r *teamResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	ctx, span := StartTFSpan(ctx, r)
+	ctx, span := StartTFSpan(ctx, r.fm.Tp.Tracer(serviceName), r)
 	defer span.End()
 
 	var data teamResourceModel
@@ -368,7 +368,7 @@ func (r *teamResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 		return
 	}
 
-	if err := r.client.DeleteTeam(ctx, data.ID.ValueString()); err != nil {
+	if err := r.fm.Client.DeleteTeam(ctx, data.ID.ValueString(), WithTracerProvider(r.fm.Tp)); err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf("Unable to delete team %s, got error: %s", data.ID.ValueString(), err),

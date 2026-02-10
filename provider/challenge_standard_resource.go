@@ -35,7 +35,7 @@ func NewChallengeStandardResource() resource.Resource {
 }
 
 type challengeStandardResource struct {
-	client *Client
+	fm *Framework
 }
 
 // ChallengeStandardResourceModel is exported for ease of extending
@@ -75,20 +75,20 @@ func (r *challengeStandardResource) Configure(ctx context.Context, req resource.
 		return
 	}
 
-	client, ok := req.ProviderData.(*Client)
+	fm, ok := req.ProviderData.(*Framework)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *github.com/ctfer-io/go-ctfd/api.Client, got: %T. Please open an issue at https://github.com/ctfer-io/terraform-provider-ctfd", req.ProviderData),
+			fmt.Sprintf("Expected %T, got: %T. Please open an issue at https://github.com/ctfer-io/terraform-provider-ctfd", (*Framework)(nil), req.ProviderData),
 		)
 		return
 	}
 
-	r.client = client
+	r.fm = fm
 }
 
 func (r *challengeStandardResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	ctx, span := StartTFSpan(ctx, r)
+	ctx, span := StartTFSpan(ctx, r.fm.Tp.Tracer(serviceName), r)
 	defer span.End()
 
 	var data ChallengeStandardResourceModel
@@ -110,7 +110,7 @@ func (r *challengeStandardResource) Create(ctx context.Context, req resource.Cre
 			Prerequisites: preqs,
 		}
 	}
-	res, err := r.client.PostChallenges(ctx, &api.PostChallengesParams{
+	res, err := r.fm.Client.PostChallenges(ctx, &api.PostChallengesParams{
 		Name:           data.Name.ValueString(),
 		Category:       data.Category.ValueString(),
 		Description:    data.Description.ValueString(),
@@ -123,7 +123,7 @@ func (r *challengeStandardResource) Create(ctx context.Context, req resource.Cre
 		Type:           "standard",
 		NextID:         utils.ToInt(data.Next),
 		Requirements:   reqs,
-	})
+	}, WithTracerProvider(r.fm.Tp))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -140,10 +140,10 @@ func (r *challengeStandardResource) Create(ctx context.Context, req resource.Cre
 	// Create tags
 	challTags := make([]types.String, 0, len(data.Tags))
 	for _, tag := range data.Tags {
-		_, err := r.client.PostTags(ctx, &api.PostTagsParams{
+		_, err := r.fm.Client.PostTags(ctx, &api.PostTagsParams{
 			Challenge: utils.Atoi(data.ID.ValueString()),
 			Value:     tag.ValueString(),
-		})
+		}, WithTracerProvider(r.fm.Tp))
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Client Error",
@@ -160,11 +160,11 @@ func (r *challengeStandardResource) Create(ctx context.Context, req resource.Cre
 	// Create topics
 	challTopics := make([]types.String, 0, len(data.Topics))
 	for _, topic := range data.Topics {
-		_, err := r.client.PostTopics(ctx, &api.PostTopicsParams{
+		_, err := r.fm.Client.PostTopics(ctx, &api.PostTopicsParams{
 			Challenge: utils.Atoi(data.ID.ValueString()),
 			Type:      "challenge",
 			Value:     topic.ValueString(),
-		})
+		}, WithTracerProvider(r.fm.Tp))
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Client Error",
@@ -185,7 +185,7 @@ func (r *challengeStandardResource) Create(ctx context.Context, req resource.Cre
 }
 
 func (r *challengeStandardResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	ctx, span := StartTFSpan(ctx, r)
+	ctx, span := StartTFSpan(ctx, r.fm.Tp.Tracer(serviceName), r)
 	defer span.End()
 
 	var data ChallengeStandardResourceModel
@@ -194,7 +194,7 @@ func (r *challengeStandardResource) Read(ctx context.Context, req resource.ReadR
 		return
 	}
 
-	data.Read(ctx, r.client, resp.Diagnostics)
+	data.Read(ctx, r.fm.Client, resp.Diagnostics, WithTracerProvider(r.fm.Tp))
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -203,7 +203,7 @@ func (r *challengeStandardResource) Read(ctx context.Context, req resource.ReadR
 }
 
 func (r *challengeStandardResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	ctx, span := StartTFSpan(ctx, r)
+	ctx, span := StartTFSpan(ctx, r.fm.Tp.Tracer(serviceName), r)
 	defer span.End()
 
 	var data ChallengeStandardResourceModel
@@ -227,7 +227,7 @@ func (r *challengeStandardResource) Update(ctx context.Context, req resource.Upd
 			Prerequisites: preqs,
 		}
 	}
-	_, err := r.client.PatchChallenge(ctx, data.ID.ValueString(), &api.PatchChallengeParams{
+	_, err := r.fm.Client.PatchChallenge(ctx, data.ID.ValueString(), &api.PatchChallengeParams{
 		Name:           data.Name.ValueString(),
 		Category:       data.Category.ValueString(),
 		Description:    data.Description.ValueString(),
@@ -239,7 +239,7 @@ func (r *challengeStandardResource) Update(ctx context.Context, req resource.Upd
 		State:          data.State.ValueString(),
 		NextID:         utils.ToInt(data.Next),
 		Requirements:   reqs,
-	})
+	}, WithTracerProvider(r.fm.Tp))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -249,7 +249,7 @@ func (r *challengeStandardResource) Update(ctx context.Context, req resource.Upd
 	}
 
 	// Update its tags (drop them all, create new ones)
-	challTags, err := r.client.GetChallengeTags(ctx, data.ID.ValueString())
+	challTags, err := r.fm.Client.GetChallengeTags(ctx, data.ID.ValueString(), WithTracerProvider(r.fm.Tp))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -258,7 +258,7 @@ func (r *challengeStandardResource) Update(ctx context.Context, req resource.Upd
 		return
 	}
 	for _, tag := range challTags {
-		if err := r.client.DeleteTag(ctx, strconv.Itoa(tag.ID)); err != nil {
+		if err := r.fm.Client.DeleteTag(ctx, strconv.Itoa(tag.ID), WithTracerProvider(r.fm.Tp)); err != nil {
 			resp.Diagnostics.AddError(
 				"Client Error",
 				fmt.Sprintf("Unable to delete tag %d of challenge %s, got error: %s", tag.ID, data.ID.ValueString(), err),
@@ -268,10 +268,10 @@ func (r *challengeStandardResource) Update(ctx context.Context, req resource.Upd
 	}
 	tags := make([]types.String, 0, len(data.Tags))
 	for _, tag := range data.Tags {
-		_, err := r.client.PostTags(ctx, &api.PostTagsParams{
+		_, err := r.fm.Client.PostTags(ctx, &api.PostTagsParams{
 			Challenge: utils.Atoi(data.ID.ValueString()),
 			Value:     tag.ValueString(),
-		})
+		}, WithTracerProvider(r.fm.Tp))
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Client Error",
@@ -286,7 +286,7 @@ func (r *challengeStandardResource) Update(ctx context.Context, req resource.Upd
 	}
 
 	// Update its topics (drop them all, create new ones)
-	challTopics, err := r.client.GetChallengeTopics(ctx, data.ID.ValueString())
+	challTopics, err := r.fm.Client.GetChallengeTopics(ctx, data.ID.ValueString(), WithTracerProvider(r.fm.Tp))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -295,10 +295,10 @@ func (r *challengeStandardResource) Update(ctx context.Context, req resource.Upd
 		return
 	}
 	for _, topic := range challTopics {
-		if err := r.client.DeleteTopic(ctx, &api.DeleteTopicArgs{
+		if err := r.fm.Client.DeleteTopic(ctx, &api.DeleteTopicArgs{
 			ID:   strconv.Itoa(topic.ID),
 			Type: "challenge",
-		}); err != nil {
+		}, WithTracerProvider(r.fm.Tp)); err != nil {
 			resp.Diagnostics.AddError(
 				"Client Error",
 				fmt.Sprintf("Unable to delete topic %d of challenge %s, got error: %s", topic.ID, data.ID.ValueString(), err),
@@ -308,11 +308,11 @@ func (r *challengeStandardResource) Update(ctx context.Context, req resource.Upd
 	}
 	topics := make([]types.String, 0, len(data.Topics))
 	for _, topic := range data.Topics {
-		_, err := r.client.PostTopics(ctx, &api.PostTopicsParams{
+		_, err := r.fm.Client.PostTopics(ctx, &api.PostTopicsParams{
 			Challenge: utils.Atoi(data.ID.ValueString()),
 			Type:      "challenge",
 			Value:     topic.ValueString(),
-		})
+		}, WithTracerProvider(r.fm.Tp))
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Client Error",
@@ -333,7 +333,7 @@ func (r *challengeStandardResource) Update(ctx context.Context, req resource.Upd
 }
 
 func (r *challengeStandardResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	ctx, span := StartTFSpan(ctx, r)
+	ctx, span := StartTFSpan(ctx, r.fm.Tp.Tracer(serviceName), r)
 	defer span.End()
 
 	var data ChallengeStandardResourceModel
@@ -342,7 +342,7 @@ func (r *challengeStandardResource) Delete(ctx context.Context, req resource.Del
 		return
 	}
 
-	if err := r.client.DeleteChallenge(ctx, data.ID.ValueString()); err != nil {
+	if err := r.fm.Client.DeleteChallenge(ctx, data.ID.ValueString(), WithTracerProvider(r.fm.Tp)); err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete challenge, got error: %s", err))
 		return
 	}
@@ -360,8 +360,8 @@ func (r *challengeStandardResource) ImportState(ctx context.Context, req resourc
 // Starting from this are helper or types-specific code related to the ctfd_challenge_standard resource
 //
 
-func (chall *ChallengeStandardResourceModel) Read(ctx context.Context, client *Client, diags diag.Diagnostics) {
-	res, err := client.GetChallenge(ctx, chall.ID.ValueString())
+func (chall *ChallengeStandardResourceModel) Read(ctx context.Context, client *Client, diags diag.Diagnostics, opts ...Option) {
+	res, err := client.GetChallenge(ctx, chall.ID.ValueString(), opts...)
 	if err != nil {
 		diags.AddError("Client Error", fmt.Sprintf("Unable to read challenge %s, got error: %s", chall.ID.ValueString(), err))
 		return
@@ -381,7 +381,7 @@ func (chall *ChallengeStandardResourceModel) Read(ctx context.Context, client *C
 
 	// Get subresources
 	// => Requirements
-	resReqs, err := client.GetChallengeRequirements(ctx, strconv.Itoa(id))
+	resReqs, err := client.GetChallengeRequirements(ctx, strconv.Itoa(id), opts...)
 	if err != nil {
 		diags.AddError(
 			"Client Error",
@@ -403,7 +403,7 @@ func (chall *ChallengeStandardResourceModel) Read(ctx context.Context, client *C
 	chall.Requirements = reqs
 
 	// => Tags
-	resTags, err := client.GetChallengeTags(ctx, strconv.Itoa(id))
+	resTags, err := client.GetChallengeTags(ctx, strconv.Itoa(id), opts...)
 	if err != nil {
 		diags.AddError(
 			"Client Error",
@@ -417,7 +417,7 @@ func (chall *ChallengeStandardResourceModel) Read(ctx context.Context, client *C
 	}
 
 	// => Topics
-	resTopics, err := client.GetChallengeTopics(ctx, strconv.Itoa(id))
+	resTopics, err := client.GetChallengeTopics(ctx, strconv.Itoa(id), opts...)
 	if err != nil {
 		diags.AddError(
 			"Client Error",

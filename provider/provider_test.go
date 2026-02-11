@@ -21,23 +21,23 @@ var (
 	// acceptance testing. The factory function will be invoked for every Terraform
 	// CLI command executed to create a provider server to which the CLI can
 	// reattach.
-	testAccProtoV6ProviderFactories = map[string]func() (tfprotov6.ProviderServer, error){
-		"ctfd": providerserver.NewProtocol6WithError(provider.New("test")()),
-	}
+	testAccProtoV6ProviderFactories = map[string]func() (tfprotov6.ProviderServer, error){}
 )
 
 func TestMain(m *testing.M) {
 	ctx := context.Background()
 
-	shutdown, err := provider.SetupOtelSDK(ctx, "test")
+	out, err := provider.SetupOTelSDK(ctx, "test")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer func() {
-		if err := shutdown(ctx); err != nil {
+		if err := out.Shutdown(ctx); err != nil {
 			log.Printf("Error shutting down tracer provider: %v", err)
 		}
 	}()
+
+	testAccProtoV6ProviderFactories["ctfd"] = providerserver.NewProtocol6WithError(provider.New("test", out.TracerProvider)())
 
 	m.Run()
 }

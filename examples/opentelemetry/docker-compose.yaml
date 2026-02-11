@@ -5,7 +5,7 @@ networks:
 
 services:
   jaeger:
-    image: jaegertracing/jaeger:2.14.0
+    image: jaegertracing/jaeger:2.15.0
     ports:
       - "16686:16686"   # Jaeger UI
     networks:
@@ -30,6 +30,7 @@ services:
     environment:
       OTEL_EXPORTER_OTLP_ENDPOINT: "dns://collector:4317"
       OTEL_EXPORTER_OTLP_INSECURE: "true"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
     depends_on:
       - collector
     networks:
@@ -41,10 +42,13 @@ services:
       timeout: 10s
 
   ctfd-setup:
-    image: ctferio/ctfd-setup:v1.7.3@sha256:735a9b56747b901d00a9e9d78715c3ceee067828f5dc38bf08d79b8d07a028c0
+    image: ctferio/ctfd-setup:v1.8.6@sha256:489ad4e881e8ffb74e0dc5f5914ed84a68df978982217689506cbd3d519f6a73
     environment:
       URL: http://ctfd:8000
       FILE: /.ctfd.yaml
+      OTEL_EXPORTER_OTLP_ENDPOINT: "dns://collector:4317"
+      OTEL_EXPORTER_OTLP_INSECURE: "true"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
     volumes:
       - .ctfd.yaml:/.ctfd.yaml
     networks:

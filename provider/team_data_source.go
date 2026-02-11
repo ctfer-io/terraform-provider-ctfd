@@ -22,7 +22,7 @@ func NewTeamDataSource() datasource.DataSource {
 }
 
 type teamDataSource struct {
-	client *Client
+	fm *Framework
 }
 
 type teamsDataSourceModel struct {
@@ -101,25 +101,25 @@ func (data *teamDataSource) Configure(ctx context.Context, req datasource.Config
 		return
 	}
 
-	client, ok := req.ProviderData.(*Client)
+	fm, ok := req.ProviderData.(*Framework)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Data Source Configure Type",
-			fmt.Sprintf("Expected *github.com/ctfer-io/go-ctfd/api.Client, got: %T. Please open an issue at https://github.com/ctfer-io/terraform-provider-ctfd", req.ProviderData),
+			fmt.Sprintf("Expected %T, got: %T. Please open an issue at https://github.com/ctfer-io/terraform-provider-ctfd", (*Framework)(nil), req.ProviderData),
 		)
 		return
 	}
 
-	data.client = client
+	data.fm = fm
 }
 
 func (data *teamDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	ctx, span := StartTFSpan(ctx, data)
+	ctx, span := StartTFSpan(ctx, data.fm.Tp.Tracer(serviceName), data)
 	defer span.End()
 
 	var state teamsDataSourceModel
 
-	teams, err := data.client.GetTeams(ctx, &api.GetTeamsParams{})
+	teams, err := data.fm.Client.GetTeams(ctx, &api.GetTeamsParams{}, WithTracerProvider(data.fm.Tp))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unable to Read CTFd Teams",

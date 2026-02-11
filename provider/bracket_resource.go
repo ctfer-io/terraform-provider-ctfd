@@ -30,7 +30,7 @@ func NewBracketResource() resource.Resource {
 }
 
 type bracketResource struct {
-	client *Client
+	fm *Framework
 }
 
 type bracketResourceModel struct {
@@ -85,20 +85,20 @@ func (r *bracketResource) Configure(ctx context.Context, req resource.ConfigureR
 		return
 	}
 
-	client, ok := req.ProviderData.(*Client)
+	fm, ok := req.ProviderData.(*Framework)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *github.com/ctfer-io/go-ctfd/api.Client, got: %T. Please open an issue at https://github.com/ctfer-io/terraform-provider-ctfd", req.ProviderData),
+			fmt.Sprintf("Expected %T, got: %T. Please open an issue at https://github.com/ctfer-io/terraform-provider-ctfd", (*Framework)(nil), req.ProviderData),
 		)
 		return
 	}
 
-	r.client = client
+	r.fm = fm
 }
 
 func (r *bracketResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	ctx, span := StartTFSpan(ctx, r)
+	ctx, span := StartTFSpan(ctx, r.fm.Tp.Tracer(serviceName), r)
 	defer span.End()
 
 	var data bracketResourceModel
@@ -108,11 +108,11 @@ func (r *bracketResource) Create(ctx context.Context, req resource.CreateRequest
 	}
 
 	// Create bracket
-	res, err := r.client.PostBrackets(ctx, &api.PostBracketsParams{
+	res, err := r.fm.Client.PostBrackets(ctx, &api.PostBracketsParams{
 		Name:        data.Name.ValueString(),
 		Description: data.Description.ValueString(),
 		Type:        data.Type.ValueString(),
-	})
+	}, WithTracerProvider(r.fm.Tp))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -133,7 +133,7 @@ func (r *bracketResource) Create(ctx context.Context, req resource.CreateRequest
 }
 
 func (r *bracketResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	ctx, span := StartTFSpan(ctx, r)
+	ctx, span := StartTFSpan(ctx, r.fm.Tp.Tracer(serviceName), r)
 	defer span.End()
 
 	var data bracketResourceModel
@@ -143,7 +143,7 @@ func (r *bracketResource) Read(ctx context.Context, req resource.ReadRequest, re
 	}
 
 	// XXX cannot get bracket by ID, so we need to query them all
-	brackets, err := r.client.GetBrackets(ctx, &api.GetBracketsParams{})
+	brackets, err := r.fm.Client.GetBrackets(ctx, &api.GetBracketsParams{}, WithTracerProvider(r.fm.Tp))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -178,7 +178,7 @@ func (r *bracketResource) Read(ctx context.Context, req resource.ReadRequest, re
 }
 
 func (r *bracketResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	ctx, span := StartTFSpan(ctx, r)
+	ctx, span := StartTFSpan(ctx, r.fm.Tp.Tracer(serviceName), r)
 	defer span.End()
 
 	var data bracketResourceModel
@@ -188,11 +188,11 @@ func (r *bracketResource) Update(ctx context.Context, req resource.UpdateRequest
 	}
 
 	// Update bracket
-	if _, err := r.client.PatchBrackets(ctx, data.ID.ValueString(), &api.PatchBracketsParams{
+	if _, err := r.fm.Client.PatchBrackets(ctx, data.ID.ValueString(), &api.PatchBracketsParams{
 		Name:        data.Name.ValueStringPointer(),
 		Description: data.Description.ValueStringPointer(),
 		Type:        data.Type.ValueStringPointer(),
-	}); err != nil {
+	}, WithTracerProvider(r.fm.Tp)); err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf("Unable to update bracket %s, got error: %s", data.ID.ValueString(), err),
@@ -207,7 +207,7 @@ func (r *bracketResource) Update(ctx context.Context, req resource.UpdateRequest
 }
 
 func (r *bracketResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	ctx, span := StartTFSpan(ctx, r)
+	ctx, span := StartTFSpan(ctx, r.fm.Tp.Tracer(serviceName), r)
 	defer span.End()
 
 	var data bracketResourceModel
@@ -216,7 +216,7 @@ func (r *bracketResource) Delete(ctx context.Context, req resource.DeleteRequest
 		return
 	}
 
-	if err := r.client.DeleteBrackets(ctx, data.ID.ValueString()); err != nil {
+	if err := r.fm.Client.DeleteBrackets(ctx, data.ID.ValueString(), WithTracerProvider(r.fm.Tp)); err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete bracket %s, got error: %s", data.ID.ValueString(), err))
 		return
 	}

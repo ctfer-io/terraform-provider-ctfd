@@ -31,7 +31,7 @@ func NewSolutionResource() resource.Resource {
 }
 
 type solutionResource struct {
-	client *Client
+	fm *Framework
 }
 
 type solutionResourceModel struct {
@@ -87,20 +87,20 @@ func (r *solutionResource) Configure(ctx context.Context, req resource.Configure
 		return
 	}
 
-	client, ok := req.ProviderData.(*Client)
+	fm, ok := req.ProviderData.(*Framework)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *github.com/ctfer-io/go-ctfd/api.Client, got: %T. Please open an issue at https://github.com/ctfer-io/terraform-provider-ctfd", req.ProviderData),
+			fmt.Sprintf("Expected %T, got: %T. Please open an issue at https://github.com/ctfer-io/terraform-provider-ctfd", (*Framework)(nil), req.ProviderData),
 		)
 		return
 	}
 
-	r.client = client
+	r.fm = fm
 }
 
 func (r *solutionResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	ctx, span := StartTFSpan(ctx, r)
+	ctx, span := StartTFSpan(ctx, r.fm.Tp.Tracer(serviceName), r)
 	defer span.End()
 
 	var data solutionResourceModel
@@ -110,11 +110,11 @@ func (r *solutionResource) Create(ctx context.Context, req resource.CreateReques
 	}
 
 	// Create solution
-	res, err := r.client.PostSolutions(ctx, &api.PostSolutionsParams{
+	res, err := r.fm.Client.PostSolutions(ctx, &api.PostSolutionsParams{
 		ChallengeID: utils.Atoi(data.ChallengeID.ValueString()),
 		Content:     data.Content.ValueString(),
 		State:       data.State.ValueString(),
-	})
+	}, WithTracerProvider(r.fm.Tp))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -135,7 +135,7 @@ func (r *solutionResource) Create(ctx context.Context, req resource.CreateReques
 }
 
 func (r *solutionResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	ctx, span := StartTFSpan(ctx, r)
+	ctx, span := StartTFSpan(ctx, r.fm.Tp.Tracer(serviceName), r)
 	defer span.End()
 
 	var data solutionResourceModel
@@ -145,7 +145,7 @@ func (r *solutionResource) Read(ctx context.Context, req resource.ReadRequest, r
 	}
 
 	// Retrieve solution
-	res, err := r.client.GetSolutions(ctx, data.ID.ValueString(), nil)
+	res, err := r.fm.Client.GetSolutions(ctx, data.ID.ValueString(), nil, WithTracerProvider(r.fm.Tp))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -166,7 +166,7 @@ func (r *solutionResource) Read(ctx context.Context, req resource.ReadRequest, r
 }
 
 func (r *solutionResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	ctx, span := StartTFSpan(ctx, r)
+	ctx, span := StartTFSpan(ctx, r.fm.Tp.Tracer(serviceName), r)
 	defer span.End()
 
 	var data solutionResourceModel
@@ -176,10 +176,10 @@ func (r *solutionResource) Update(ctx context.Context, req resource.UpdateReques
 	}
 
 	// Update solution
-	if _, err := r.client.PatchSolutions(ctx, data.ID.ValueString(), &api.PatchSolutionsParams{
+	if _, err := r.fm.Client.PatchSolutions(ctx, data.ID.ValueString(), &api.PatchSolutionsParams{
 		Content: data.Content.ValueString(),
 		State:   data.State.ValueString(),
-	}); err != nil {
+	}, WithTracerProvider(r.fm.Tp)); err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf("Unable to update solution of challenge %s, got error: %s", data.ChallengeID.ValueString(), err),
@@ -194,7 +194,7 @@ func (r *solutionResource) Update(ctx context.Context, req resource.UpdateReques
 }
 
 func (r *solutionResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	ctx, span := StartTFSpan(ctx, r)
+	ctx, span := StartTFSpan(ctx, r.fm.Tp.Tracer(serviceName), r)
 	defer span.End()
 
 	var data solutionResourceModel
@@ -203,7 +203,7 @@ func (r *solutionResource) Delete(ctx context.Context, req resource.DeleteReques
 		return
 	}
 
-	if err := r.client.DeleteSolutions(ctx, data.ID.ValueString()); err != nil {
+	if err := r.fm.Client.DeleteSolutions(ctx, data.ID.ValueString(), WithTracerProvider(r.fm.Tp)); err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete solution of challenge %s, got error: %s", data.ChallengeID.ValueString(), err))
 		return
 	}

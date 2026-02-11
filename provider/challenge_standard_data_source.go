@@ -22,7 +22,7 @@ func NewChallengeStandardDataSource() datasource.DataSource {
 }
 
 type challengeStandardDataSource struct {
-	client *Client
+	fm *Framework
 }
 
 type challengesStandardDataSourceModel struct {
@@ -120,27 +120,27 @@ func (data *challengeStandardDataSource) Configure(ctx context.Context, req data
 		return
 	}
 
-	client, ok := req.ProviderData.(*Client)
+	fm, ok := req.ProviderData.(*Framework)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Data Source Configure Type",
-			fmt.Sprintf("Expected *github.com/ctfer-io/go-ctfd/api.Client, got: %T. Please open an issue at https://github.com/ctfer-io/terraform-provider-ctfd", req.ProviderData),
+			fmt.Sprintf("Expected %T, got: %T. Please open an issue at https://github.com/ctfer-io/terraform-provider-ctfd", (*Framework)(nil), req.ProviderData),
 		)
 		return
 	}
 
-	data.client = client
+	data.fm = fm
 }
 
 func (data *challengeStandardDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	ctx, span := StartTFSpan(ctx, data)
+	ctx, span := StartTFSpan(ctx, data.fm.Tp.Tracer(serviceName), data)
 	defer span.End()
 
 	var state challengesStandardDataSourceModel
 
-	challs, err := data.client.GetChallenges(ctx, &api.GetChallengesParams{
+	challs, err := data.fm.Client.GetChallenges(ctx, &api.GetChallengesParams{
 		Type: utils.Ptr("standard"),
-	})
+	}, WithTracerProvider(data.fm.Tp))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unable to Read CTFd Challenges",
@@ -154,7 +154,7 @@ func (data *challengeStandardDataSource) Read(ctx context.Context, req datasourc
 		chall := ChallengeStandardResourceModel{
 			ID: types.StringValue(strconv.Itoa(c.ID)),
 		}
-		chall.Read(ctx, data.client, resp.Diagnostics)
+		chall.Read(ctx, data.fm.Client, resp.Diagnostics, WithTracerProvider(data.fm.Tp))
 		if resp.Diagnostics.HasError() {
 			return
 		}

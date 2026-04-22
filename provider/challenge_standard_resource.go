@@ -507,6 +507,8 @@ var (
 		"position": schema.Int64Attribute{
 			MarkdownDescription: "The challenge position as displayed to players.",
 			Optional:            true,
+			Computed:            true,
+			Default:             int64default.StaticInt64(0),
 		},
 		"next": schema.Int64Attribute{
 			MarkdownDescription: "Suggestion for the end-user as next challenge to work on.",

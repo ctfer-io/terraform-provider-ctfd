@@ -93,7 +93,7 @@ func (r *challengeDynamicResource) Create(ctx context.Context, req resource.Crea
 			preqs = append(preqs, id)
 		}
 		reqs = &api.Requirements{
-			Anonymize:     data.Requirements.Behavior.ValueStringPointer(),
+			Anonymize:     FromBehavior(data.Requirements.Behavior),
 			Prerequisites: preqs,
 		}
 	}
@@ -214,7 +214,7 @@ func (r *challengeDynamicResource) Update(ctx context.Context, req resource.Upda
 			preqs = append(preqs, id)
 		}
 		reqs = &api.Requirements{
-			Anonymize:     data.Requirements.Behavior.ValueStringPointer(),
+			Anonymize:     FromBehavior(data.Requirements.Behavior),
 			Prerequisites: preqs,
 		}
 	}
@@ -395,7 +395,7 @@ func (chall *ChallengeDynamicResourceModel) Read(ctx context.Context, client *Cl
 			challPreqs = append(challPreqs, types.StringValue(strconv.Itoa(req)))
 		}
 		reqs = &RequirementsSubresourceModel{
-			Behavior:      types.StringPointerValue(resReqs.Anonymize),
+			Behavior:      GetBehavior(resReqs.Anonymize),
 			Prerequisites: challPreqs,
 		}
 	}

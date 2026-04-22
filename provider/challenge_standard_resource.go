@@ -52,6 +52,7 @@ type ChallengeStandardResourceModel struct {
 	Value          types.Int64                   `tfsdk:"value"`
 	Logic          types.String                  `tfsdk:"logic"`
 	State          types.String                  `tfsdk:"state"`
+	Position       types.Int64                   `tfsdk:"position"`
 	Next           types.Int64                   `tfsdk:"next"`
 	Requirements   *RequirementsSubresourceModel `tfsdk:"requirements"`
 	Tags           []types.String                `tfsdk:"tags"`
@@ -120,6 +121,7 @@ func (r *challengeStandardResource) Create(ctx context.Context, req resource.Cre
 		Value:          int(data.Value.ValueInt64()),
 		Logic:          data.Logic.ValueString(),
 		State:          data.State.ValueString(),
+		Position:       utils.ToInt(data.Position),
 		Type:           "standard",
 		NextID:         utils.ToInt(data.Next),
 		Requirements:   reqs,
@@ -237,6 +239,7 @@ func (r *challengeStandardResource) Update(ctx context.Context, req resource.Upd
 		Value:          utils.ToInt(data.Value),
 		Logic:          data.Logic.ValueStringPointer(),
 		State:          data.State.ValueString(),
+		Position:       utils.ToInt(data.Position),
 		NextID:         utils.ToInt(data.Next),
 		Requirements:   reqs,
 	}, WithTracerProvider(r.fm.Tp))
@@ -375,6 +378,7 @@ func (chall *ChallengeStandardResourceModel) Read(ctx context.Context, client *C
 	chall.Value = types.Int64Value(int64(res.Value))
 	chall.Logic = types.StringValue(res.Logic)
 	chall.State = types.StringValue(res.State)
+	chall.Position = utils.ToTFInt64(res.Position)
 	chall.Next = utils.ToTFInt64(res.NextID)
 
 	id := utils.Atoi(chall.ID.ValueString())
@@ -499,6 +503,10 @@ var (
 					types.StringValue("visible"),
 				}),
 			},
+		},
+		"position": schema.Int64Attribute{
+			MarkdownDescription: "The challenge position as displayed to players.",
+			Optional:            true,
 		},
 		"next": schema.Int64Attribute{
 			MarkdownDescription: "Suggestion for the end-user as next challenge to work on.",

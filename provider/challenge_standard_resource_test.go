@@ -62,6 +62,7 @@ resource "ctfd_challenge_standard" "http" {
 	attribution = "NicolasFgrx"
 	value       = 500
     state       = "visible"
+	position    = 1
 
 	topics = [
 		"Network"
@@ -83,6 +84,7 @@ resource "ctfd_challenge_standard" "icmp" {
 	EOT
 	attribution = "NicolasFgrx"
 	value       = 500
+	position    = 2
 
 	requirements = {
 		behavior      = "anonymized"

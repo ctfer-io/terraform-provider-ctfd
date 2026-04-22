@@ -93,7 +93,7 @@ func (r *challengeDynamicResource) Create(ctx context.Context, req resource.Crea
 			preqs = append(preqs, id)
 		}
 		reqs = &api.Requirements{
-			Anonymize:     GetAnon(data.Requirements.Behavior),
+			Anonymize:     FromBehavior(data.Requirements.Behavior),
 			Prerequisites: preqs,
 		}
 	}
@@ -110,6 +110,7 @@ func (r *challengeDynamicResource) Create(ctx context.Context, req resource.Crea
 		Minimum:        utils.ToInt(data.Minimum),
 		Logic:          data.Logic.ValueString(),
 		State:          data.State.ValueString(),
+		Position:       utils.ToInt(data.Position),
 		Type:           "dynamic",
 		NextID:         utils.ToInt(data.Next),
 		Requirements:   reqs,
@@ -213,7 +214,7 @@ func (r *challengeDynamicResource) Update(ctx context.Context, req resource.Upda
 			preqs = append(preqs, id)
 		}
 		reqs = &api.Requirements{
-			Anonymize:     GetAnon(data.Requirements.Behavior),
+			Anonymize:     FromBehavior(data.Requirements.Behavior),
 			Prerequisites: preqs,
 		}
 	}
@@ -230,6 +231,7 @@ func (r *challengeDynamicResource) Update(ctx context.Context, req resource.Upda
 		Minimum:        utils.ToInt(data.Minimum),
 		Logic:          data.Logic.ValueStringPointer(),
 		State:          data.State.ValueString(),
+		Position:       utils.ToInt(data.Position),
 		NextID:         utils.ToInt(data.Next),
 		Requirements:   reqs,
 	}, WithTracerProvider(r.fm.Tp))
@@ -371,6 +373,7 @@ func (chall *ChallengeDynamicResourceModel) Read(ctx context.Context, client *Cl
 	chall.Minimum = utils.ToTFInt64(res.Minimum)
 	chall.Logic = types.StringValue(res.Logic)
 	chall.State = types.StringValue(res.State)
+	chall.Position = utils.ToTFInt64(res.Position)
 	chall.Next = utils.ToTFInt64(res.NextID)
 
 	id := utils.Atoi(chall.ID.ValueString())
@@ -392,7 +395,7 @@ func (chall *ChallengeDynamicResourceModel) Read(ctx context.Context, client *Cl
 			challPreqs = append(challPreqs, types.StringValue(strconv.Itoa(req)))
 		}
 		reqs = &RequirementsSubresourceModel{
-			Behavior:      FromAnon(resReqs.Anonymize),
+			Behavior:      GetBehavior(resReqs.Anonymize),
 			Prerequisites: challPreqs,
 		}
 	}

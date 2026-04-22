@@ -2,6 +2,7 @@ package utils
 
 import (
 	"context"
+	"maps"
 	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -62,11 +63,7 @@ func Atoi(s string) int {
 // In case the same key is defined in both, b takes privilege.
 func BlindMerge[T comparable, U any](a, b map[T]U) map[T]U {
 	c := map[T]U{}
-	for k, v := range a {
-		c[k] = v
-	}
-	for k, v := range b {
-		c[k] = v
-	}
+	maps.Copy(c, a)
+	maps.Copy(c, b)
 	return c
 }

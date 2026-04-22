@@ -80,6 +80,7 @@ resource "ctfd_file" "http_file" {
 - `logic` (String) The flag validation logic.
 - `max_attempts` (Number) Maximum amount of attempts before being unable to flag the challenge.
 - `next` (Number) Suggestion for the end-user as next challenge to work on.
+- `position` (Number) The challenge position as displayed to players.
 - `requirements` (Attributes) List of required challenges that needs to get flagged before this one being accessible. Useful for skill-trees-like strategy CTF. (see [below for nested schema](#nestedatt--requirements))
 - `state` (String) State of the challenge, either hidden or visible.
 - `tags` (Set of String) List of challenge tags that will be displayed to the end-user. You could use them to give some quick insights of what a challenge involves.

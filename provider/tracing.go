@@ -15,6 +15,7 @@ import (
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.39.0"
 	"go.opentelemetry.io/otel/trace"
+	"go.uber.org/multierr"
 )
 
 const (
@@ -26,7 +27,27 @@ type OTelSetup struct {
 	TracerProvider trace.TracerProvider
 }
 
-func SetupOTelSDK(ctx context.Context, version string) (*OTelSetup, error) {
+func SetupOTelSDK(ctx context.Context, version string) (out OTelSetup, err error) {
+	var shutdownFuncs []func(context.Context) error
+
+	// shutdown calls cleanup functions registered via shutdownFuncs.
+	// The errors from the calls are joined.
+	// Each registered cleanup will be invoked once.
+
+	out.Shutdown = func(ctx context.Context) error {
+		var err error
+		for _, fn := range shutdownFuncs {
+			err = multierr.Append(err, fn(ctx))
+		}
+		shutdownFuncs = nil
+		return err
+	}
+
+	// handleErr calls shutdown for cleanup and makes sure that all errors are returned
+	handleErr := func(inErr error) {
+		err = multierr.Append(inErr, out.Shutdown(ctx))
+	}
+
 	// Set up propagator
 	prop := propagation.NewCompositeTextMapPropagator(
 		propagation.TraceContext{},
@@ -44,25 +65,25 @@ func SetupOTelSDK(ctx context.Context, version string) (*OTelSetup, error) {
 		),
 	)
 	if err != nil {
-		return nil, err
+		return
 	}
 
 	// Then create the span exporter
-	exp, err := autoexport.NewSpanExporter(ctx)
+	exp, nerr := autoexport.NewSpanExporter(ctx)
 	if err != nil {
-		return nil, err
+		handleErr(nerr)
+		return
 	}
-	tracerProvider := sdktrace.NewTracerProvider(
+	shutdownFuncs = append(shutdownFuncs, exp.Shutdown)
+
+	out.TracerProvider = sdktrace.NewTracerProvider(
 		// We need to have the burden of a simple span processor as the process might be short-lived
 		// because a batch processor can not give enough time to export data...
 		sdktrace.WithSpanProcessor(sdktrace.NewSimpleSpanProcessor(exp)),
 		sdktrace.WithResource(r),
 	)
 
-	return &OTelSetup{
-		Shutdown:       tracerProvider.Shutdown,
-		TracerProvider: tracerProvider,
-	}, nil
+	return
 }
 
 func StartTFSpan(

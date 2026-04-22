@@ -3,7 +3,7 @@ module github.com/ctfer-io/terraform-provider-ctfd/v2
 go 1.25.8
 
 require (
-	github.com/ctfer-io/go-ctfd v0.16.0
+	github.com/ctfer-io/go-ctfd v0.17.0
 	github.com/hashicorp/terraform-plugin-docs v0.25.0
 	github.com/hashicorp/terraform-plugin-framework v1.18.0
 	github.com/hashicorp/terraform-plugin-go v0.30.0
@@ -14,6 +14,7 @@ require (
 	go.opentelemetry.io/otel v1.43.0
 	go.opentelemetry.io/otel/sdk v1.43.0
 	go.opentelemetry.io/otel/trace v1.43.0
+	go.uber.org/multierr v1.11.0
 )
 
 require (

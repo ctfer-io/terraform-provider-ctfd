@@ -106,7 +106,7 @@ func (r *challengeStandardResource) Create(ctx context.Context, req resource.Cre
 			preqs = append(preqs, id)
 		}
 		reqs = &api.Requirements{
-			Anonymize:     GetAnon(data.Requirements.Behavior),
+			Anonymize:     data.Requirements.Behavior.ValueStringPointer(),
 			Prerequisites: preqs,
 		}
 	}
@@ -223,7 +223,7 @@ func (r *challengeStandardResource) Update(ctx context.Context, req resource.Upd
 			preqs = append(preqs, id)
 		}
 		reqs = &api.Requirements{
-			Anonymize:     GetAnon(data.Requirements.Behavior),
+			Anonymize:     data.Requirements.Behavior.ValueStringPointer(),
 			Prerequisites: preqs,
 		}
 	}
@@ -396,7 +396,7 @@ func (chall *ChallengeStandardResourceModel) Read(ctx context.Context, client *C
 			challPreqs = append(challPreqs, types.StringValue(strconv.Itoa(req)))
 		}
 		reqs = &RequirementsSubresourceModel{
-			Behavior:      FromAnon(resReqs.Anonymize),
+			Behavior:      types.StringPointerValue(resReqs.Anonymize),
 			Prerequisites: challPreqs,
 		}
 	}
@@ -517,6 +517,7 @@ var (
 						validators.NewStringEnumValidator([]basetypes.StringValue{
 							BehaviorHidden,
 							BehaviorAnonymized,
+							BehaviorPreview,
 						}),
 					},
 				},

@@ -89,7 +89,7 @@ func (data *bracketDataSource) Read(ctx context.Context, req datasource.ReadRequ
 
 	var state bracketsDataSourceModel
 
-	brackets, err := data.fm.Client.GetBrackets(ctx, &api.GetBracketsParams{}, WithTracerProvider(data.fm.Tp))
+	brackets, _, err := data.fm.Client.GetBrackets(ctx, &api.GetBracketsParams{}, WithTracerProvider(data.fm.Tp))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unable to Read CTFd Brackets",

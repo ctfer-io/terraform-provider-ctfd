@@ -110,7 +110,7 @@ func (r *solutionResource) Create(ctx context.Context, req resource.CreateReques
 	}
 
 	// Create solution
-	res, err := r.fm.Client.PostSolutions(ctx, &api.PostSolutionsParams{
+	res, _, err := r.fm.Client.PostSolutions(ctx, &api.PostSolutionsParams{
 		ChallengeID: utils.Atoi(data.ChallengeID.ValueString()),
 		Content:     data.Content.ValueString(),
 		State:       data.State.ValueString(),
@@ -145,7 +145,7 @@ func (r *solutionResource) Read(ctx context.Context, req resource.ReadRequest, r
 	}
 
 	// Retrieve solution
-	res, err := r.fm.Client.GetSolutions(ctx, data.ID.ValueString(), nil, WithTracerProvider(r.fm.Tp))
+	res, _, err := r.fm.Client.GetSolutions(ctx, data.ID.ValueString(), nil, WithTracerProvider(r.fm.Tp))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -176,7 +176,7 @@ func (r *solutionResource) Update(ctx context.Context, req resource.UpdateReques
 	}
 
 	// Update solution
-	if _, err := r.fm.Client.PatchSolutions(ctx, data.ID.ValueString(), &api.PatchSolutionsParams{
+	if _, _, err := r.fm.Client.PatchSolutions(ctx, data.ID.ValueString(), &api.PatchSolutionsParams{
 		Content: data.Content.ValueString(),
 		State:   data.State.ValueString(),
 	}, WithTracerProvider(r.fm.Tp)); err != nil {
@@ -203,7 +203,7 @@ func (r *solutionResource) Delete(ctx context.Context, req resource.DeleteReques
 		return
 	}
 
-	if err := r.fm.Client.DeleteSolutions(ctx, data.ID.ValueString(), WithTracerProvider(r.fm.Tp)); err != nil {
+	if _, err := r.fm.Client.DeleteSolutions(ctx, data.ID.ValueString(), WithTracerProvider(r.fm.Tp)); err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete solution of challenge %s, got error: %s", data.ChallengeID.ValueString(), err))
 		return
 	}

@@ -121,7 +121,7 @@ func (r *hintResource) Create(ctx context.Context, req resource.CreateRequest, r
 		id, _ := strconv.Atoi(preq.ValueString())
 		reqs = append(reqs, id)
 	}
-	res, err := r.fm.Client.PostHints(ctx, &api.PostHintsParams{
+	res, _, err := r.fm.Client.PostHints(ctx, &api.PostHintsParams{
 		ChallengeID: utils.Atoi(data.ChallengeID.ValueString()),
 		Title:       data.Title.ValueStringPointer(),
 		Content:     data.Content.ValueString(),
@@ -160,7 +160,7 @@ func (r *hintResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	}
 
 	// Retrieve hint
-	h, err := r.fm.Client.GetHint(ctx, data.ID.ValueString(), &api.GetHintParams{
+	h, _, err := r.fm.Client.GetHint(ctx, data.ID.ValueString(), &api.GetHintParams{
 		Preview: utils.Ptr(true), // mimic a preview to get the hint even if not unlocked by the admin
 	}, WithTracerProvider(r.fm.Tp))
 	if err != nil {
@@ -171,7 +171,7 @@ func (r *hintResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		return
 	}
 	// XXX cannot get hint by ID, so we need to query them all
-	hints, err := r.fm.Client.GetChallengeHints(ctx, strconv.Itoa(h.ChallengeID), WithTracerProvider(r.fm.Tp))
+	hints, _, err := r.fm.Client.GetChallengeHints(ctx, strconv.Itoa(h.ChallengeID), WithTracerProvider(r.fm.Tp))
 	hint := (*api.Hint)(nil)
 	for _, h := range hints {
 		if h.ID == utils.Atoi(data.ID.ValueString()) {
@@ -220,7 +220,7 @@ func (r *hintResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		id, _ := strconv.Atoi(preq.ValueString())
 		preqs = append(preqs, id)
 	}
-	if _, err := r.fm.Client.PatchHint(ctx, data.ID.ValueString(), &api.PatchHintsParams{
+	if _, _, err := r.fm.Client.PatchHint(ctx, data.ID.ValueString(), &api.PatchHintsParams{
 		ChallengeID: utils.Atoi(data.ChallengeID.ValueString()),
 		Title:       data.Title.ValueStringPointer(),
 		Content:     data.Content.ValueString(),
@@ -252,7 +252,7 @@ func (r *hintResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 		return
 	}
 
-	if err := r.fm.Client.DeleteHint(ctx, data.ID.ValueString(), WithTracerProvider(r.fm.Tp)); err != nil {
+	if _, err := r.fm.Client.DeleteHint(ctx, data.ID.ValueString(), WithTracerProvider(r.fm.Tp)); err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete hint %s, got error: %s", data.ID.ValueString(), err))
 		return
 	}

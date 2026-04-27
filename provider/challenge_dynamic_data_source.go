@@ -151,7 +151,7 @@ func (data *challengeDynamicDataSource) Read(ctx context.Context, req datasource
 
 	var state challengesDynamicDataSourceModel
 
-	challs, err := data.fm.Client.GetChallenges(ctx, &api.GetChallengesParams{
+	challs, _, err := data.fm.Client.GetChallenges(ctx, &api.GetChallengesParams{
 		Type: utils.Ptr("dynamic"),
 	}, WithTracerProvider(data.fm.Tp))
 	if err != nil {

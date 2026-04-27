@@ -146,7 +146,7 @@ func (r *teamResource) Create(ctx context.Context, req resource.CreateRequest, r
 		return
 	}
 
-	res, err := r.fm.Client.PostTeams(ctx, &api.PostTeamsParams{
+	res, _, err := r.fm.Client.PostTeams(ctx, &api.PostTeamsParams{
 		Name:        data.Name.ValueString(),
 		Email:       data.Email.ValueString(),
 		Password:    data.Password.ValueString(),
@@ -170,7 +170,7 @@ func (r *teamResource) Create(ctx context.Context, req resource.CreateRequest, r
 
 	// => Members
 	for _, mem := range data.Members {
-		_, err := r.fm.Client.PostTeamMembers(ctx, strconv.Itoa(res.ID), &api.PostTeamsMembersParams{
+		_, _, err := r.fm.Client.PostTeamMembers(ctx, strconv.Itoa(res.ID), &api.PostTeamsMembersParams{
 			UserID: utils.Atoi(mem.ValueString()),
 		}, WithTracerProvider(r.fm.Tp))
 		if err != nil {
@@ -183,7 +183,7 @@ func (r *teamResource) Create(ctx context.Context, req resource.CreateRequest, r
 	}
 	// => Captain
 	cap := utils.Atoi(data.Captain.ValueString())
-	if _, err := r.fm.Client.PatchTeam(ctx, strconv.Itoa(res.ID), &api.PatchTeamsParams{
+	if _, _, err := r.fm.Client.PatchTeam(ctx, strconv.Itoa(res.ID), &api.PatchTeamsParams{
 		CaptainID: &cap,
 		Fields:    []api.Field{},
 	}, WithTracerProvider(r.fm.Tp)); err != nil {
@@ -211,7 +211,7 @@ func (r *teamResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	}
 
 	teamId := utils.Atoi(data.ID.ValueString())
-	res, err := r.fm.Client.GetTeam(ctx, strconv.Itoa(teamId), WithTracerProvider(r.fm.Tp))
+	res, _, err := r.fm.Client.GetTeam(ctx, strconv.Itoa(teamId), WithTracerProvider(r.fm.Tp))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -233,7 +233,7 @@ func (r *teamResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	// password is not returned, which is good :)
 
 	// => Members
-	mems, err := r.fm.Client.GetTeamMembers(ctx, strconv.Itoa(teamId), WithTracerProvider(r.fm.Tp))
+	mems, _, err := r.fm.Client.GetTeamMembers(ctx, strconv.Itoa(teamId), WithTracerProvider(r.fm.Tp))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -264,7 +264,7 @@ func (r *teamResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		return
 	}
 
-	_, err := r.fm.Client.PatchTeam(ctx, data.ID.ValueString(), &api.PatchTeamsParams{
+	_, _, err := r.fm.Client.PatchTeam(ctx, data.ID.ValueString(), &api.PatchTeamsParams{
 		Name:        data.Name.ValueStringPointer(),
 		Email:       data.Email.ValueStringPointer(),
 		Password:    data.Password.ValueStringPointer(),
@@ -285,7 +285,7 @@ func (r *teamResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	}
 
 	// => Members
-	currentMembers, err := r.fm.Client.GetTeamMembers(ctx, data.ID.ValueString(), WithTracerProvider(r.fm.Tp))
+	currentMembers, _, err := r.fm.Client.GetTeamMembers(ctx, data.ID.ValueString(), WithTracerProvider(r.fm.Tp))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -303,7 +303,7 @@ func (r *teamResource) Update(ctx context.Context, req resource.UpdateRequest, r
 			}
 		}
 		if !exists {
-			if _, err := r.fm.Client.PostTeamMembers(ctx, data.ID.ValueString(), &api.PostTeamsMembersParams{
+			if _, _, err := r.fm.Client.PostTeamMembers(ctx, data.ID.ValueString(), &api.PostTeamsMembersParams{
 				UserID: utils.Atoi(tfMember.ValueString()),
 			}, WithTracerProvider(r.fm.Tp)); err != nil {
 				resp.Diagnostics.AddError(
@@ -325,7 +325,7 @@ func (r *teamResource) Update(ctx context.Context, req resource.UpdateRequest, r
 			}
 		}
 		if !exists {
-			if _, err := r.fm.Client.DeleteTeamMembers(ctx, data.ID.ValueString(), &api.DeleteTeamMembersParams{
+			if _, _, err := r.fm.Client.DeleteTeamMembers(ctx, data.ID.ValueString(), &api.DeleteTeamMembersParams{
 				UserID: currentMember,
 			}, WithTracerProvider(r.fm.Tp)); err != nil {
 				resp.Diagnostics.AddError(
@@ -341,7 +341,7 @@ func (r *teamResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	}
 	// => Captain
 	cap := utils.Ptr(utils.Atoi(data.Captain.ValueString()))
-	if _, err := r.fm.Client.PatchTeam(ctx, data.ID.ValueString(), &api.PatchTeamsParams{
+	if _, _, err := r.fm.Client.PatchTeam(ctx, data.ID.ValueString(), &api.PatchTeamsParams{
 		CaptainID: cap,
 		Fields:    []api.Field{},
 	}, WithTracerProvider(r.fm.Tp)); err != nil {
@@ -368,7 +368,7 @@ func (r *teamResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 		return
 	}
 
-	if err := r.fm.Client.DeleteTeam(ctx, data.ID.ValueString(), WithTracerProvider(r.fm.Tp)); err != nil {
+	if _, err := r.fm.Client.DeleteTeam(ctx, data.ID.ValueString(), WithTracerProvider(r.fm.Tp)); err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf("Unable to delete team %s, got error: %s", data.ID.ValueString(), err),

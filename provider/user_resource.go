@@ -161,7 +161,7 @@ func (r *userResource) Create(ctx context.Context, req resource.CreateRequest, r
 		return
 	}
 
-	res, err := r.fm.Client.PostUsers(ctx, &api.PostUsersParams{
+	res, _, err := r.fm.Client.PostUsers(ctx, &api.PostUsersParams{
 		Name:        data.Name.ValueString(),
 		Email:       data.Email.ValueString(),
 		Password:    data.Password.ValueString(),
@@ -202,7 +202,7 @@ func (r *userResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		return
 	}
 
-	res, err := r.fm.Client.GetUser(ctx, data.ID.ValueString(), WithTracerProvider(r.fm.Tp))
+	res, _, err := r.fm.Client.GetUser(ctx, data.ID.ValueString(), WithTracerProvider(r.fm.Tp))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -242,7 +242,7 @@ func (r *userResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		return
 	}
 
-	_, err := r.fm.Client.PatchUser(ctx, data.ID.ValueString(), &api.PatchUsersParams{
+	_, _, err := r.fm.Client.PatchUser(ctx, data.ID.ValueString(), &api.PatchUsersParams{
 		Name:        data.Name.ValueString(),
 		Email:       data.Email.ValueString(),
 		Password:    data.Password.ValueStringPointer(),
@@ -281,7 +281,7 @@ func (r *userResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 		return
 	}
 
-	if err := r.fm.Client.DeleteUser(ctx, data.ID.ValueString(), WithTracerProvider(r.fm.Tp)); err != nil {
+	if _, err := r.fm.Client.DeleteUser(ctx, data.ID.ValueString(), WithTracerProvider(r.fm.Tp)); err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
 			fmt.Sprintf("Unable to delete user %s, got error: %s", data.ID.ValueString(), err),

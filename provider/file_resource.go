@@ -149,7 +149,7 @@ func (r *fileResource) Create(ctx context.Context, req resource.CreateRequest, r
 	if !data.ChallengeID.IsNull() {
 		params.Challenge = utils.Ptr(utils.Atoi(data.ChallengeID.ValueString()))
 	}
-	res, err := r.fm.Client.PostFiles(ctx, params, WithTracerProvider(r.fm.Tp))
+	res, _, err := r.fm.Client.PostFiles(ctx, params, WithTracerProvider(r.fm.Tp))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -181,7 +181,7 @@ func (r *fileResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		return
 	}
 
-	res, err := r.fm.Client.GetFile(ctx, data.ID.ValueString(), WithTracerProvider(r.fm.Tp))
+	res, _, err := r.fm.Client.GetFile(ctx, data.ID.ValueString(), WithTracerProvider(r.fm.Tp))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"CTFd Error",
@@ -240,7 +240,7 @@ func (r *fileResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 		return
 	}
 
-	if err := r.fm.Client.DeleteFile(ctx, data.ID.ValueString(), WithTracerProvider(r.fm.Tp)); err != nil {
+	if _, err := r.fm.Client.DeleteFile(ctx, data.ID.ValueString(), WithTracerProvider(r.fm.Tp)); err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete file %s, got error: %s", data.ID.ValueString(), err))
 		return
 	}
@@ -254,7 +254,7 @@ func (r *fileResource) ImportState(ctx context.Context, req resource.ImportState
 
 // XXX this helper only exist because CTFd does not return the challenge id of a file if it exist...
 func lookForChallengeId(ctx context.Context, client *Client, fileID int, diags diag.Diagnostics, opts ...Option) types.String {
-	challs, err := client.GetChallenges(ctx, &api.GetChallengesParams{
+	challs, _, err := client.GetChallenges(ctx, &api.GetChallengesParams{
 		View: utils.Ptr("admin"), // required, else CTFd only returns the "visible" challenges
 	}, opts...)
 	if err != nil {
@@ -266,7 +266,7 @@ func lookForChallengeId(ctx context.Context, client *Client, fileID int, diags d
 	}
 
 	for _, chall := range challs {
-		files, err := client.GetChallengeFiles(ctx, strconv.Itoa(chall.ID), opts...)
+		files, _, err := client.GetChallengeFiles(ctx, strconv.Itoa(chall.ID), opts...)
 		if err != nil {
 			diags.AddError(
 				"CTFd Error",

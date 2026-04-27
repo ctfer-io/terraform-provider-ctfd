@@ -51,28 +51,28 @@ func (cli *Client) Login(ctx context.Context, params *api.LoginParams, opts ...O
 
 // region brackets
 
-func (cli *Client) GetBrackets(ctx context.Context, params *api.GetBracketsParams, opts ...Option) ([]*api.Bracket, error) {
+func (cli *Client) GetBrackets(ctx context.Context, params *api.GetBracketsParams, opts ...Option) ([]*api.Bracket, *api.MetaResponse, error) {
 	ctx, span := StartAPISpan(ctx, getTracer(opts...))
 	defer span.End()
 
 	return cli.sub.GetBrackets(params, apiOptions(ctx)...)
 }
 
-func (cli *Client) PostBrackets(ctx context.Context, params *api.PostBracketsParams, opts ...Option) (*api.Bracket, error) {
+func (cli *Client) PostBrackets(ctx context.Context, params *api.PostBracketsParams, opts ...Option) (*api.Bracket, *api.MetaResponse, error) {
 	ctx, span := StartAPISpan(ctx, getTracer(opts...))
 	defer span.End()
 
 	return cli.sub.PostBrackets(params, apiOptions(ctx)...)
 }
 
-func (cli *Client) PatchBrackets(ctx context.Context, id string, params *api.PatchBracketsParams, opts ...Option) (*api.Bracket, error) {
+func (cli *Client) PatchBrackets(ctx context.Context, id string, params *api.PatchBracketsParams, opts ...Option) (*api.Bracket, *api.MetaResponse, error) {
 	ctx, span := StartAPISpan(ctx, getTracer(opts...))
 	defer span.End()
 
 	return cli.sub.PatchBrackets(utils.Atoi(id), params, apiOptions(ctx)...)
 }
 
-func (cli *Client) DeleteBrackets(ctx context.Context, id string, opts ...Option) error {
+func (cli *Client) DeleteBrackets(ctx context.Context, id string, opts ...Option) (*api.MetaResponse, error) {
 	ctx, span := StartAPISpan(ctx, getTracer(opts...))
 	defer span.End()
 
@@ -81,49 +81,49 @@ func (cli *Client) DeleteBrackets(ctx context.Context, id string, opts ...Option
 
 // region challenges
 
-func (cli *Client) GetChallenges(ctx context.Context, params *api.GetChallengesParams, opts ...Option) ([]*api.Challenge, error) {
+func (cli *Client) GetChallenges(ctx context.Context, params *api.GetChallengesParams, opts ...Option) ([]*api.Challenge, *api.MetaResponse, error) {
 	ctx, span := StartAPISpan(ctx, getTracer(opts...))
 	defer span.End()
 
 	return cli.sub.GetChallenges(params, apiOptions(ctx)...)
 }
 
-func (cli *Client) PostChallenges(ctx context.Context, params *api.PostChallengesParams, opts ...Option) (*api.Challenge, error) {
+func (cli *Client) PostChallenges(ctx context.Context, params *api.PostChallengesParams, opts ...Option) (*api.Challenge, *api.MetaResponse, error) {
 	ctx, span := StartAPISpan(ctx, getTracer(opts...))
 	defer span.End()
 
 	return cli.sub.PostChallenges(params, apiOptions(ctx)...)
 }
 
-func (cli *Client) PatchChallenge(ctx context.Context, id string, params *api.PatchChallengeParams, opts ...Option) (*api.Challenge, error) {
+func (cli *Client) PatchChallenge(ctx context.Context, id string, params *api.PatchChallengeParams, opts ...Option) (*api.Challenge, *api.MetaResponse, error) {
 	ctx, span := StartAPISpan(ctx, getTracer(opts...))
 	defer span.End()
 
 	return cli.sub.PatchChallenge(utils.Atoi(id), params, apiOptions(ctx)...)
 }
 
-func (cli *Client) GetChallengeTags(ctx context.Context, id string, opts ...Option) ([]*api.Tag, error) {
+func (cli *Client) GetChallengeTags(ctx context.Context, id string, opts ...Option) ([]*api.Tag, *api.MetaResponse, error) {
 	ctx, span := StartAPISpan(ctx, getTracer(opts...))
 	defer span.End()
 
 	return cli.sub.GetChallengeTags(utils.Atoi(id), apiOptions(ctx)...)
 }
 
-func (cli *Client) GetChallengeRequirements(ctx context.Context, id string, opts ...Option) (*api.Requirements, error) {
+func (cli *Client) GetChallengeRequirements(ctx context.Context, id string, opts ...Option) (*api.Requirements, *api.MetaResponse, error) {
 	ctx, span := StartAPISpan(ctx, getTracer(opts...))
 	defer span.End()
 
 	return cli.sub.GetChallengeRequirements(utils.Atoi(id), apiOptions(ctx)...)
 }
 
-func (cli *Client) GetChallengeFiles(ctx context.Context, id string, opts ...Option) ([]*api.File, error) {
+func (cli *Client) GetChallengeFiles(ctx context.Context, id string, opts ...Option) ([]*api.File, *api.MetaResponse, error) {
 	ctx, span := StartAPISpan(ctx, getTracer(opts...))
 	defer span.End()
 
 	return cli.sub.GetChallengeFiles(utils.Atoi(id), apiOptions(ctx)...)
 }
 
-func (cli *Client) GetChallengeHints(ctx context.Context, id string, opts ...Option) ([]*api.Hint, error) {
+func (cli *Client) GetChallengeHints(ctx context.Context, id string, opts ...Option) ([]*api.Hint, *api.MetaResponse, error) {
 	ctx, span := StartAPISpan(ctx, getTracer(opts...))
 	defer span.End()
 
@@ -132,28 +132,28 @@ func (cli *Client) GetChallengeHints(ctx context.Context, id string, opts ...Opt
 
 // region tags
 
-func (cli *Client) PostTags(ctx context.Context, params *api.PostTagsParams, opts ...Option) (*api.Tag, error) {
+func (cli *Client) PostTags(ctx context.Context, params *api.PostTagsParams, opts ...Option) (*api.Tag, *api.MetaResponse, error) {
 	ctx, span := StartAPISpan(ctx, getTracer(opts...))
 	defer span.End()
 
 	return cli.sub.PostTags(params, apiOptions(ctx)...)
 }
 
-func (cli *Client) DeleteTag(ctx context.Context, id string, opts ...Option) error {
+func (cli *Client) DeleteTag(ctx context.Context, id string, opts ...Option) (*api.MetaResponse, error) {
 	ctx, span := StartAPISpan(ctx, getTracer(opts...))
 	defer span.End()
 
 	return cli.sub.DeleteTag(id, apiOptions(ctx)...)
 }
 
-func (cli *Client) DeleteChallenge(ctx context.Context, id string, opts ...Option) error {
+func (cli *Client) DeleteChallenge(ctx context.Context, id string, opts ...Option) (*api.MetaResponse, error) {
 	ctx, span := StartAPISpan(ctx, getTracer(opts...))
 	defer span.End()
 
 	return cli.sub.DeleteChallenge(utils.Atoi(id), apiOptions(ctx)...)
 }
 
-func (cli *Client) GetChallenge(ctx context.Context, id string, opts ...Option) (*api.Challenge, error) {
+func (cli *Client) GetChallenge(ctx context.Context, id string, opts ...Option) (*api.Challenge, *api.MetaResponse, error) {
 	ctx, span := StartAPISpan(ctx, getTracer(opts...))
 	defer span.End()
 
@@ -162,21 +162,21 @@ func (cli *Client) GetChallenge(ctx context.Context, id string, opts ...Option) 
 
 // region topics
 
-func (cli *Client) PostTopics(ctx context.Context, params *api.PostTopicsParams, opts ...Option) (*api.Topic, error) {
+func (cli *Client) PostTopics(ctx context.Context, params *api.PostTopicsParams, opts ...Option) (*api.Topic, *api.MetaResponse, error) {
 	ctx, span := StartAPISpan(ctx, getTracer(opts...))
 	defer span.End()
 
 	return cli.sub.PostTopics(params, apiOptions(ctx)...)
 }
 
-func (cli *Client) DeleteTopic(ctx context.Context, params *api.DeleteTopicArgs, opts ...Option) error {
+func (cli *Client) DeleteTopic(ctx context.Context, params *api.DeleteTopicArgs, opts ...Option) (*api.MetaResponse, error) {
 	ctx, span := StartAPISpan(ctx, getTracer(opts...))
 	defer span.End()
 
 	return cli.sub.DeleteTopic(params, apiOptions(ctx)...)
 }
 
-func (cli *Client) GetChallengeTopics(ctx context.Context, id string, opts ...Option) ([]*api.Topic, error) {
+func (cli *Client) GetChallengeTopics(ctx context.Context, id string, opts ...Option) ([]*api.Topic, *api.MetaResponse, error) {
 	ctx, span := StartAPISpan(ctx, getTracer(opts...))
 	defer span.End()
 
@@ -185,14 +185,14 @@ func (cli *Client) GetChallengeTopics(ctx context.Context, id string, opts ...Op
 
 // region files
 
-func (cli *Client) PostFiles(ctx context.Context, params *api.PostFilesParams, opts ...Option) ([]*api.File, error) {
+func (cli *Client) PostFiles(ctx context.Context, params *api.PostFilesParams, opts ...Option) ([]*api.File, *api.MetaResponse, error) {
 	ctx, span := StartAPISpan(ctx, getTracer(opts...))
 	defer span.End()
 
 	return cli.sub.PostFiles(params, apiOptions(ctx)...)
 }
 
-func (cli *Client) GetFile(ctx context.Context, id string, opts ...Option) (*api.File, error) {
+func (cli *Client) GetFile(ctx context.Context, id string, opts ...Option) (*api.File, *api.MetaResponse, error) {
 	ctx, span := StartAPISpan(ctx, getTracer(opts...))
 	defer span.End()
 
@@ -206,7 +206,7 @@ func (cli *Client) GetFileContent(ctx context.Context, file *api.File, opts ...O
 	return cli.sub.GetFileContent(file, apiOptions(ctx)...)
 }
 
-func (cli *Client) DeleteFile(ctx context.Context, id string, opts ...Option) error {
+func (cli *Client) DeleteFile(ctx context.Context, id string, opts ...Option) (*api.MetaResponse, error) {
 	ctx, span := StartAPISpan(ctx, getTracer(opts...))
 	defer span.End()
 
@@ -215,28 +215,28 @@ func (cli *Client) DeleteFile(ctx context.Context, id string, opts ...Option) er
 
 // region flags
 
-func (cli *Client) PostFlags(ctx context.Context, params *api.PostFlagsParams, opts ...Option) (*api.Flag, error) {
+func (cli *Client) PostFlags(ctx context.Context, params *api.PostFlagsParams, opts ...Option) (*api.Flag, *api.MetaResponse, error) {
 	ctx, span := StartAPISpan(ctx, getTracer(opts...))
 	defer span.End()
 
 	return cli.sub.PostFlags(params, apiOptions(ctx)...)
 }
 
-func (cli *Client) GetFlag(ctx context.Context, id string, opts ...Option) (*api.Flag, error) {
+func (cli *Client) GetFlag(ctx context.Context, id string, opts ...Option) (*api.Flag, *api.MetaResponse, error) {
 	ctx, span := StartAPISpan(ctx, getTracer(opts...))
 	defer span.End()
 
 	return cli.sub.GetFlag(id, apiOptions(ctx)...)
 }
 
-func (cli *Client) PatchFlag(ctx context.Context, id string, params *api.PatchFlagParams, opts ...Option) (*api.Flag, error) {
+func (cli *Client) PatchFlag(ctx context.Context, id string, params *api.PatchFlagParams, opts ...Option) (*api.Flag, *api.MetaResponse, error) {
 	ctx, span := StartAPISpan(ctx, getTracer(opts...))
 	defer span.End()
 
 	return cli.sub.PatchFlag(id, params, apiOptions(ctx)...)
 }
 
-func (cli *Client) DeleteFlag(ctx context.Context, id string, opts ...Option) error {
+func (cli *Client) DeleteFlag(ctx context.Context, id string, opts ...Option) (*api.MetaResponse, error) {
 	ctx, span := StartAPISpan(ctx, getTracer(opts...))
 	defer span.End()
 
@@ -245,28 +245,28 @@ func (cli *Client) DeleteFlag(ctx context.Context, id string, opts ...Option) er
 
 // region hints
 
-func (cli *Client) PostHints(ctx context.Context, params *api.PostHintsParams, opts ...Option) (*api.Hint, error) {
+func (cli *Client) PostHints(ctx context.Context, params *api.PostHintsParams, opts ...Option) (*api.Hint, *api.MetaResponse, error) {
 	ctx, span := StartAPISpan(ctx, getTracer(opts...))
 	defer span.End()
 
 	return cli.sub.PostHints(params, apiOptions(ctx)...)
 }
 
-func (cli *Client) GetHint(ctx context.Context, id string, params *api.GetHintParams, opts ...Option) (*api.Hint, error) {
+func (cli *Client) GetHint(ctx context.Context, id string, params *api.GetHintParams, opts ...Option) (*api.Hint, *api.MetaResponse, error) {
 	ctx, span := StartAPISpan(ctx, getTracer(opts...))
 	defer span.End()
 
 	return cli.sub.GetHint(id, params, apiOptions(ctx)...)
 }
 
-func (cli *Client) PatchHint(ctx context.Context, id string, params *api.PatchHintsParams, opts ...Option) (*api.Hint, error) {
+func (cli *Client) PatchHint(ctx context.Context, id string, params *api.PatchHintsParams, opts ...Option) (*api.Hint, *api.MetaResponse, error) {
 	ctx, span := StartAPISpan(ctx, getTracer(opts...))
 	defer span.End()
 
 	return cli.sub.PatchHint(id, params, apiOptions(ctx)...)
 }
 
-func (cli *Client) DeleteHint(ctx context.Context, id string, opts ...Option) error {
+func (cli *Client) DeleteHint(ctx context.Context, id string, opts ...Option) (*api.MetaResponse, error) {
 	ctx, span := StartAPISpan(ctx, getTracer(opts...))
 	defer span.End()
 
@@ -275,28 +275,28 @@ func (cli *Client) DeleteHint(ctx context.Context, id string, opts ...Option) er
 
 // region solutions
 
-func (cli *Client) PostSolutions(ctx context.Context, params *api.PostSolutionsParams, opts ...Option) (*api.Solution, error) {
+func (cli *Client) PostSolutions(ctx context.Context, params *api.PostSolutionsParams, opts ...Option) (*api.Solution, *api.MetaResponse, error) {
 	ctx, span := StartAPISpan(ctx, getTracer(opts...))
 	defer span.End()
 
 	return cli.sub.PostSolutions(params, apiOptions(ctx)...)
 }
 
-func (cli *Client) GetSolutions(ctx context.Context, id string, params *api.GetSolutionsParams, opts ...Option) (*api.Solution, error) {
+func (cli *Client) GetSolutions(ctx context.Context, id string, params *api.GetSolutionsParams, opts ...Option) (*api.Solution, *api.MetaResponse, error) {
 	ctx, span := StartAPISpan(ctx, getTracer(opts...))
 	defer span.End()
 
 	return cli.sub.GetSolutions(utils.Atoi(id), params, apiOptions(ctx)...)
 }
 
-func (cli *Client) PatchSolutions(ctx context.Context, id string, params *api.PatchSolutionsParams, opts ...Option) (*api.Solution, error) {
+func (cli *Client) PatchSolutions(ctx context.Context, id string, params *api.PatchSolutionsParams, opts ...Option) (*api.Solution, *api.MetaResponse, error) {
 	ctx, span := StartAPISpan(ctx, getTracer(opts...))
 	defer span.End()
 
 	return cli.sub.PatchSolutions(utils.Atoi(id), params, apiOptions(ctx)...)
 }
 
-func (cli *Client) DeleteSolutions(ctx context.Context, id string, opts ...Option) error {
+func (cli *Client) DeleteSolutions(ctx context.Context, id string, opts ...Option) (*api.MetaResponse, error) {
 	ctx, span := StartAPISpan(ctx, getTracer(opts...))
 	defer span.End()
 
@@ -305,56 +305,56 @@ func (cli *Client) DeleteSolutions(ctx context.Context, id string, opts ...Optio
 
 // region teams
 
-func (cli *Client) GetTeams(ctx context.Context, params *api.GetTeamsParams, opts ...Option) ([]*api.Team, error) {
+func (cli *Client) GetTeams(ctx context.Context, params *api.GetTeamsParams, opts ...Option) ([]*api.Team, *api.MetaResponse, error) {
 	ctx, span := StartAPISpan(ctx, getTracer(opts...))
 	defer span.End()
 
 	return cli.sub.GetTeams(params, apiOptions(ctx)...)
 }
 
-func (cli *Client) PostTeams(ctx context.Context, params *api.PostTeamsParams, opts ...Option) (*api.Team, error) {
+func (cli *Client) PostTeams(ctx context.Context, params *api.PostTeamsParams, opts ...Option) (*api.Team, *api.MetaResponse, error) {
 	ctx, span := StartAPISpan(ctx, getTracer(opts...))
 	defer span.End()
 
 	return cli.sub.PostTeams(params, apiOptions(ctx)...)
 }
 
-func (cli *Client) PatchTeam(ctx context.Context, id string, params *api.PatchTeamsParams, opts ...Option) (*api.Team, error) {
+func (cli *Client) PatchTeam(ctx context.Context, id string, params *api.PatchTeamsParams, opts ...Option) (*api.Team, *api.MetaResponse, error) {
 	ctx, span := StartAPISpan(ctx, getTracer(opts...))
 	defer span.End()
 
 	return cli.sub.PatchTeam(utils.Atoi(id), params, apiOptions(ctx)...)
 }
 
-func (cli *Client) GetTeam(ctx context.Context, id string, opts ...Option) (*api.Team, error) {
+func (cli *Client) GetTeam(ctx context.Context, id string, opts ...Option) (*api.Team, *api.MetaResponse, error) {
 	ctx, span := StartAPISpan(ctx, getTracer(opts...))
 	defer span.End()
 
 	return cli.sub.GetTeam(utils.Atoi(id), apiOptions(ctx)...)
 }
 
-func (cli *Client) DeleteTeam(ctx context.Context, id string, opts ...Option) error {
+func (cli *Client) DeleteTeam(ctx context.Context, id string, opts ...Option) (*api.MetaResponse, error) {
 	ctx, span := StartAPISpan(ctx, getTracer(opts...))
 	defer span.End()
 
 	return cli.sub.DeleteTeam(utils.Atoi(id), apiOptions(ctx)...)
 }
 
-func (cli *Client) PostTeamMembers(ctx context.Context, id string, params *api.PostTeamsMembersParams, opts ...Option) (int, error) {
+func (cli *Client) PostTeamMembers(ctx context.Context, id string, params *api.PostTeamsMembersParams, opts ...Option) (int, *api.MetaResponse, error) {
 	ctx, span := StartAPISpan(ctx, getTracer(opts...))
 	defer span.End()
 
 	return cli.sub.PostTeamMembers(utils.Atoi(id), params, apiOptions(ctx)...)
 }
 
-func (cli *Client) GetTeamMembers(ctx context.Context, id string, opts ...Option) ([]int, error) {
+func (cli *Client) GetTeamMembers(ctx context.Context, id string, opts ...Option) ([]int, *api.MetaResponse, error) {
 	ctx, span := StartAPISpan(ctx, getTracer(opts...))
 	defer span.End()
 
 	return cli.sub.GetTeamMembers(utils.Atoi(id), apiOptions(ctx)...)
 }
 
-func (cli *Client) DeleteTeamMembers(ctx context.Context, id string, params *api.DeleteTeamMembersParams, opts ...Option) ([]int, error) {
+func (cli *Client) DeleteTeamMembers(ctx context.Context, id string, params *api.DeleteTeamMembersParams, opts ...Option) ([]int, *api.MetaResponse, error) {
 	ctx, span := StartAPISpan(ctx, getTracer(opts...))
 	defer span.End()
 
@@ -363,35 +363,35 @@ func (cli *Client) DeleteTeamMembers(ctx context.Context, id string, params *api
 
 // region users
 
-func (cli *Client) GetUsers(ctx context.Context, params *api.GetUsersParams, opts ...Option) ([]*api.User, error) {
+func (cli *Client) GetUsers(ctx context.Context, params *api.GetUsersParams, opts ...Option) ([]*api.User, *api.MetaResponse, error) {
 	ctx, span := StartAPISpan(ctx, getTracer(opts...))
 	defer span.End()
 
 	return cli.sub.GetUsers(params, apiOptions(ctx)...)
 }
 
-func (cli *Client) PostUsers(ctx context.Context, params *api.PostUsersParams, opts ...Option) (*api.User, error) {
+func (cli *Client) PostUsers(ctx context.Context, params *api.PostUsersParams, opts ...Option) (*api.User, *api.MetaResponse, error) {
 	ctx, span := StartAPISpan(ctx, getTracer(opts...))
 	defer span.End()
 
 	return cli.sub.PostUsers(params, apiOptions(ctx)...)
 }
 
-func (cli *Client) GetUser(ctx context.Context, id string, opts ...Option) (*api.User, error) {
+func (cli *Client) GetUser(ctx context.Context, id string, opts ...Option) (*api.User, *api.MetaResponse, error) {
 	ctx, span := StartAPISpan(ctx, getTracer(opts...))
 	defer span.End()
 
 	return cli.sub.GetUser(utils.Atoi(id), apiOptions(ctx)...)
 }
 
-func (cli *Client) PatchUser(ctx context.Context, id string, params *api.PatchUsersParams, opts ...Option) (*api.User, error) {
+func (cli *Client) PatchUser(ctx context.Context, id string, params *api.PatchUsersParams, opts ...Option) (*api.User, *api.MetaResponse, error) {
 	ctx, span := StartAPISpan(ctx, getTracer(opts...))
 	defer span.End()
 
 	return cli.sub.PatchUser(utils.Atoi(id), params, apiOptions(ctx)...)
 }
 
-func (cli *Client) DeleteUser(ctx context.Context, id string, opts ...Option) error {
+func (cli *Client) DeleteUser(ctx context.Context, id string, opts ...Option) (*api.MetaResponse, error) {
 	ctx, span := StartAPISpan(ctx, getTracer(opts...))
 	defer span.End()
 

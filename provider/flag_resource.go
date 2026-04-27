@@ -128,7 +128,7 @@ func (r *flagResource) Create(ctx context.Context, req resource.CreateRequest, r
 	}
 
 	// Create flag
-	res, err := r.fm.Client.PostFlags(ctx, &api.PostFlagsParams{
+	res, _, err := r.fm.Client.PostFlags(ctx, &api.PostFlagsParams{
 		Challenge: utils.Atoi(data.ChallengeID.ValueString()),
 		Content:   data.Content.ValueString(),
 		Data:      data.Data.ValueString(),
@@ -164,7 +164,7 @@ func (r *flagResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	}
 
 	// Retrieve flag
-	res, err := r.fm.Client.GetFlag(ctx, data.ID.ValueString(), WithTracerProvider(r.fm.Tp))
+	res, _, err := r.fm.Client.GetFlag(ctx, data.ID.ValueString(), WithTracerProvider(r.fm.Tp))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -196,7 +196,7 @@ func (r *flagResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	}
 
 	// Update flag
-	if _, err := r.fm.Client.PatchFlag(ctx, data.ID.ValueString(), &api.PatchFlagParams{
+	if _, _, err := r.fm.Client.PatchFlag(ctx, data.ID.ValueString(), &api.PatchFlagParams{
 		ID:      data.ID.ValueString(),
 		Content: data.Content.ValueString(),
 		Data:    data.Data.ValueString(),
@@ -225,7 +225,7 @@ func (r *flagResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 		return
 	}
 
-	if err := r.fm.Client.DeleteFlag(ctx, data.ID.ValueString(), WithTracerProvider(r.fm.Tp)); err != nil {
+	if _, err := r.fm.Client.DeleteFlag(ctx, data.ID.ValueString(), WithTracerProvider(r.fm.Tp)); err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete flag %s, got error: %s", data.ID.ValueString(), err))
 		return
 	}

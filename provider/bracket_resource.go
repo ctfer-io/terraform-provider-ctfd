@@ -108,7 +108,7 @@ func (r *bracketResource) Create(ctx context.Context, req resource.CreateRequest
 	}
 
 	// Create bracket
-	res, err := r.fm.Client.PostBrackets(ctx, &api.PostBracketsParams{
+	res, _, err := r.fm.Client.PostBrackets(ctx, &api.PostBracketsParams{
 		Name:        data.Name.ValueString(),
 		Description: data.Description.ValueString(),
 		Type:        data.Type.ValueString(),
@@ -143,7 +143,7 @@ func (r *bracketResource) Read(ctx context.Context, req resource.ReadRequest, re
 	}
 
 	// XXX cannot get bracket by ID, so we need to query them all
-	brackets, err := r.fm.Client.GetBrackets(ctx, &api.GetBracketsParams{}, WithTracerProvider(r.fm.Tp))
+	brackets, _, err := r.fm.Client.GetBrackets(ctx, &api.GetBracketsParams{}, WithTracerProvider(r.fm.Tp))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client Error",
@@ -188,7 +188,7 @@ func (r *bracketResource) Update(ctx context.Context, req resource.UpdateRequest
 	}
 
 	// Update bracket
-	if _, err := r.fm.Client.PatchBrackets(ctx, data.ID.ValueString(), &api.PatchBracketsParams{
+	if _, _, err := r.fm.Client.PatchBrackets(ctx, data.ID.ValueString(), &api.PatchBracketsParams{
 		Name:        data.Name.ValueStringPointer(),
 		Description: data.Description.ValueStringPointer(),
 		Type:        data.Type.ValueStringPointer(),
@@ -216,7 +216,7 @@ func (r *bracketResource) Delete(ctx context.Context, req resource.DeleteRequest
 		return
 	}
 
-	if err := r.fm.Client.DeleteBrackets(ctx, data.ID.ValueString(), WithTracerProvider(r.fm.Tp)); err != nil {
+	if _, err := r.fm.Client.DeleteBrackets(ctx, data.ID.ValueString(), WithTracerProvider(r.fm.Tp)); err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete bracket %s, got error: %s", data.ID.ValueString(), err))
 		return
 	}

@@ -138,7 +138,7 @@ func (data *challengeStandardDataSource) Read(ctx context.Context, req datasourc
 
 	var state challengesStandardDataSourceModel
 
-	challs, err := data.fm.Client.GetChallenges(ctx, &api.GetChallengesParams{
+	challs, _, err := data.fm.Client.GetChallenges(ctx, &api.GetChallengesParams{
 		Type: utils.Ptr("standard"),
 	}, WithTracerProvider(data.fm.Tp))
 	if err != nil {

@@ -119,37 +119,46 @@ func (data *userDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	ctx, span := StartTFSpan(ctx, data.fm.Tp.Tracer(serviceName), data)
 	defer span.End()
 
-	var state usersDataSourceModel
-
-	users, err := data.fm.Client.GetUsers(ctx, &api.GetUsersParams{}, WithTracerProvider(data.fm.Tp))
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Unable to Read CTFd Users",
-			err.Error(),
-		)
-		return
+	state := usersDataSourceModel{
+		ID:    types.StringValue("placeholder"),
+		Users: []userResourceModel{},
 	}
 
-	state.Users = make([]userResourceModel, 0, len(users))
-	for _, u := range users {
-		// Flatten response
-		state.Users = append(state.Users, userResourceModel{
-			ID:          types.StringValue(strconv.Itoa(u.ID)),
-			Name:        types.StringValue(u.Name),
-			Email:       types.StringPointerValue(u.Email),
-			Password:    types.StringValue("placeholder"),
-			Website:     types.StringPointerValue(u.Website),
-			Affiliation: types.StringPointerValue(u.Affiliation),
-			Country:     types.StringPointerValue(u.Country),
-			Language:    types.StringPointerValue(u.Language),
-			Type:        types.StringPointerValue(u.Type),
-			Verified:    types.BoolPointerValue(u.Verified),
-			Hidden:      types.BoolPointerValue(u.Hidden),
-			Banned:      types.BoolPointerValue(u.Banned),
-		})
-	}
+	for page := 1; ; page++ {
+		usrs, meta, err := data.fm.Client.GetUsers(ctx, &api.GetUsersParams{
+			Page: &page,
+		}, WithTracerProvider(data.fm.Tp))
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Unable to Read CTFd Users",
+				err.Error(),
+			)
+			return
+		}
 
-	state.ID = types.StringValue("placeholder")
+		for _, u := range usrs {
+			// Flatten response
+			state.Users = append(state.Users, userResourceModel{
+				ID:          types.StringValue(strconv.Itoa(u.ID)),
+				Name:        types.StringValue(u.Name),
+				Email:       types.StringPointerValue(u.Email),
+				Password:    types.StringValue("placeholder"),
+				Website:     types.StringPointerValue(u.Website),
+				Affiliation: types.StringPointerValue(u.Affiliation),
+				Country:     types.StringPointerValue(u.Country),
+				Language:    types.StringPointerValue(u.Language),
+				Type:        types.StringPointerValue(u.Type),
+				Verified:    types.BoolPointerValue(u.Verified),
+				Hidden:      types.BoolPointerValue(u.Hidden),
+				Banned:      types.BoolPointerValue(u.Banned),
+			})
+		}
+
+		// Keep pushing until no more pages to fetch
+		if meta == nil || meta.Pagination.Pages == page {
+			break
+		}
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }

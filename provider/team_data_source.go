@@ -117,40 +117,47 @@ func (data *teamDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	ctx, span := StartTFSpan(ctx, data.fm.Tp.Tracer(serviceName), data)
 	defer span.End()
 
-	var state teamsDataSourceModel
-
-	teams, err := data.fm.Client.GetTeams(ctx, &api.GetTeamsParams{}, WithTracerProvider(data.fm.Tp))
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Unable to Read CTFd Teams",
-			err.Error(),
-		)
-		return
+	state := teamsDataSourceModel{
+		ID:    types.StringValue("placeholder"),
+		Teams: []teamResourceModel{},
 	}
-
-	state.Teams = make([]teamResourceModel, 0, len(teams))
-	for _, t := range teams {
-		// Flatten response
-		members := make([]basetypes.StringValue, 0, len(t.Members))
-		for _, tm := range t.Members {
-			members = append(members, types.StringValue(strconv.Itoa(tm)))
+	for page := 1; ; page++ {
+		tms, meta, err := data.fm.Client.GetTeams(ctx, &api.GetTeamsParams{
+			Page: &page,
+		}, WithTracerProvider(data.fm.Tp))
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Unable to Read CTFd Teams",
+				err.Error(),
+			)
+			return
 		}
-		state.Teams = append(state.Teams, teamResourceModel{
-			ID:          types.StringValue(strconv.Itoa(t.ID)),
-			Name:        types.StringValue(t.Name),
-			Email:       types.StringValue(*t.Email),
-			Password:    types.StringValue("placeholder"),
-			Website:     types.StringValue(*t.Website),
-			Affiliation: types.StringValue(*t.Affiliation),
-			Country:     types.StringValue(*t.Country),
-			Hidden:      types.BoolValue(t.Hidden),
-			Banned:      types.BoolValue(t.Banned),
-			Members:     members,
-			Captain:     types.StringValue(strconv.Itoa(*t.CaptainID)),
-		})
-	}
 
-	state.ID = types.StringValue("placeholder")
+		for _, t := range tms {
+			members := make([]basetypes.StringValue, 0, len(t.Members))
+			for _, tm := range t.Members {
+				members = append(members, types.StringValue(strconv.Itoa(tm)))
+			}
+			state.Teams = append(state.Teams, teamResourceModel{
+				ID:          types.StringValue(strconv.Itoa(t.ID)),
+				Name:        types.StringValue(t.Name),
+				Email:       types.StringValue(*t.Email),
+				Password:    types.StringValue("placeholder"),
+				Website:     types.StringValue(*t.Website),
+				Affiliation: types.StringValue(*t.Affiliation),
+				Country:     types.StringValue(*t.Country),
+				Hidden:      types.BoolValue(t.Hidden),
+				Banned:      types.BoolValue(t.Banned),
+				Members:     members,
+				Captain:     types.StringValue(strconv.Itoa(*t.CaptainID)),
+			})
+		}
+
+		// Keep pushing until no more pages to fetch
+		if meta == nil || meta.Pagination.Pages == page {
+			break
+		}
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }

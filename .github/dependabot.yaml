@@ -13,3 +13,8 @@ updates:
       interval: "weekly"
     assignees:
       - "pandatix"
+    groups:
+      # interdependencies between plugin modules
+      hashicorp-terraform-plugin:
+        patterns:
+          - "github.com/hashicorp/terraform-plugin-*"

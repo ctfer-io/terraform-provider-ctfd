@@ -73,6 +73,7 @@ func (r *teamResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 			"password": schema.StringAttribute{
 				MarkdownDescription: "Password of the team. Notice that during a CTF you may not want to update those to avoid defaulting team accesses.",
 				Required:            true,
+				Sensitive:           true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
